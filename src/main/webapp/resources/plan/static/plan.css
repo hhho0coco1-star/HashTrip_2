@@ -136,20 +136,6 @@ rgba(0,0,0,0.2);
 .place-card:hover { transform: translateX(5px); }
 .place-card.dragging { opacity: 0.5; }
 
-.place-card::before {
-    content: '';
-    position: absolute;
-    left: -25px;
-    top: 25px;
-    width: 15px;
-    height: 15px;
-    background: 
-#667eea;
-    border-radius: 50%;
-    border: 3px solid 
-#fff;
-}
-
 .place-name {
     font-size: 18px;
     font-weight: bold;
@@ -446,15 +432,6 @@ rgba(0,0,0,0.7);
     background: #4caf50;
 }
 
-.place-card.visited::after {
-    content: '✓';
-    position: absolute;
-    left: -28px;
-    top: 22px;
-    color: #fff;
-    font-size: 10px;
-    font-weight: bold;
-}
 
 .place-card.current {
     background: #fff3e0;
@@ -463,24 +440,10 @@ rgba(0,0,0,0.7);
     animation: pulse 2s infinite;
 }
 
-.place-card.current::before {
-    background: #ff9800;
-    width: 20px;
-    height: 20px;
-    left: -27px;
-    top: 23px;
-    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
-}
-
 .place-card.upcoming {
     background: #f5f5f5;
     opacity: 0.8;
 }
-
-.place-card.upcoming::before {
-    background: #bdbdbd;
-}
-
 @keyframes pulse {
     0%, 100% { box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3); }
     50% { box-shadow: 0 4px 25px rgba(255, 152, 0, 0.6); }
@@ -691,3 +654,130 @@ rgba(0,0,0,0.7);
     }
 }
 
+/* ── 사진 업로드 버튼 ── */
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, 
+#667eea 0%, 
+#764ba2 100%);
+    color: 
+#fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px 
+rgba(102, 126, 234, 0.3);
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px 
+rgba(102, 126, 234, 0.4);
+}
+
+.upload-btn:active {
+    transform: translateY(0);
+}
+
+.upload-btn i {
+    font-size: 16px;
+}
+
+/* ── 사진 업로드 영역 ── */
+.photo-upload {
+    margin-top: 15px;
+    padding: 15px;
+    background: 
+#f8f9fa;
+    border-radius: 10px;
+    border: 1px solid 
+#e9ecef;
+}
+
+/* ── 사진 프리뷰 ── */
+.photo-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.photo-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px 
+rgba(0, 0, 0, 0.1);
+}
+
+.photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.delete-photo-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: 
+rgba(255, 107, 107, 0.9);
+    color: 
+#fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.photo-item:hover .delete-photo-btn {
+    opacity: 1;
+}
+
+/* ── 기록 필드 영역 ── */
+.recording-fields {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed 
+#dee2e6;
+}
+
+/* ── 별점 영역 개선 ── */
+.recording-fields .rating-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.recording-fields .star-rating i {
+    font-size: 22px;
+    color: 
+#ddd;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.recording-fields .star-rating i.fas {
+    color: 
+#ffc107;
+}
+
+.recording-fields .star-rating i:hover {
+    transform: scale(1.2);
+}
