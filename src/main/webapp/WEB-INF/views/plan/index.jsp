@@ -15,13 +15,29 @@
 <body>
 	<div class="container">
 		<!-- 헤더 -->
-		<header class="plan-header">
-			<input type="text" id="tripTitle" class="trip-title-input"
-				placeholder="여행 제목을 입력하세요">
-			<div class="trip-status">
-				<span id="statusBadge" class="status-badge status-planning">계획
-					중</span>
+			<div class="plan-header">
+				<input type="text" class="trip-title-input" id="tripTitle"
+					placeholder="여행 제목을 입력하세요"> <span class="status-badge"
+					id="statusBadge">계획 중</span>
 			</div>
+
+			<!-- 여행 기간 섹션 추가 -->
+			<div class="trip-period-section">
+				<div class="period-row">
+					<div class="period-item">
+						<label>🛫 여행 시작일</label> <input type="date" id="tripStartDate"
+							onchange="updateTripPeriod()">
+					</div>
+					<div class="period-item">
+						<label>🛬 여행 종료일</label> <input type="date" id="tripEndDate"
+							onchange="updateTripPeriod()">
+					</div>
+					<div class="period-summary" id="periodSummary">
+						<!-- 여행 기간 요약 표시 -->
+					</div>
+				</div>
+			</div>
+
 		</header>
 
 		<!-- 장소 추가 버튼 (계획/기록 상태에서) -->
