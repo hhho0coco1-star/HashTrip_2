@@ -1,0 +1,141 @@
+@charset "UTF-8";
+/* 기본 변수 설정 */
+:root {
+    --toss-blue: #3182f6;
+    --toss-grey-50: #f9fafb;
+    --toss-grey-100: #f2f4f6;
+    --toss-grey-600: #6b7684;
+    --toss-grey-800: #333d4b;
+    --toss-white: #ffffff;
+    --radius-lg: 20px;
+    --radius-md: 12px;
+}
+
+#mypage {
+    background-color: var(--toss-grey-50);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+}
+
+.mypage-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 프로필 카드 */
+.profile-card {
+    background: var(--toss-white);
+    padding: 30px 24px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.profile-avatar {
+    font-size: 50px;
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    background: var(--toss-grey-100);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+}
+
+.profile-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--toss-grey-800);
+    margin-bottom: 8px;
+}
+
+.profile-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: var(--toss-grey-100);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--toss-blue);
+    font-weight: 600;
+}
+
+/* 대시보드 카드 공통 */
+.dashboard-card {
+    background: var(--toss-white);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.dashboard-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--toss-grey-800);
+}
+
+/* 태그 관리자 스타일 */
+.tag-mgr-card {
+    border-bottom: 1px solid var(--toss-grey-100);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+}
+
+.tag-mgr-card:last-child { border: none; }
+
+.tmg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.tmg-title { font-weight: 600; color: var(--toss-grey-800); }
+.tmg-sub { font-size: 13px; color: var(--toss-grey-600); margin-bottom: 12px; }
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    background: var(--toss-blue);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 4px;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: white;
+    margin-left: 6px;
+    cursor: pointer;
+}
+
+.add-tag-btn {
+    background: var(--toss-grey-100);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--toss-grey-600);
+    margin: 4px;
+    cursor: pointer;
+}
+
+/* 찜한 여행지 칩 */
+.saved-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.saved-chip {
+    padding: 10px 16px;
+    background: var(--toss-grey-50);
+    border: 1px solid var(--toss-grey-100);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* 버튼 스타일 */
+.btn-action {
+    width: 100%;
+    padding: 16px;
+    background: var(--toss-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+}

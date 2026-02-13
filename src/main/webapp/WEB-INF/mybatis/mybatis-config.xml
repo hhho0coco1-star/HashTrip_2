@@ -10,7 +10,7 @@
 	</settings>
 
 	<typeAliases>
-		
+		<typeAlias type="com.app.dto.UsersDTO" alias="UsersDTO"/>
 	</typeAliases>
 	
 </configuration>
