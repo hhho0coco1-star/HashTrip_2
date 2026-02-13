@@ -11,32 +11,36 @@
 	href="<c:url value='/resources/plan/static/plan.css'/>">
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 </head>
 <body>
 	<div class="container">
 		<!-- 헤더 -->
-			<div class="plan-header">
-				<input type="text" class="trip-title-input" id="tripTitle"
-					placeholder="여행 제목을 입력하세요"> <span class="status-badge"
-					id="statusBadge">계획 중</span>
-			</div>
+		<div class="plan-header">
+			<input type="text" class="trip-title-input" id="tripTitle"
+				placeholder="여행 제목을 입력하세요"> <span class="status-badge"
+				id="statusBadge">계획 중</span>
+		</div>
 
-			<!-- 여행 기간 섹션 추가 -->
-			<div class="trip-period-section">
-				<div class="period-row">
-					<div class="period-item">
-						<label>🛫 여행 시작일</label> <input type="date" id="tripStartDate"
-							onchange="updateTripPeriod()">
-					</div>
-					<div class="period-item">
-						<label>🛬 여행 종료일</label> <input type="date" id="tripEndDate"
-							onchange="updateTripPeriod()">
-					</div>
-					<div class="period-summary" id="periodSummary">
-						<!-- 여행 기간 요약 표시 -->
-					</div>
+		<!-- 여행 기간 섹션 추가 -->
+		<div class="trip-period-section">
+			<div class="period-row">
+				<div class="period-item">
+					<label>🛫 여행 시작일</label> <input type="date" id="tripStartDate"
+						onchange="updateTripPeriod()">
+				</div>
+				<div class="period-item">
+					<label>🛬 여행 종료일</label> <input type="date" id="tripEndDate"
+						onchange="updateTripPeriod()">
+				</div>
+				<div class="period-summary" id="periodSummary">
+					<!-- 여행 기간 요약 표시 -->
 				</div>
 			</div>
+		</div>
 
 		</header>
 

@@ -1,3 +1,4 @@
+
 @charset "UTF-8";
 
 * {
@@ -8,9 +9,7 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
-    background: linear-gradient(135deg, 
-#667eea 0%, 
-#764ba2 100%);
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
     min-height: 100vh;
     padding: 20px;
 }
@@ -18,12 +17,10 @@ body {
 .container {
     max-width: 800px;
     margin: 0 auto;
-    background: 
-#fff;
+    background: #fff;
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 10px 40px 
-rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(49, 130, 206, 0.3);
 }
 
 /* 헤더 */
@@ -33,8 +30,7 @@ rgba(0,0,0,0.2);
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 2px solid 
-#eee;
+    border-bottom: 2px solid #e0f2fe;
 }
 
 .trip-title-input {
@@ -44,6 +40,7 @@ rgba(0,0,0,0.2);
     outline: none;
     flex: 1;
     padding: 10px;
+    color: #1e3a5f;
 }
 
 .status-badge {
@@ -53,15 +50,9 @@ rgba(0,0,0,0.2);
     font-weight: bold;
 }
 
-.status-planning { background: 
-#ffeaa7; color: 
-#d68910; }
-.status-recording { background: 
-#81ecec; color: 
-#00838f; }
-.status-complete { background: 
-#a29bfe; color: 
-#5e35b1; }
+.status-planning { background: #bfdbfe; color: #1e40af; }
+.status-recording { background: #a5f3fc; color: #0e7490; }
+.status-complete { background: #c7d2fe; color: #4338ca; }
 
 /* 장소 추가 */
 .add-place-section {
@@ -84,63 +75,234 @@ rgba(0,0,0,0.2);
     transition: all 0.3s;
 }
 
-.btn-primary { background: 
-#667eea; color: 
-#fff; }
-.btn-primary:hover { background: 
-#5a6fd6; }
-.btn-success { background: 
-#00b894; color: 
-#fff; }
-.btn-success:hover { background: 
-#00a383; }
-.btn-complete { background: 
-#6c5ce7; color: 
-#fff; }
-.btn-save { background: 
-#636e72; color: 
-#fff; }
+.btn-primary { background: #3182ce; color: #fff; }
+.btn-primary:hover { background: #2c5282; }
+.btn-success { background: #0ea5e9; color: #fff; }
+.btn-success:hover { background: #0284c7; }
+.btn-complete { background: #6366f1; color: #fff; }
+.btn-save { background: #64748b; color: #fff; }
 
 /* 타임라인 */
 .timeline-container {
     position: relative;
-    padding-left: 30px;
+    padding-left: 50px;
 }
 
 .timeline-container::before {
     content: '';
     position: absolute;
-    left: 10px;
+    left: 18px;
     top: 0;
     bottom: 0;
-    width: 3px;
-    background: 
-#667eea;
+    width: 4px;
+    background: linear-gradient(to bottom, #10b981 0%, #3182ce 50%, #94a3b8 100%);
+    border-radius: 2px;
 }
 
 .place-list {
     min-height: 100px;
 }
 
+/* 기본 place-card */
 .place-card {
-    background: 
-#f8f9fa;
+    background: #f0f9ff;
     border-radius: 12px;
     padding: 20px;
-    margin-bottom: 20px;
+    padding-left: 25px;
+    margin-bottom: 25px;
     position: relative;
     cursor: grab;
     transition: all 0.3s;
+    border-left: 4px solid #3182ce;
 }
 
-.place-card:hover { transform: translateX(5px); }
+.place-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(49, 130, 206, 0.2);
+}
+
 .place-card.dragging { opacity: 0.5; }
+
+/* ═══════════════════════════════════════════════════════
+   여행 진행 상태 표시 - 명확한 구분
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 공통 상태 아이콘 ── */
+.place-card::before {
+    content: '';
+    position: absolute;
+    left: -41px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 12px;
+    z-index: 10;
+    background: #3182ce;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+/* ── 여행 전 (upcoming) ── */
+.place-card.upcoming {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 2px dashed #94a3b8;
+    border-left: 4px dashed #94a3b8;
+}
+
+.place-card.upcoming::before {
+    content: "\f017";
+    background: #f1f5f9;
+    border: 3px solid #94a3b8;
+    color: #64748b;
+}
+
+.place-card.upcoming .place-name {
+    color: #64748b;
+}
+
+.place-card.upcoming::after {
+    content: "예정";
+    position: absolute;
+    top: 12px;
+    right: 50px;
+    background: #e2e8f0;
+    color: #64748b;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ── 여행 중 (current) - 가장 강조 ── */
+.place-card.current {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 3px solid #3182ce;
+    border-left: 6px solid #3182ce;
+    box-shadow: 0 8px 30px rgba(49, 130, 206, 0.4);
+    transform: scale(1.02);
+    animation: currentPulse 2s ease-in-out infinite;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+.place-card.current::before {
+    content: "\f3c5";
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
+    border: 3px solid #fff;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    left: -44px;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(49, 130, 206, 0.5);
+    animation: iconBounce 1s ease-in-out infinite;
+}
+
+.place-card.current::after {
+    content: "🚀 여행 중";
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background: linear-gradient(135deg, #3182ce 0%, #2563eb 100%);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+.place-card.current .place-name {
+    color: #1e40af;
+    font-size: 20px;
+}
+
+@keyframes currentPulse {
+    0%, 100% {
+        box-shadow: 0 8px 30px rgba(49, 130, 206, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 40px rgba(49, 130, 206, 0.6),
+                    0 0 0 4px rgba(49, 130, 206, 0.1);
+    }
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-55%) scale(1.1); }
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ── 여행 후 (visited) - 완료되었지만 활성 상태 ── */
+.place-card.visited {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #10b981;
+    border-left: 5px solid #10b981;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+}
+
+.place-card.visited::before {
+    content: "\f00c";
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border: 3px solid #fff;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.place-card.visited::after {
+    content: "✓ 방문 완료";
+    position: absolute;
+    top: 12px;
+    right: 50px;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.place-card.visited .place-name {
+    color: #065f46;
+}
+
+.place-card.visited:hover {
+    transform: translateX(5px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+}
+
+/* ── 상태별 드래그 힌트 숨김 처리 ── */
+.place-card.visited .drag-hint,
+.place-card.current .drag-hint {
+    display: none;
+}
+
+/* ── 삭제 버튼 위치 조정 ── */
+.place-card.current .delete-place,
+.place-card.visited .delete-place,
+.place-card.upcoming .delete-place {
+    top: 15px;
+    right: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════ */
 
 .place-name {
     font-size: 18px;
     font-weight: bold;
-    color: 
-#2d3436;
+    color: #1e3a5f;
     margin-bottom: 10px;
 }
 
@@ -152,19 +314,27 @@ rgba(0,0,0,0.2);
 
 .place-datetime input {
     padding: 8px;
-    border: 1px solid 
-#ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
+}
+
+.place-datetime input:focus {
+    border-color: #3182ce;
+    outline: none;
 }
 
 .place-memo textarea {
     width: 100%;
     padding: 10px;
-    border: 1px solid 
-#ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
     resize: vertical;
     min-height: 60px;
+}
+
+.place-memo textarea:focus {
+    border-color: #3182ce;
+    outline: none;
 }
 
 /* 기록 모드 전용 */
@@ -173,12 +343,18 @@ rgba(0,0,0,0.2);
 }
 
 .photo-upload-area {
-    border: 2px dashed 
-#ddd;
+    border: 2px dashed #93c5fd;
     border-radius: 8px;
     padding: 20px;
     text-align: center;
     cursor: pointer;
+    background: #f0f9ff;
+    transition: all 0.3s;
+}
+
+.photo-upload-area:hover {
+    border-color: #3182ce;
+    background: #e0f2fe;
 }
 
 .photo-preview {
@@ -203,8 +379,7 @@ rgba(0,0,0,0.2);
 }
 
 .star-rating i {
-    color: 
-#ffd700;
+    color: #fbbf24;
     cursor: pointer;
     font-size: 20px;
 }
@@ -212,39 +387,44 @@ rgba(0,0,0,0.2);
 .place-comment textarea {
     width: 100%;
     padding: 10px;
-    border: 1px solid 
-#ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
     margin-top: 10px;
+}
+
+.place-comment textarea:focus {
+    border-color: #3182ce;
+    outline: none;
 }
 
 .delete-place {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: 
-#ff7675;
-    color: 
-#fff;
+    background: #ef4444;
+    color: #fff;
     border: none;
     border-radius: 50%;
     width: 30px;
     height: 30px;
     cursor: pointer;
+    transition: background 0.3s;
+}
+
+.delete-place:hover {
+    background: #dc2626;
 }
 
 /* 총 리뷰 */
 .review-section {
     margin-top: 30px;
     padding-top: 30px;
-    border-top: 2px solid 
-#eee;
+    border-top: 2px solid #e0f2fe;
 }
 
 .review-section h2 {
     margin-bottom: 20px;
-    color: 
-#2d3436;
+    color: #1e3a5f;
 }
 
 .total-rating {
@@ -257,11 +437,15 @@ rgba(0,0,0,0.2);
 .total-review-input {
     width: 100%;
     padding: 15px;
-    border: 1px solid 
-#ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 8px;
     min-height: 100px;
     resize: vertical;
+}
+
+.total-review-input:focus {
+    border-color: #3182ce;
+    outline: none;
 }
 
 .photo-selector {
@@ -277,13 +461,11 @@ rgba(0,0,0,0.2);
     object-fit: cover;
     border-radius: 8px;
     cursor: pointer;
-    border: 3px solid 
-transparent;
+    border: 3px solid transparent;
 }
 
 .photo-selector img.selected {
-    border-color: 
-#667eea;
+    border-color: #3182ce;
 }
 
 /* 하단 버튼 */
@@ -294,8 +476,7 @@ transparent;
     gap: 15px;
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 2px solid 
-#eee;
+    border-top: 2px solid #e0f2fe;
 }
 
 .visibility-toggle {
@@ -309,8 +490,7 @@ transparent;
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
-rgba(0,0,0,0.7);
+    background: rgba(30, 58, 95, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -318,8 +498,7 @@ rgba(0,0,0,0.7);
 }
 
 .modal-content {
-    background: 
-#fff;
+    background: #fff;
     width: 90%;
     max-width: 900px;
     height: 80%;
@@ -327,6 +506,7 @@ rgba(0,0,0,0.7);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 20px 60px rgba(49, 130, 206, 0.3);
 }
 
 .modal-header {
@@ -334,8 +514,9 @@ rgba(0,0,0,0.7);
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid 
-#eee;
+    border-bottom: 1px solid #e0f2fe;
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
+    color: #fff;
 }
 
 .close-btn {
@@ -343,6 +524,7 @@ rgba(0,0,0,0.7);
     background: none;
     border: none;
     cursor: pointer;
+    color: #fff;
 }
 
 .modal-body {
@@ -360,20 +542,27 @@ rgba(0,0,0,0.7);
 .search-box input {
     flex: 1;
     padding: 12px;
-    border: 1px solid 
-#ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 8px;
+}
+
+.search-box input:focus {
+    border-color: #3182ce;
+    outline: none;
 }
 
 .search-box button {
     padding: 12px 20px;
-    background: 
-#667eea;
-    color: 
-#fff;
+    background: #3182ce;
+    color: #fff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    transition: background 0.3s;
+}
+
+.search-box button:hover {
+    background: #2c5282;
 }
 
 .map-container {
@@ -390,31 +579,28 @@ rgba(0,0,0,0.7);
 
 .search-result-item {
     padding: 12px;
-    border-bottom: 1px solid 
-#eee;
+    border-bottom: 1px solid #e0f2fe;
     cursor: pointer;
+    transition: background 0.2s;
 }
 
 .search-result-item:hover {
-    background: 
-#f8f9fa;
+    background: #f0f9ff;
 }
 
 .modal-footer {
     padding: 20px;
-    border-top: 1px solid 
-#eee;
+    border-top: 1px solid #e0f2fe;
     text-align: right;
 }
 
 .hidden { display: none !important; }
 
-
 .add-place-hint {
     display: inline-block;
     margin-left: 10px;
     font-size: 12px;
-    color: #28a745;
+    color: #0ea5e9;
     font-weight: 500;
 }
 
@@ -422,37 +608,10 @@ rgba(0,0,0,0.7);
     display: none;
 }
 
-/* 여행 진행 상태 표시 */
-.place-card.visited {
-    background: #e8f5e9;
-    border-left: 4px solid #4caf50;
-}
-
-.place-card.visited::before {
-    background: #4caf50;
-}
-
-
-.place-card.current {
-    background: #fff3e0;
-    border-left: 4px solid #ff9800;
-    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-    animation: pulse 2s infinite;
-}
-
-.place-card.upcoming {
-    background: #f5f5f5;
-    opacity: 0.8;
-}
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3); }
-    50% { box-shadow: 0 4px 25px rgba(255, 152, 0, 0.6); }
-}
-
 /* 현재 위치 라벨 */
 .current-label {
     display: inline-block;
-    background: #ff9800;
+    background: #3182ce;
     color: #fff;
     padding: 4px 12px;
     border-radius: 12px;
@@ -463,7 +622,7 @@ rgba(0,0,0,0.7);
 
 /* 완료 체크 버튼 */
 .complete-place-btn {
-    background: #4caf50;
+    background: #0ea5e9;
     color: #fff;
     border: none;
     padding: 8px 16px;
@@ -471,23 +630,25 @@ rgba(0,0,0,0.7);
     cursor: pointer;
     font-size: 14px;
     margin-top: 10px;
+    transition: background 0.3s;
 }
 
 .complete-place-btn:hover {
-    background: #43a047;
+    background: #0284c7;
 }
 
 .complete-place-btn:disabled {
-    background: #bdbdbd;
+    background: #94a3b8;
     cursor: not-allowed;
 }
 
 /* 진행 상황 표시바 */
 .progress-section {
-    background: #f8f9fa;
+    background: #f0f9ff;
     border-radius: 12px;
     padding: 15px 20px;
     margin-bottom: 20px;
+    border: 1px solid #bfdbfe;
 }
 
 .progress-info {
@@ -495,19 +656,19 @@ rgba(0,0,0,0.7);
     justify-content: space-between;
     margin-bottom: 10px;
     font-size: 14px;
-    color: #636e72;
+    color: #64748b;
 }
 
 .progress-bar {
     height: 8px;
-    background: #e0e0e0;
+    background: #e0f2fe;
     border-radius: 4px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    background: linear-gradient(90deg, #10b981, #3182ce, #94a3b8);
     border-radius: 4px;
     transition: width 0.5s ease;
 }
@@ -521,14 +682,14 @@ rgba(0,0,0,0.7);
     display: block;
     font-weight: bold;
     margin-bottom: 8px;
-    color: #333;
+    color: #1e3a5f;
 }
 
 .place-comment {
     width: 100%;
     min-height: 100px;
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #bfdbfe;
     border-radius: 8px;
     resize: vertical;
     font-size: 14px;
@@ -537,16 +698,16 @@ rgba(0,0,0,0.7);
 }
 
 .place-comment:focus {
-    border-color: #4a90d9;
+    border-color: #3182ce;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
 }
 
 /* 드래그 힌트 스타일 */
 .drag-hint {
     display: block;
     font-size: 11px;
-    color: #888;
+    color: #64748b;
     margin-bottom: 5px;
     cursor: grab;
 }
@@ -559,18 +720,13 @@ rgba(0,0,0,0.7);
     cursor: grabbing;
 }
 
-.place-card.visited .drag-hint,
-.place-card.current .drag-hint {
-    display: none;
-}
-
 /* 여행 기간 섹션 */
 .trip-period-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
-    border: 1px solid #dee2e6;
+    border: 1px solid #bfdbfe;
 }
 
 .period-row {
@@ -589,28 +745,28 @@ rgba(0,0,0,0.7);
 .period-item label {
     font-size: 14px;
     font-weight: 600;
-    color: #495057;
+    color: #1e3a5f;
 }
 
 .period-item input[type="date"] {
     padding: 10px 14px;
-    border: 2px solid #dee2e6;
+    border: 2px solid #bfdbfe;
     border-radius: 8px;
     font-size: 15px;
-    color: #495057;
+    color: #1e3a5f;
     background: #fff;
     cursor: pointer;
     transition: all 0.3s;
 }
 
 .period-item input[type="date"]:focus {
-    border-color: #667eea;
+    border-color: #3182ce;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
 }
 
 .period-item input[type="date"]:disabled {
-    background: #e9ecef;
+    background: #e0f2fe;
     cursor: not-allowed;
 }
 
@@ -620,7 +776,7 @@ rgba(0,0,0,0.7);
     gap: 15px;
     margin-left: auto;
     padding: 12px 20px;
-    background: #667eea;
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
     color: #fff;
     border-radius: 25px;
     font-weight: 600;
@@ -652,6 +808,23 @@ rgba(0,0,0,0.7);
         margin-left: 0;
         justify-content: center;
     }
+
+    .timeline-container {
+        padding-left: 40px;
+    }
+
+    .place-card::before {
+        left: -32px;
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+
+    .place-card.current::before {
+        left: -34px;
+        width: 28px;
+        height: 28px;
+    }
 }
 
 /* ── 사진 업로드 버튼 ── */
@@ -660,25 +833,20 @@ rgba(0,0,0,0.7);
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background: linear-gradient(135deg, 
-#667eea 0%, 
-#764ba2 100%);
-    color: 
-#fff;
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
+    color: #fff;
     border: none;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px 
-rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
 }
 
 .upload-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px 
-rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
 }
 
 .upload-btn:active {
@@ -693,29 +861,19 @@ rgba(102, 126, 234, 0.4);
 .photo-upload {
     margin-top: 15px;
     padding: 15px;
-    background: 
-#f8f9fa;
+    background: #f0f9ff;
     border-radius: 10px;
-    border: 1px solid 
-#e9ecef;
+    border: 1px solid #bfdbfe;
 }
 
 /* ── 사진 프리뷰 ── */
-.photo-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 12px;
-}
-
 .photo-item {
     position: relative;
     width: 80px;
     height: 80px;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px 
-rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.15);
 }
 
 .photo-item img {
@@ -730,10 +888,8 @@ rgba(0, 0, 0, 0.1);
     right: 4px;
     width: 20px;
     height: 20px;
-    background: 
-rgba(255, 107, 107, 0.9);
-    color: 
-#fff;
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
     border: none;
     border-radius: 50%;
     font-size: 14px;
@@ -753,8 +909,7 @@ rgba(255, 107, 107, 0.9);
 .recording-fields {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px dashed 
-#dee2e6;
+    border-top: 1px dashed #bfdbfe;
 }
 
 /* ── 별점 영역 개선 ── */
@@ -767,15 +922,13 @@ rgba(255, 107, 107, 0.9);
 
 .recording-fields .star-rating i {
     font-size: 22px;
-    color: 
-#ddd;
+    color: #cbd5e1;
     cursor: pointer;
     transition: color 0.2s, transform 0.2s;
 }
 
 .recording-fields .star-rating i.fas {
-    color: 
-#ffc107;
+    color: #fbbf24;
 }
 
 .recording-fields .star-rating i:hover {
