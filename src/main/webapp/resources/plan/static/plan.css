@@ -1,0 +1,418 @@
+@charset "UTF-8";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, 
+#667eea 0%, 
+#764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: 
+#fff;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px 
+rgba(0,0,0,0.2);
+}
+
+/* 헤더 */
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid 
+#eee;
+}
+
+.trip-title-input {
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    outline: none;
+    flex: 1;
+    padding: 10px;
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.status-planning { background: 
+#ffeaa7; color: 
+#d68910; }
+.status-recording { background: 
+#81ecec; color: 
+#00838f; }
+.status-complete { background: 
+#a29bfe; color: 
+#5e35b1; }
+
+/* 장소 추가 */
+.add-place-section {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-primary { background: 
+#667eea; color: 
+#fff; }
+.btn-primary:hover { background: 
+#5a6fd6; }
+.btn-success { background: 
+#00b894; color: 
+#fff; }
+.btn-success:hover { background: 
+#00a383; }
+.btn-complete { background: 
+#6c5ce7; color: 
+#fff; }
+.btn-save { background: 
+#636e72; color: 
+#fff; }
+
+/* 타임라인 */
+.timeline-container {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: 
+#667eea;
+}
+
+.place-list {
+    min-height: 100px;
+}
+
+.place-card {
+    background: 
+#f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    cursor: grab;
+    transition: all 0.3s;
+}
+
+.place-card:hover { transform: translateX(5px); }
+.place-card.dragging { opacity: 0.5; }
+
+.place-card::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 25px;
+    width: 15px;
+    height: 15px;
+    background: 
+#667eea;
+    border-radius: 50%;
+    border: 3px solid 
+#fff;
+}
+
+.place-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: 
+#2d3436;
+    margin-bottom: 10px;
+}
+
+.place-datetime {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.place-datetime input {
+    padding: 8px;
+    border: 1px solid 
+#ddd;
+    border-radius: 6px;
+}
+
+.place-memo textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid 
+#ddd;
+    border-radius: 6px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* 기록 모드 전용 */
+.place-photos {
+    margin-top: 15px;
+}
+
+.photo-upload-area {
+    border: 2px dashed 
+#ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.photo-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.photo-preview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.place-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.star-rating i {
+    color: 
+#ffd700;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.place-comment textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid 
+#ddd;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.delete-place {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: 
+#ff7675;
+    color: 
+#fff;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+
+/* 총 리뷰 */
+.review-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid 
+#eee;
+}
+
+.review-section h2 {
+    margin-bottom: 20px;
+    color: 
+#2d3436;
+}
+
+.total-rating {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.total-review-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid 
+#ddd;
+    border-radius: 8px;
+    min-height: 100px;
+    resize: vertical;
+}
+
+.photo-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.photo-selector img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 3px solid 
+transparent;
+}
+
+.photo-selector img.selected {
+    border-color: 
+#667eea;
+}
+
+/* 하단 버튼 */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid 
+#eee;
+}
+
+.visibility-toggle {
+    margin-right: auto;
+}
+
+/* 모달 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: 
+#fff;
+    width: 90%;
+    max-width: 900px;
+    height: 80%;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid 
+#eee;
+}
+
+.close-btn {
+    font-size: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.modal-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid 
+#ddd;
+    border-radius: 8px;
+}
+
+.search-box button {
+    padding: 12px 20px;
+    background: 
+#667eea;
+    color: 
+#fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.map-container {
+    width: 100%;
+    height: 400px;
+    border-radius: 8px;
+}
+
+.search-results {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    padding: 12px;
+    border-bottom: 1px solid 
+#eee;
+    cursor: pointer;
+}
+
+.search-result-item:hover {
+    background: 
+#f8f9fa;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid 
+#eee;
+    text-align: right;
+}
+
+.hidden { display: none !important; }
