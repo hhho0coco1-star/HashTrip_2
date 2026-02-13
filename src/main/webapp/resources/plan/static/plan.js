@@ -1,3 +1,4 @@
+
 // 상태 관리
 const TripStatus = {
     PLANNING: 'planning',
@@ -11,6 +12,9 @@ let selectedPlace = null;
 let map = null;
 let marker = null;
 let ps = null;
+
+// 현재 방문 중인 장소 인덱스 (0부터 시작, -1이면 시작 전)
+let currentPlaceIndex = -1;
 
 // DOM 요소
 const addPlaceBtn = document.getElementById('addPlaceBtn');
@@ -33,6 +37,187 @@ document.addEventListener('DOMContentLoaded', function() {
     initEventListeners();
 });
 
+// 장소 카드 렌더링 함수
+function renderPlaces() {
+    placeList.innerHTML = '';
+
+    places.forEach((place, index) => {
+        const card = document.createElement('div');
+        card.className = 'place-card';
+        card.draggable = (currentStatus === TripStatus.PLANNING);
+        card.dataset.index = index;
+
+        // 기록 중 상태일 때 진행 상태 클래스 추가
+        if (currentStatus === TripStatus.RECORDING) {
+            if (index < currentPlaceIndex) {
+                card.classList.add('visited');
+            } else if (index === currentPlaceIndex) {
+                card.classList.add('current');
+            } else {
+                card.classList.add('upcoming');
+            }
+        }
+
+        // 현재 위치 라벨
+        const currentLabel = (currentStatus === TripStatus.RECORDING && index === currentPlaceIndex)
+            ? '<span class="current-label">📍 현재 위치</span>'
+            : '';
+
+        // 완료 버튼 (기록 중 + 현재 장소일 때만)
+        const completeBtn = (currentStatus === TripStatus.RECORDING && index === currentPlaceIndex)
+            ? `<button class="complete-place-btn" onclick="completeCurrentPlace()">✓ 방문 완료</button>`
+            : '';
+
+        card.innerHTML = `
+            ${currentLabel}
+            <div class="place-name">${place.name}</div>
+            <div class="place-datetime">
+                <input type="date" value="${place.date || ''}"
+                       onchange="updatePlace(${index}, 'date', this.value)"
+                       ${currentStatus === TripStatus.COMPLETE ? 'disabled' : ''}>
+                <input type="time" value="${place.time || ''}"
+                       onchange="updatePlace(${index}, 'time', this.value)"
+                       ${currentStatus === TripStatus.COMPLETE ? 'disabled' : ''}>
+            </div>
+            <div class="place-memo">
+                <textarea placeholder="메모를 입력하세요..."
+                          onchange="updatePlace(${index}, 'memo', this.value)"
+                          ${currentStatus === TripStatus.COMPLETE ? 'disabled' : ''}>${place.memo || ''}</textarea>
+            </div>
+            ${currentStatus === TripStatus.RECORDING ? renderRecordingFields(place, index) : ''}
+            ${completeBtn}
+            ${currentStatus !== TripStatus.COMPLETE ?
+                `<button class="delete-place" onclick="deletePlace(${index})">×</button>` : ''}
+        `;
+
+        placeList.appendChild(card);
+    });
+
+    updateProgress();
+    initDragAndDrop();
+}
+
+// 기록 중 필드 렌더링
+function renderRecordingFields(place, index) {
+    return `
+        <div class="recording-fields">
+            <div class="photo-upload">
+                <input type="file" id="photo-${place.id}" multiple accept="image/*" 
+                       onchange="handlePhotoUpload(${place.id}, this)" style="display:none;">
+                <button class="upload-btn" onclick="triggerPhotoUpload(${place.id})">
+                    <i class="fas fa-camera"></i> 사진 추가
+                </button>
+                <div class="photo-preview">
+                    ${(place.photos || []).map(photo => `<img src="${photo}" alt="사진">`).join('')}
+                </div>
+            </div>
+            <div class="rating-section">
+                <span>별점:</span>
+                <div class="star-rating" data-id="${place.id}" data-rating="${place.rating || 0}">
+                    ${[1,2,3,4,5].map(i => 
+                        `<i class="${i <= (place.rating || 0) ? 'fas' : 'far'} fa-star" 
+                            data-value="${i}" onclick="setRating(${place.id}, ${i})"></i>`
+                    ).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 현재 장소 방문 완료
+function completeCurrentPlace() {
+    if (currentPlaceIndex < places.length - 1) {
+        currentPlaceIndex++;
+        renderPlaces();
+    } else {
+        // 모든 장소 방문 완료
+        if (confirm('모든 장소를 방문했습니다! 여행을 완료하시겠습니까?')) {
+            completeTrip();
+        }
+    }
+}
+
+// 진행 상황 업데이트
+function updateProgress() {
+    const progressSection = document.getElementById('progressSection');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressFill = document.getElementById('progressFill');
+
+    if (!progressSection) return;
+
+    if (currentStatus === TripStatus.RECORDING && places.length > 0) {
+        progressSection.classList.remove('hidden');
+
+        const completed = currentPlaceIndex >= 0 ? currentPlaceIndex : 0;
+        const total = places.length;
+        const percent = Math.round((completed / total) * 100);
+
+        progressText.textContent = `${completed} / ${total} 완료`;
+        progressPercent.textContent = `${percent}%`;
+        progressFill.style.width = `${percent}%`;
+    } else {
+        progressSection.classList.add('hidden');
+    }
+}
+
+// 여행 시작
+function startTrip() {
+    if (places.length === 0) {
+        alert('최소 1개 이상의 장소를 추가해주세요.');
+        return;
+    }
+
+    currentStatus = TripStatus.RECORDING;
+    currentPlaceIndex = 0;
+    updateUI();
+    renderPlaces();
+}
+
+// 여행 완료
+function completeTrip() {
+    currentStatus = TripStatus.COMPLETE;
+    updateUI();
+    renderPlaces();
+}
+
+// UI 업데이트 (통합)
+function updateUI() {
+    const addPlaceHint = document.getElementById('addPlaceHint');
+
+    switch (currentStatus) {
+        case TripStatus.PLANNING:
+            statusBadge.textContent = '계획 중';
+            statusBadge.className = 'status-badge status-planning';
+            addPlaceSection.classList.remove('hidden');
+            if (addPlaceHint) addPlaceHint.classList.add('hidden');
+            startTripBtn.classList.remove('hidden');
+            completeTripBtn.classList.add('hidden');
+            reviewSection.classList.add('hidden');
+            break;
+        case TripStatus.RECORDING:
+            statusBadge.textContent = '기록 중';
+            statusBadge.className = 'status-badge status-recording';
+            addPlaceSection.classList.remove('hidden');
+            if (addPlaceHint) addPlaceHint.classList.remove('hidden');
+            startTripBtn.classList.add('hidden');
+            completeTripBtn.classList.remove('hidden');
+            reviewSection.classList.remove('hidden');
+            break;
+        case TripStatus.COMPLETE:
+            statusBadge.textContent = '완료';
+            statusBadge.className = 'status-badge status-complete';
+            addPlaceSection.classList.add('hidden');
+            startTripBtn.classList.add('hidden');
+            completeTripBtn.classList.add('hidden');
+            reviewSection.classList.remove('hidden');
+            break;
+    }
+
+    updateProgress();
+}
+
+// 이벤트 리스너 초기화
 function initEventListeners() {
     addPlaceBtn.addEventListener('click', openMapModal);
     closeMapModal.addEventListener('click', closeModal);
@@ -45,13 +230,12 @@ function initEventListeners() {
     completeTripBtn.addEventListener('click', completeTrip);
     saveBtn.addEventListener('click', savePlan);
 
-    // 별점 이벤트
     document.querySelectorAll('.star-rating').forEach(function(rating) {
         rating.addEventListener('click', handleStarClick);
     });
 }
 
-// 지도 모달 열기
+// 지도 모달
 function openMapModal() {
     mapModal.classList.remove('hidden');
     if (!map) {
@@ -151,8 +335,8 @@ function addSelectedPlace() {
         address: selectedPlace.address,
         lat: selectedPlace.lat,
         lng: selectedPlace.lng,
-        startDate: '',
-        endDate: '',
+        date: '',
+        time: '',
         memo: '',
         photos: [],
         rating: 0,
@@ -162,86 +346,6 @@ function addSelectedPlace() {
     places.push(place);
     renderPlaces();
     closeModal();
-}
-
-function renderPlaces() {
-    var html = '';
-
-    for (var i = 0; i < places.length; i++) {
-        var place = places[i];
-        var isComplete = currentStatus === TripStatus.COMPLETE;
-        var disabledAttr = isComplete ? 'disabled' : '';
-
-        html += '<div class="place-card" draggable="true" data-id="' + place.id + '">';
-        html += '<button class="delete-place" onclick="deletePlace(' + place.id + ')">×</button>';
-        html += '<div class="place-name">';
-        html += '<i class="fas fa-map-marker-alt" style="color: #667eea;"></i> ';
-        html += place.name;
-        html += '</div>';
-        html += '<div style="font-size: 12px; color: #666; margin-bottom: 10px;">';
-        html += place.address;
-        html += '</div>';
-
-        html += '<div class="place-datetime">';
-        html += '<div>';
-        html += '<label>시작</label>';
-        html += '<input type="datetime-local" value="' + place.startDate + '" ';
-        html += 'onchange="updatePlace(' + place.id + ', \'startDate\', this.value)" ' + disabledAttr + '>';
-        html += '</div>';
-        html += '<div>';
-        html += '<label>종료</label>';
-        html += '<input type="datetime-local" value="' + place.endDate + '" ';
-        html += 'onchange="updatePlace(' + place.id + ', \'endDate\', this.value)" ' + disabledAttr + '>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '<div class="place-memo">';
-        html += '<textarea placeholder="메모를 입력하세요" ';
-        html += 'onchange="updatePlace(' + place.id + ', \'memo\', this.value)" ' + disabledAttr + '>';
-        html += place.memo + '</textarea>';
-        html += '</div>';
-
-        // 기록 모드일 때만 사진/평점/코멘트 표시
-        if (currentStatus !== TripStatus.PLANNING) {
-            // 사진 업로드
-            html += '<div class="place-photos">';
-            html += '<div class="photo-upload-area" onclick="triggerPhotoUpload(' + place.id + ')">';
-            html += '<i class="fas fa-camera"></i> 사진 추가';
-            html += '<input type="file" id="photo-' + place.id + '" multiple accept="image/*" ';
-            html += 'onchange="handlePhotoUpload(' + place.id + ', this)" style="display:none;">';
-            html += '</div>';
-            html += '<div class="photo-preview" id="preview-' + place.id + '">';
-            for (var j = 0; j < place.photos.length; j++) {
-                html += '<img src="' + place.photos[j] + '" alt="photo">';
-            }
-            html += '</div>';
-            html += '</div>';
-
-            // 평점
-            html += '<div class="place-rating">';
-            html += '<span>평점</span>';
-            html += '<div class="star-rating" data-id="' + place.id + '" data-rating="' + place.rating + '">';
-            for (var k = 1; k <= 5; k++) {
-                var starClass = k <= place.rating ? 'fas' : 'far';
-                html += '<i class="' + starClass + ' fa-star" data-value="' + k + '" ';
-                html += 'onclick="setRating(' + place.id + ', ' + k + ')"></i>';
-            }
-            html += '</div>';
-            html += '</div>';
-
-            // 코멘트
-            html += '<div class="place-comment">';
-            html += '<textarea placeholder="코멘트를 작성하세요" ';
-            html += 'onchange="updatePlace(' + place.id + ', \'comment\', this.value)">';
-            html += place.comment + '</textarea>';
-            html += '</div>';
-        }
-
-        html += '</div>';
-    }
-
-    placeList.innerHTML = html;
-    initDragAndDrop();
 }
 
 // 드래그 앤 드롭
@@ -285,14 +389,19 @@ function handleDrop(e) {
 }
 
 // 장소 업데이트/삭제
-function updatePlace(id, field, value) {
-    var place = places.find(function(p) { return p.id === id; });
-    if (place) place[field] = value;
+function updatePlace(index, field, value) {
+    if (places[index]) {
+        places[index][field] = value;
+    }
 }
 
-function deletePlace(id) {
+function deletePlace(index) {
     if (confirm('이 장소를 삭제하시겠습니까?')) {
-        places = places.filter(function(p) { return p.id !== id; });
+        places.splice(index, 1);
+        // 삭제 후 현재 인덱스 조정
+        if (currentPlaceIndex >= places.length) {
+            currentPlaceIndex = places.length - 1;
+        }
         renderPlaces();
     }
 }
@@ -340,58 +449,13 @@ function handleStarClick(e) {
     }
 }
 
-// 상태 전환
-function startTrip() {
-    if (places.length === 0) {
-        alert('최소 1개 이상의 장소를 추가해주세요.');
-        return;
-    }
-
-    currentStatus = TripStatus.RECORDING;
-    updateUI();
-    renderPlaces();
-}
-
-function completeTrip() {
-    currentStatus = TripStatus.COMPLETE;
-    updateUI();
-    renderPlaces();
-}
-
-function updateUI() {
-    switch (currentStatus) {
-        case TripStatus.PLANNING:
-            statusBadge.textContent = '계획 중';
-            statusBadge.className = 'status-badge status-planning';
-            addPlaceSection.classList.remove('hidden');
-            startTripBtn.classList.remove('hidden');
-            completeTripBtn.classList.add('hidden');
-            reviewSection.classList.add('hidden');
-            break;
-        case TripStatus.RECORDING:
-            statusBadge.textContent = '기록 중';
-            statusBadge.className = 'status-badge status-recording';
-            addPlaceSection.classList.add('hidden');
-            startTripBtn.classList.add('hidden');
-            completeTripBtn.classList.remove('hidden');
-            reviewSection.classList.remove('hidden');
-            break;
-        case TripStatus.COMPLETE:
-            statusBadge.textContent = '완료';
-            statusBadge.className = 'status-badge status-complete';
-            addPlaceSection.classList.add('hidden');
-            startTripBtn.classList.add('hidden');
-            completeTripBtn.classList.add('hidden');
-            reviewSection.classList.remove('hidden');
-            break;
-    }
-}
-
 function updatePhotoSelector() {
     var selector = document.getElementById('photoSelector');
+    if (!selector) return;
+
     var allPhotos = [];
     for (var i = 0; i < places.length; i++) {
-        allPhotos = allPhotos.concat(places[i].photos);
+        allPhotos = allPhotos.concat(places[i].photos || []);
     }
     var html = '';
     for (var j = 0; j < allPhotos.length; j++) {
@@ -416,11 +480,4 @@ function savePlan() {
 
     console.log('저장 데이터:', data);
     alert('저장되었습니다.');
-
-    // TODO: AJAX로 서버에 전송
-    // fetch('/plan/save', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(data)
-    // });
 }

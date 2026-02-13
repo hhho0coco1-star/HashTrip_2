@@ -65,8 +65,14 @@ rgba(0,0,0,0.2);
 
 /* 장소 추가 */
 .add-place-section {
-    text-align: center;
-    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.add-place-section.hidden {
+    display: none;
 }
 
 .btn {
@@ -416,3 +422,130 @@ rgba(0,0,0,0.7);
 }
 
 .hidden { display: none !important; }
+
+
+.add-place-hint {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 12px;
+    color: #28a745;
+    font-weight: 500;
+}
+
+.add-place-hint.hidden {
+    display: none;
+}
+
+/* 여행 진행 상태 표시 */
+.place-card.visited {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+}
+
+.place-card.visited::before {
+    background: #4caf50;
+}
+
+.place-card.visited::after {
+    content: '✓';
+    position: absolute;
+    left: -28px;
+    top: 22px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.place-card.current {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.place-card.current::before {
+    background: #ff9800;
+    width: 20px;
+    height: 20px;
+    left: -27px;
+    top: 23px;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+}
+
+.place-card.upcoming {
+    background: #f5f5f5;
+    opacity: 0.8;
+}
+
+.place-card.upcoming::before {
+    background: #bdbdbd;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3); }
+    50% { box-shadow: 0 4px 25px rgba(255, 152, 0, 0.6); }
+}
+
+/* 현재 위치 라벨 */
+.current-label {
+    display: inline-block;
+    background: #ff9800;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* 완료 체크 버튼 */
+.complete-place-btn {
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.complete-place-btn:hover {
+    background: #43a047;
+}
+
+.complete-place-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+/* 진행 상황 표시바 */
+.progress-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #636e72;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
