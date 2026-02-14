@@ -3,6 +3,7 @@ package com.app.dao;
 import java.util.List;
 
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlaceTagMapDTO;
 
@@ -25,4 +26,6 @@ public interface PlaceDAO {
 	public List<String> selectPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
+
+	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 }

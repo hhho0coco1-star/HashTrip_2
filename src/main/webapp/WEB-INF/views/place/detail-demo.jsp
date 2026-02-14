@@ -76,7 +76,17 @@
 
 					<section class="place-head">
 						<div>
-							<p class="place-kind"><c:out value="${place.placeCategory}" /></p>
+							<p class="place-kind">
+								<c:choose>
+									<c:when test="${not empty tagNameList}">
+										<c:out value="${tagNameList[0]}" />
+									</c:when>
+									<c:when test="${not empty place.placeCategory}">
+										<c:out value="${place.placeCategory}" />
+									</c:when>
+									<c:otherwise>여행지</c:otherwise>
+								</c:choose>
+							</p>
 							<h3><c:out value="${place.placeName}" /></h3>
 							<p class="place-meta"><c:out value="${place.placeAddress}" /></p>
 						</div>
@@ -106,8 +116,25 @@
 						</div>
 						<div class="detail-grid">
 							<div class="detail-item">
-								<p class="detail-label">카테고리</p>
-								<p class="detail-value"><c:out value="${place.placeCategory}" /></p>
+								<p class="detail-label">운영시간</p>
+								<p class="detail-value">
+									<c:choose>
+										<c:when test="${not empty hoursList}">
+											<c:forEach var="hour" items="${hoursList}" varStatus="status">
+												<c:if test="${status.first}">
+													<c:choose>
+														<c:when test="${hour.isClosed eq 'Y'}">휴무</c:when>
+														<c:when test="${not empty hour.openTime and not empty hour.closeTime}">
+															<c:out value="${hour.openTime}" /> ~ <c:out value="${hour.closeTime}" />
+														</c:when>
+														<c:otherwise>시간 정보 있음</c:otherwise>
+													</c:choose>
+												</c:if>
+											</c:forEach>
+										</c:when>
+										<c:otherwise>-</c:otherwise>
+									</c:choose>
+								</p>
 							</div>
 							<div class="detail-item">
 								<p class="detail-label">전화번호</p>
@@ -132,16 +159,46 @@
 								</p>
 							</div>
 							<div class="detail-item">
-								<p class="detail-label">좌표</p>
+								<p class="detail-label">리뷰 수</p>
 								<p class="detail-value">
-									<c:choose>
-										<c:when test="${not empty place.placeLatitude and not empty place.placeLongitude}">
-											${place.placeLatitude}, ${place.placeLongitude}
-										</c:when>
-										<c:otherwise>-</c:otherwise>
-									</c:choose>
+									${fn:length(reviewList)}개
 								</p>
 							</div>
+						</div>
+
+						<div class="hours-list">
+							<c:choose>
+								<c:when test="${not empty hoursList}">
+									<c:forEach var="hour" items="${hoursList}">
+										<div class="hours-item">
+											<p class="hours-day">
+												<c:choose>
+													<c:when test="${hour.dayOfWeek == 1}">월</c:when>
+													<c:when test="${hour.dayOfWeek == 2}">화</c:when>
+													<c:when test="${hour.dayOfWeek == 3}">수</c:when>
+													<c:when test="${hour.dayOfWeek == 4}">목</c:when>
+													<c:when test="${hour.dayOfWeek == 5}">금</c:when>
+													<c:when test="${hour.dayOfWeek == 6}">토</c:when>
+													<c:when test="${hour.dayOfWeek == 7}">일</c:when>
+													<c:otherwise>-</c:otherwise>
+												</c:choose>
+											</p>
+											<p class="hours-time">
+												<c:choose>
+													<c:when test="${hour.isClosed eq 'Y'}">휴무</c:when>
+													<c:when test="${not empty hour.openTime and not empty hour.closeTime}">
+														<c:out value="${hour.openTime}" /> ~ <c:out value="${hour.closeTime}" />
+													</c:when>
+													<c:otherwise>미등록</c:otherwise>
+												</c:choose>
+											</p>
+										</div>
+									</c:forEach>
+								</c:when>
+								<c:otherwise>
+									<p class="place-meta">운영시간 정보가 없습니다.</p>
+								</c:otherwise>
+							</c:choose>
 						</div>
 
 						<div class="tag-row">

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.app.dao.AreaBasedList2Repository;
 import com.app.dao.PlaceDAO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlaceTagMapDTO;
 import com.app.dto.TourResponseDTO;
@@ -112,6 +113,11 @@ public class PlaceServiceImpl implements PlaceService {
 	@Override
 	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception {
 		return placeDAO.selectPlaceReviewsByPlaceNo(placeNo);
+	}
+
+	@Override
+	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception {
+		return placeDAO.selectPlaceHoursByPlaceNo(placeNo);
 	}
 
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {

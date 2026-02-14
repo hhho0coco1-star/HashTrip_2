@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.app.dao.PlaceDAO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlaceTagMapDTO;
 
@@ -30,6 +31,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_TAG_NAMES_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceTagNamesByPlaceNo";
 	private static final String SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlacePhotoUrlsByPlaceNo";
 	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
+	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -117,5 +119,10 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID, placeNo);
 	}
 }

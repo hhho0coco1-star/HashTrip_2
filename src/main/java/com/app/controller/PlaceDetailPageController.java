@@ -33,6 +33,7 @@ public class PlaceDetailPageController {
 		model.addAttribute("placeNo", resolvedPlaceNo);
 		model.addAttribute("place", place);
 		model.addAttribute("reviewList", placeService.getPlaceReviewsByPlaceNo(resolvedPlaceNo));
+		model.addAttribute("hoursList", placeService.getPlaceHoursByPlaceNo(resolvedPlaceNo));
 		model.addAttribute("kakaoMapAppKey", kakaoMapAppKey);
 
 		if (place == null) {

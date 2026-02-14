@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.List;
 
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
 
 public interface PlaceService {
@@ -18,4 +19,6 @@ public interface PlaceService {
 	public List<String> getPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
+
+	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 }

@@ -294,6 +294,37 @@ body {
 	color: var(--text-main);
 }
 
+.hours-list {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.hours-item {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	gap: 10px;
+	align-items: center;
+	padding: 8px 10px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: #fcfdff;
+}
+
+.hours-day {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 800;
+	color: #2d3a4d;
+}
+
+.hours-time {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--text-main);
+}
+
 .tag-row {
 	display: flex;
 	flex-wrap: wrap;

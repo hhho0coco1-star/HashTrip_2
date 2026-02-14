@@ -116,4 +116,20 @@
 		WHERE PLACE_NO = #{placeNo}
 		ORDER BY CREATED_AT DESC, COMMENT_NO DESC
 	</select>
+
+	<select id="selectPlaceHoursByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceHoursDTO">
+		SELECT
+			HOURS_ID,
+			PLACE_NO,
+			DAY_OF_WEEK,
+			OPEN_TIME,
+			CLOSE_TIME,
+			BREAK_STRAT_TIME,
+			BREAK_END_TIME,
+			LAST_ORDER,
+			IS_CLOSED
+		FROM PLACE_HOURS
+		WHERE PLACE_NO = #{placeNo}
+		ORDER BY DAY_OF_WEEK ASC
+	</select>
 </mapper>
