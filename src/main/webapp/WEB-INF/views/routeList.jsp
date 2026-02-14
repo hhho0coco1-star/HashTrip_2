@@ -61,9 +61,9 @@
 
         <%-- ── 필터 바 ── --%>
         <div class="filter-bar" id="filter-bar">
-            <button class="filter-chip <c:if test='${empty activeFilter}'>active</c:if>'" onclick="filterRoutes('', this)">전체</button>
+            <button class="filter-chip ${empty activeFilter ? 'active' : ''}" onclick="filterRoutes('', this)">전체</button>
             <c:forEach var="cat" items="${categories}">
-                <button class="filter-chip <c:if test='${activeFilter == cat.categoryKey}'>active</c:if>'" 
+                <button class="filter-chip ${activeFilter == cat.categoryKey ? 'active' : ''}" 
                         onclick="filterRoutes('${cat.categoryKey}', this)">${cat.icon} ${cat.label}</button>
             </c:forEach>
         </div>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="travel_plan_mapper">
+
+	<select id="getPublicTravelPlans" resultType="com.app.dto.TravelPlanDTO">
+		SELECT
+			tp.plan_no,
+			tp.user_no,
+			tp.plan_title,
+			tp.plan_is_public,
+			tp.plan_status,
+			tp.plan_start_date,
+			tp.plan_end_date,
+			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
+			NVL(ts.travel_type_name, 'adventurer') AS type_id,
+			NVL(
+				(
+					SELECT MAX(pd.plan_meno)
+					FROM Plan_Details pd
+					WHERE pd.plan_no = tp.plan_no
+					  AND pd.plan_meno IS NOT NULL
+				),
+				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
+			) AS description,
+			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			NVL(
+				(
+					SELECT COUNT(DISTINCT w.wish_no)
+					FROM wishlist w
+					WHERE w.place_no IN (
+						SELECT pd2.place_no
+						FROM Plan_Details pd2
+						WHERE pd2.plan_no = tp.plan_no
+					)
+				),
+				0
+			) AS saved_count,
+			CASE
+				WHEN ts.travel_type_name IS NULL THEN 70
+				ELSE 90
+			END AS match_score
+		FROM Travel_Plans tp
+		INNER JOIN Users u
+			ON u.user_no = tp.user_no
+		LEFT JOIN (
+			SELECT
+				user_no,
+				MAX(travel_type_name) KEEP (
+					DENSE_RANK LAST ORDER BY travel_analyzed_date NULLS LAST, style_user_no
+				) AS travel_type_name
+			FROM Travel_Styles
+			GROUP BY user_no
+		) ts
+			ON ts.user_no = tp.user_no
+		WHERE NVL(tp.plan_is_public, 'Y') = 'Y'
+		ORDER BY tp.plan_no DESC
+	</select>
+
+	<select id="getTravelPlanById" parameterType="long"
+		resultType="com.app.dto.TravelPlanDTO">
+		SELECT
+			tp.plan_no,
+			tp.user_no,
+			tp.plan_title,
+			tp.plan_is_public,
+			tp.plan_status,
+			tp.plan_start_date,
+			tp.plan_end_date,
+			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
+			NVL(ts.travel_type_name, 'adventurer') AS type_id,
+			NVL(
+				(
+					SELECT MAX(pd.plan_meno)
+					FROM Plan_Details pd
+					WHERE pd.plan_no = tp.plan_no
+					  AND pd.plan_meno IS NOT NULL
+				),
+				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
+			) AS description,
+			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			NVL(
+				(
+					SELECT COUNT(DISTINCT w.wish_no)
+					FROM wishlist w
+					WHERE w.place_no IN (
+						SELECT pd2.place_no
+						FROM Plan_Details pd2
+						WHERE pd2.plan_no = tp.plan_no
+					)
+				),
+				0
+			) AS saved_count,
+			CASE
+				WHEN ts.travel_type_name IS NULL THEN 70
+				ELSE 90
+			END AS match_score
+		FROM Travel_Plans tp
+		INNER JOIN Users u
+			ON u.user_no = tp.user_no
+		LEFT JOIN (
+			SELECT
+				user_no,
+				MAX(travel_type_name) KEEP (
+					DENSE_RANK LAST ORDER BY travel_analyzed_date NULLS LAST, style_user_no
+				) AS travel_type_name
+			FROM Travel_Styles
+			GROUP BY user_no
+		) ts
+			ON ts.user_no = tp.user_no
+		WHERE tp.plan_no = #{planNo}
+	</select>
+
+	<select id="getTravelPlansByUserNo" parameterType="long"
+		resultType="com.app.dto.TravelPlanDTO">
+		SELECT
+			tp.plan_no,
+			tp.user_no,
+			tp.plan_title,
+			tp.plan_is_public,
+			tp.plan_status,
+			tp.plan_start_date,
+			tp.plan_end_date,
+			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
+			NVL(ts.travel_type_name, 'adventurer') AS type_id,
+			NVL(
+				(
+					SELECT MAX(pd.plan_meno)
+					FROM Plan_Details pd
+					WHERE pd.plan_no = tp.plan_no
+					  AND pd.plan_meno IS NOT NULL
+				),
+				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
+			) AS description,
+			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			NVL(
+				(
+					SELECT COUNT(DISTINCT w.wish_no)
+					FROM wishlist w
+					WHERE w.place_no IN (
+						SELECT pd2.place_no
+						FROM Plan_Details pd2
+						WHERE pd2.plan_no = tp.plan_no
+					)
+				),
+				0
+			) AS saved_count,
+			CASE
+				WHEN ts.travel_type_name IS NULL THEN 70
+				ELSE 90
+			END AS match_score
+		FROM Travel_Plans tp
+		INNER JOIN Users u
+			ON u.user_no = tp.user_no
+		LEFT JOIN (
+			SELECT
+				user_no,
+				MAX(travel_type_name) KEEP (
+					DENSE_RANK LAST ORDER BY travel_analyzed_date NULLS LAST, style_user_no
+				) AS travel_type_name
+			FROM Travel_Styles
+			GROUP BY user_no
+		) ts
+			ON ts.user_no = tp.user_no
+		WHERE tp.user_no = #{userNo}
+		ORDER BY tp.plan_no DESC
+	</select>
+
+</mapper>

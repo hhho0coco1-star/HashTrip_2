@@ -38,6 +38,16 @@
 
 .btn-like-raw:hover { transform: scale(1.2); }
 
+.like-count-text {
+    font-size: .95rem;
+    color: var(--text-secondary);
+}
+
+.like-count-text b {
+    color: var(--primary-blue);
+    font-weight: 800;
+}
+
 /* 2. 일정 카드 */
 .step-card {
     background: white;
@@ -96,3 +106,62 @@
 }
 
 .review-item:last-child { border-bottom: none; }
+
+.review-form {
+    margin-bottom: 18px;
+}
+
+.review-input {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: 'Pretendard', sans-serif;
+    font-size: .95rem;
+    color: var(--text-primary);
+}
+
+.review-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.review-form-row label {
+    font-size: .86rem;
+    color: var(--text-secondary);
+    margin-right: 8px;
+}
+
+.review-form-row select {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.review-rating {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.review-content {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.review-empty {
+    padding: 20px 0;
+    color: var(--text-tertiary);
+}

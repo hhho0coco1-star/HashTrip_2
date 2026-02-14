@@ -1,88 +1,271 @@
 package com.app.service.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.app.dao.CommunityDAO;
 import com.app.dto.RouteDTO;
 import com.app.dto.TagCategoryDTO;
+import com.app.dto.TravelPlanDTO;
 import com.app.dto.TravelerTypeDTO;
-import org.springframework.stereotype.Service;
-import java.util.*;
+import com.app.service.PlanDetailService;
+import com.app.service.TravelPlanService;
 
 @Service
 public class RouteService {
 
-    // 상세 조회용 메서드
+    @Autowired
+    private PlanDetailService planDetailService;
+
+    @Autowired
+    private TravelPlanService travelPlanService;
+
+    @Autowired
+    private CommunityDAO communityDAO;
+
     public RouteDTO getRouteById(Long routeId) {
-        return getAllRoutes().stream()
-                .filter(r -> r.getId().equals(routeId))
-                .findFirst()
-                .orElse(null);
+        TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
+        if (travelPlan == null) {
+            return null;
+        }
+
+        RouteDTO route = mapTravelPlanToRoute(travelPlan);
+        enrichRoute(route);
+        return route;
     }
 
-    // 추천 루트 데이터 (총 6개)
     public List<RouteDTO> getAllRoutes() {
-        List<RouteDTO> list = new ArrayList<>();
+        return getRoutesByCategory(null);
+    }
 
-        // 1. 제주도 (기존)
-        list.add(new RouteDTO(1L, "여행가 민수", "✈️", "adventurer", "제주도 서쪽 정복", 
-                "에메랄드빛 바다와 오름을 동시에 즐기는 환상의 코스입니다.", 
-                Arrays.asList("협재해수욕장", "금오름", "싱계물공원"), 
-                buildTagMap("place:#바다", "plan:#무계획"), 120, 45, 98));
+    public List<RouteDTO> getRoutesByCategory(String categoryKey) {
+        String normalizedCategory = normalizeCategoryKey(categoryKey);
+        List<TravelPlanDTO> travelPlans = travelPlanService.findPublicTravelPlans();
+        List<RouteDTO> routes = new ArrayList<>();
+        for (TravelPlanDTO travelPlan : travelPlans) {
+            if (normalizedCategory != null && !hasCategory(travelPlan.getPlanNo(), normalizedCategory)) {
+                continue;
+            }
 
-        // 2. 포천 (기존)
-        list.add(new RouteDTO(2L, "힐러 지수", "🌿", "healer", "포천 숲길 산책", 
-                "피로가 싹 가시는 초록빛 힐링 루트. 주말 나들이로 최고!", 
-                Arrays.asList("고모리 저수지", "국립수목원", "광릉숲"), 
-                buildTagMap("place:#숲", "plan:#계획형"), 85, 32, 82));
+            RouteDTO route = mapTravelPlanToRoute(travelPlan);
+            enrichRoute(route);
+            routes.add(route);
+        }
 
-        // 3. 서울 (신규: 도시형)
-        list.add(new RouteDTO(3L, "시티러버 현우", "🏙️", "explorer", "서울 감성 골목 투어", 
-                "서촌의 고즈넉함과 힙지로의 활기를 한 번에 느끼는 서울 여행.", 
-                Arrays.asList("경복궁 서촌", "익선동", "을지로 노가리골목"), 
-                buildTagMap("place:#도시", "plan:#무계획"), 245, 112, 75));
-
-        // 4. 강릉 (신규: 식도락)
-        list.add(new RouteDTO(4L, "먹보 유진", "🍜", "foodie", "강릉 맛집 도장깨기", 
-                "입이 즐거운 여행! 강릉에서만 맛볼 수 있는 특별한 메뉴들입니다.", 
-                Arrays.asList("초당순두부마을", "중앙시장", "안목커피거리"), 
-                buildTagMap("place:#바다", "plan:#계획형"), 310, 89, 92));
-
-        // 5. 부산 (신규: 야경)
-        list.add(new RouteDTO(5L, "밤하늘 준호", "🌃", "romantic", "부산 밤바다 야경 투어", 
-                "부산의 진짜 매력은 밤에 나타납니다. 인생샷 명소만 골랐어요.", 
-                Arrays.asList("더베이101", "광안리", "영도 흰여울마을"), 
-                buildTagMap("place:#바다", "plan:#계획형"), 156, 67, 88));
-
-        // 6. 단양 (신규: 액티비티)
-        list.add(new RouteDTO(6L, "액션 가영", "🪂", "adventurer", "단양 하늘을 날다", 
-                "익스트림한 여행을 원한다면? 패러글라이딩과 만천하 스카이워크!", 
-                Arrays.asList("패러마을", "고수동굴", "만천하스카이워크"), 
-                buildTagMap("place:#산", "plan:#무계획"), 92, 41, 64));
-
-        return list;
+        return routes;
     }
 
     public List<TagCategoryDTO> getAllTagCategories() {
         return Arrays.asList(
-            new TagCategoryDTO("place", "장소", "📍", "#5B8DEE", "#E8F0FE", "tag-place"),
-            new TagCategoryDTO("plan", "계획", "📝", "#22C55E", "#DCFCE7", "tag-plan")
+            new TagCategoryDTO("LOCATION", "\uC7A5\uC18C", "\uD83D\uDCCD", "#5B8DEE", "#E8F0FE", "tag-place"),
+            new TagCategoryDTO("PLANNING", "\uACC4\uD68D", "\uD83D\uDCCB", "#22C55E", "#DCFCE7", "tag-plan"),
+            new TagCategoryDTO("MOVE", "\uC774\uB3D9", "\uD83D\uDE97", "#2DD4BF", "#D9F6F1", "tag-transport"),
+            new TagCategoryDTO("STAY", "\uC219\uC18C", "\uD83C\uDFE8", "#F5A623", "#FFF3DE", "tag-stay"),
+            new TagCategoryDTO("BUDGET", "\uC608\uC0B0", "\uD83D\uDCB8", "#22C55E", "#EAFBEF", "tag-budget"),
+            new TagCategoryDTO("COMPANION", "\uB3D9\uD589", "\uD83D\uDC65", "#F87171", "#FDECEC", "tag-companion"),
+            new TagCategoryDTO("FOOD_STYLE", "\uC74C\uC2DD", "\uD83C\uDF7D", "#D97706", "#FFF4E5", "tag-food"),
+            new TagCategoryDTO("PURPOSE", "\uBAA9\uC801", "\uD83C\uDFAF", "#818CF8", "#EEF0FF", "tag-purpose"),
+            new TagCategoryDTO("INTENSITY", "\uAC15\uB3C4", "\u26A1", "#7C3AED", "#F2EBFF", "tag-intensity"),
+            new TagCategoryDTO("MOOD", "\uBB34\uB4DC", "\uD83C\uDF19", "#0EA5E9", "#E6F7FF", "tag-mood")
         );
     }
 
     public List<TravelerTypeDTO> getAllTravelerTypes() {
         List<TravelerTypeDTO> types = new ArrayList<>();
-        types.add(new TravelerTypeDTO("adventurer", "🤠", "프로 모험가", "#5B8DEE", "#E8F0FE", "도전적인 여행", null));
-        types.add(new TravelerTypeDTO("healer", "🌿", "평화로운 힐러", "#22C55E", "#DCFCE7", "여유로운 여행", null));
-        types.add(new TravelerTypeDTO("explorer", "🏙️", "도시 탐험가", "#A78BFA", "#F3F0FF", "도시의 매력을 찾는 여행", null));
-        types.add(new TravelerTypeDTO("foodie", "🍜", "식도락가", "#F87171", "#FEF2F2", "맛집이 제일 중요함", null));
-        types.add(new TravelerTypeDTO("romantic", "🌃", "낭만주의자", "#F5A623", "#FFFBEB", "분위기를 중시하는 여행", null));
+        types.add(new TravelerTypeDTO("adventurer", "\uD83E\uDD20", "\uD504\uB85C \uBAA8\uD5D8\uAC00", "#5B8DEE", "#E8F0FE", "\uB3C4\uC804\uC801\uC778 \uC5EC\uD589", null));
+        types.add(new TravelerTypeDTO("healer", "\uD83C\uDF3F", "\uD3C9\uD654\uB85C\uC6B4 \uD790\uB7EC", "#22C55E", "#DCFCE7", "\uC5EC\uC720\uB85C\uC6B4 \uC5EC\uD589", null));
+        types.add(new TravelerTypeDTO("explorer", "\uD83C\uDFD9\uFE0F", "\uB3C4\uC2DC \uD0D0\uD5D8\uAC00", "#A78BFA", "#F3F0FF", "\uB3C4\uC2DC\uC758 \uB9E4\uB825\uC744 \uCC3E\uB294 \uC5EC\uD589", null));
+        types.add(new TravelerTypeDTO("foodie", "\uD83C\uDF5C", "\uC2DD\uB3C4\uB77D\uAC00", "#F87171", "#FEF2F2", "\uB9DB\uC9D1\uC774 \uC81C\uC77C \uC911\uC694\uD568", null));
+        types.add(new TravelerTypeDTO("romantic", "\uD83C\uDF03", "\uB0AD\uB9CC\uC8FC\uC758\uC790", "#F5A623", "#FFFBEB", "\uBD84\uC704\uAE30\uB97C \uC911\uC2DC\uD558\uB294 \uC5EC\uD589", null));
         return types;
     }
 
-    private Map<String, String> buildTagMap(String... tags) {
-        Map<String, String> map = new LinkedHashMap<>();
-        for (String t : tags) {
-            String[] kv = t.split(":");
-            if(kv.length == 2) map.put(kv[0], kv[1]);
+    public Map<String, Object> toggleRouteLike(Long routeId, Long userNo) {
+        boolean alreadyLiked = communityDAO.hasPlanLike(routeId, userNo) > 0;
+        if (alreadyLiked) {
+            communityDAO.deletePlanLike(routeId, userNo);
+        } else {
+            communityDAO.insertPlanLike(routeId, userNo);
         }
+
+        int likeCount = communityDAO.countPlanLikes(routeId);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("liked", !alreadyLiked);
+        result.put("likeCount", likeCount);
+        return result;
+    }
+
+    private void enrichRoute(RouteDTO route) {
+        String normalizedTypeId = normalizeTypeId(route.getTypeId());
+        route.setTypeId(normalizedTypeId);
+        route.setEmoji(resolveEmoji(normalizedTypeId));
+
+        List<String> steps = planDetailService.findStepNames(route.getId());
+        if (steps == null || steps.isEmpty()) {
+            steps = List.of("\uB4F1\uB85D\uB41C \uCF54\uC2A4 \uC815\uBCF4 \uC5C6\uC74C");
+        }
+        route.setSteps(steps);
+
+        route.setTags(buildTagMap(planDetailService.findTagNames(route.getId())));
+
+        String representativeMemo = defaultIfBlank(planDetailService.findRepresentativeMemo(route.getId()), null);
+        if (representativeMemo != null) {
+            route.setDescription(representativeMemo);
+        }
+
+        if (route.getDescription() == null || route.getDescription().trim().isEmpty()) {
+            route.setDescription("\uC124\uBA85 \uC815\uBCF4 \uC5C6\uC74C");
+        }
+    }
+
+    private RouteDTO mapTravelPlanToRoute(TravelPlanDTO travelPlan) {
+        RouteDTO route = new RouteDTO();
+
+        route.setId(travelPlan.getPlanNo());
+        route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
+        route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
+        route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
+        route.setLikeCount(defaultIfNull(travelPlan.getLikeCount(), 0));
+        route.setSavedCount(defaultIfNull(travelPlan.getSavedCount(), 0));
+        route.setMatchScore(defaultIfNull(travelPlan.getMatchScore(), 70));
+        route.setUserName(defaultIfBlank(travelPlan.getUserName(), "Traveler"));
+
+        return route;
+    }
+
+    private String buildDescription(TravelPlanDTO travelPlan) {
+        String planStatus = defaultIfBlank(travelPlan.getPlanStatus(), "planned");
+        if (travelPlan.getPlanStartDate() != null && travelPlan.getPlanEndDate() != null) {
+            return "Status: " + planStatus + " | " + travelPlan.getPlanStartDate() + " ~ " + travelPlan.getPlanEndDate();
+        }
+        return "Status: " + planStatus;
+    }
+
+    private String defaultIfBlank(String value, String defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return value.trim();
+    }
+
+    private int defaultIfNull(Integer value, int defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    private String normalizeCategoryKey(String categoryKey) {
+        if (categoryKey == null || categoryKey.trim().isEmpty()) {
+            return null;
+        }
+        return categoryKey.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean hasCategory(Long planNo, String categoryKey) {
+        List<String> categories = planDetailService.findTagCategories(planNo);
+        if (categories == null || categories.isEmpty()) {
+            return false;
+        }
+
+        for (String category : categories) {
+            if (category != null && categoryKey.equalsIgnoreCase(category.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeTypeId(String rawTypeId) {
+        if (rawTypeId == null) {
+            return "adventurer";
+        }
+
+        String normalized = rawTypeId.trim().toLowerCase(Locale.ROOT);
+        switch (normalized) {
+            case "adventurer":
+            case "\uBAA8\uD5D8\uAC00":
+            case "\uD504\uB85C \uBAA8\uD5D8\uAC00":
+                return "adventurer";
+            case "healer":
+            case "\uD790\uB7EC":
+            case "\uD3C9\uD654\uB85C\uC6B4 \uD790\uB7EC":
+                return "healer";
+            case "explorer":
+            case "\uD0D0\uD5D8\uAC00":
+            case "\uB3C4\uC2DC \uD0D0\uD5D8\uAC00":
+                return "explorer";
+            case "foodie":
+            case "\uC2DD\uB3C4\uB77D\uAC00":
+                return "foodie";
+            case "romantic":
+            case "\uB0AD\uB9CC\uC8FC\uC758\uC790":
+                return "romantic";
+            default:
+                if (normalized.contains("\uD790\uB7EC")) {
+                    return "healer";
+                }
+                if (normalized.contains("\uD0D0\uD5D8") || normalized.contains("\uB3C4\uC2DC")) {
+                    return "explorer";
+                }
+                if (normalized.contains("\uC2DD\uB3C4\uB77D") || normalized.contains("\uB9DB")) {
+                    return "foodie";
+                }
+                if (normalized.contains("\uB0AD\uB9CC") || normalized.contains("\uC57C\uACBD")) {
+                    return "romantic";
+                }
+                return "adventurer";
+        }
+    }
+
+    private String resolveEmoji(String typeId) {
+        switch (typeId) {
+            case "healer":
+                return "\uD83C\uDF3F";
+            case "explorer":
+                return "\uD83C\uDFD9\uFE0F";
+            case "foodie":
+                return "\uD83C\uDF5C";
+            case "romantic":
+                return "\uD83C\uDF03";
+            case "adventurer":
+            default:
+                return "\uD83E\uDD20";
+        }
+    }
+
+    private Map<String, String> buildTagMap(List<String> tagNames) {
+        Map<String, String> map = new LinkedHashMap<>();
+        if (tagNames == null) {
+            return map;
+        }
+
+        int order = 1;
+        for (String tagName : tagNames) {
+            if (tagName == null) {
+                continue;
+            }
+
+            String trimmed = tagName.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+
+            String displayTag = trimmed.startsWith("#") ? trimmed : "#" + trimmed;
+            map.put("tag" + order, displayTag);
+            order++;
+
+            if (order > 5) {
+                break;
+            }
+        }
+
         return map;
     }
 }
