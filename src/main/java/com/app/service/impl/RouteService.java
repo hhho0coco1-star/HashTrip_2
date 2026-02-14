@@ -2,7 +2,6 @@ package com.app.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -11,7 +10,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.app.dao.CommunityDAO;
 import com.app.dto.RouteDTO;
 import com.app.dto.TagCategoryDTO;
 import com.app.dto.TravelPlanDTO;
@@ -27,9 +25,6 @@ public class RouteService {
 
     @Autowired
     private TravelPlanService travelPlanService;
-
-    @Autowired
-    private CommunityDAO communityDAO;
 
     public RouteDTO getRouteById(Long routeId) {
         TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
@@ -86,22 +81,6 @@ public class RouteService {
         types.add(new TravelerTypeDTO("foodie", "\uD83C\uDF5C", "\uC2DD\uB3C4\uB77D\uAC00", "#F87171", "#FEF2F2", "\uB9DB\uC9D1\uC774 \uC81C\uC77C \uC911\uC694\uD568", null));
         types.add(new TravelerTypeDTO("romantic", "\uD83C\uDF03", "\uB0AD\uB9CC\uC8FC\uC758\uC790", "#F5A623", "#FFFBEB", "\uBD84\uC704\uAE30\uB97C \uC911\uC2DC\uD558\uB294 \uC5EC\uD589", null));
         return types;
-    }
-
-    public Map<String, Object> toggleRouteLike(Long routeId, Long userNo) {
-        boolean alreadyLiked = communityDAO.hasPlanLike(routeId, userNo) > 0;
-        if (alreadyLiked) {
-            communityDAO.deletePlanLike(routeId, userNo);
-        } else {
-            communityDAO.insertPlanLike(routeId, userNo);
-        }
-
-        int likeCount = communityDAO.countPlanLikes(routeId);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("liked", !alreadyLiked);
-        result.put("likeCount", likeCount);
-        return result;
     }
 
     private void enrichRoute(RouteDTO route) {

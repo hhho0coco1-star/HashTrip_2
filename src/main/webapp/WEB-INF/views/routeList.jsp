@@ -126,7 +126,6 @@
 
                             <div class="route-foot">
                                 <div class="route-stats">
-                                    <div class="route-stat">❤️ ${route.likeCount}</div>
                                     <div class="route-stat">🔖 ${route.savedCount}</div>
                                 </div>
                                 <button class="btn-save-route" onclick="event.stopPropagation(); saveRoute(${route.id}, this)">저장</button>
@@ -188,7 +187,6 @@
                 </div>
                 <div class="route-foot">
                     <div class="route-stats">
-                        <div class="route-stat">❤️ \${route.likeCount}</div>
                         <div class="route-stat">🔖 \${route.savedCount}</div>
                     </div>
                     <button class="btn-save-route" onclick="event.stopPropagation(); saveRoute(\${route.id}, this)">저장</button>

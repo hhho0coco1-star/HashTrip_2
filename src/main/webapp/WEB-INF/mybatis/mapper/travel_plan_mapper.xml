@@ -23,7 +23,7 @@
 				),
 				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
 			) AS description,
-			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			0 AS like_count,
 			NVL(
 				(
 					SELECT COUNT(DISTINCT w.wish_no)
@@ -78,7 +78,7 @@
 				),
 				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
 			) AS description,
-			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			0 AS like_count,
 			NVL(
 				(
 					SELECT COUNT(DISTINCT w.wish_no)
@@ -132,7 +132,7 @@
 				),
 				NVL(tp.plan_title, 'Untitled Plan') || ' itinerary'
 			) AS description,
-			NVL((SELECT COUNT(*) FROM Plan_Likes pl WHERE pl.plan_no = tp.plan_no), 0) AS like_count,
+			0 AS like_count,
 			NVL(
 				(
 					SELECT COUNT(DISTINCT w.wish_no)

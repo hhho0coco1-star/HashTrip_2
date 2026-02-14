@@ -21,8 +21,6 @@
         <div class="type-badge" style="background:none; padding-left:0; color:var(--text-tertiary);">COURSE DETAIL</div>
         <div class="title-row">
             <h1 class="route-title">${route.title}</h1>
-            <button class="btn-like-raw" id="main-heart" onclick="toggleHeart(${route.id})">🤍</button>
-            <div class="like-count-text">좋아요 <b id="like-count">${route.likeCount}</b></div>
         </div>
         <p class="personal-desc" style="margin-top:15px;">
             <strong>${route.userName}</strong>의 추천 코스: ${route.description}
@@ -99,30 +97,6 @@
         if (el) {
             el.focus();
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    async function toggleHeart(routeId) {
-        try {
-            const body = 'userNo=1';
-            const response = await fetch(contextPath + '/routes/' + routeId + '/like', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body
-            });
-
-            const data = await response.json();
-            if (!response.ok || data.success === false) {
-                throw new Error('LIKE_FAILED');
-            }
-
-            const heart = document.getElementById('main-heart');
-            const count = document.getElementById('like-count');
-            heart.textContent = data.liked ? '❤️' : '🤍';
-            count.textContent = data.likeCount;
-            showToast(data.liked ? '좋아요를 반영했습니다.' : '좋아요를 취소했습니다.');
-        } catch (e) {
-            showToast('좋아요 처리 중 오류가 발생했습니다.');
         }
     }
 

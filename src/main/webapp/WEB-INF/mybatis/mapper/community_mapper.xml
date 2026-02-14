@@ -32,31 +32,4 @@
 		)
 	</insert>
 
-	<select id="hasPlanLike" parameterType="map" resultType="int">
-		SELECT COUNT(*)
-		FROM Plan_Likes
-		WHERE plan_no = #{planNo}
-		  AND user_no = #{userNo}
-	</select>
-
-	<insert id="insertPlanLike" parameterType="map">
-		INSERT INTO Plan_Likes (
-			plan_no, user_no
-		) VALUES (
-			#{planNo}, #{userNo}
-		)
-	</insert>
-
-	<delete id="deletePlanLike" parameterType="map">
-		DELETE FROM Plan_Likes
-		WHERE plan_no = #{planNo}
-		  AND user_no = #{userNo}
-	</delete>
-
-	<select id="countPlanLikes" parameterType="long" resultType="int">
-		SELECT COUNT(*)
-		FROM Plan_Likes
-		WHERE plan_no = #{planNo}
-	</select>
-
 </mapper>

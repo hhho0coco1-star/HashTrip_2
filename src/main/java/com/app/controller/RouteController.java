@@ -94,14 +94,6 @@ public class RouteController {
         return response;
     }
 
-    @PostMapping("/{routeId}/like")
-    @ResponseBody
-    public Map<String, Object> toggleLike(
-            @PathVariable Long routeId,
-            @RequestParam(required = false, defaultValue = "1") Long userNo) {
-        return routeService.toggleRouteLike(routeId, userNo);
-    }
-
     @GetMapping("/api/user-info")
     public String getUserInfo(@RequestParam int userNo) {
         return userService.findUserName(userNo);
