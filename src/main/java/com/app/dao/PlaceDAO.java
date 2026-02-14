@@ -3,11 +3,14 @@ package com.app.dao;
 import java.util.List;
 
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceTagMapDTO;
 
 public interface PlaceDAO {
 
 	public void resetPlaceImportData() throws Exception;
+
+	public void resetPlaceHoursImportData() throws Exception;
 
 	public Long getNextPlaceNo() throws Exception;
 
@@ -16,4 +19,8 @@ public interface PlaceDAO {
 	public int updateAreaBasedListPlacesBatch(List<PlaceDTO> placeDTOList) throws Exception;
 
 	public int insertPlaceTagMapBatch(List<PlaceTagMapDTO> placeTagMapDTOList) throws Exception;
+
+	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
+
+	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
 }

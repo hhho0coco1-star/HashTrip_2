@@ -17,6 +17,7 @@ BEGIN
             'TRAVEL_PLANS',
             'TRAVEL_STYLES',
             'PLACE_TAG_MAP',
+            'PLACE_HOURS',
             'USER_TAG_MAP',
             'QUSETION_OPTIONS',
             'QUESTIONS',
@@ -46,6 +47,7 @@ BEGIN
             'SEQ_OPTION_ID',
             'SEQ_USER_TAG_MAP_NO',
             'SEQ_PLACE_TAG_MAP_NO',
+            'SEQ_HOURS_ID',
             'SEQ_STYLE_USER_NO',
             'SEQ_PLAN_NO',
             'SEQ_PLAN_DETAIL_NO',
@@ -132,6 +134,7 @@ CREATE TABLE Questions_categories (
 -- 5. 장소 마스터 데이터
 CREATE TABLE Place (
     place_no NUMBER(19) PRIMARY KEY,
+    place_content_id VARCHAR2(30 CHAR),
     place_name VARCHAR2(200 CHAR) NOT NULL,
     place_category VARCHAR2(50) NOT NULL,
     place_address VARCHAR2(500 CHAR),
@@ -141,6 +144,24 @@ CREATE TABLE Place (
     place_number VARCHAR2(255 CHAR),
     place_thumbnail_url VARCHAR2(1000 CHAR)
 );
+
+CREATE TABLE Place_Hours (
+    hours_id NUMBER(19) PRIMARY KEY,
+    place_no NUMBER(19) NOT NULL,
+    day_of_week NUMBER(10),
+    open_time VARCHAR2(10),
+    close_time VARCHAR2(10),
+    break_strat_time VARCHAR2(10),
+    break_end_time VARCHAR2(10),
+    last_order VARCHAR2(10),
+    is_closed CHAR(1) DEFAULT 'N',
+    CONSTRAINT fk_hours_place FOREIGN KEY (place_no) REFERENCES Place(place_no) ON DELETE CASCADE,
+    CONSTRAINT ck_hours_day CHECK (day_of_week BETWEEN 1 AND 7),
+    CONSTRAINT ck_hours_closed CHECK (is_closed IN ('Y', 'N'))
+);
+
+CREATE INDEX IDX_PLACE_HOURS_PLACE_NO ON Place_Hours(place_no);
+CREATE UNIQUE INDEX UQ_PLACE_HOURS_PLACE_DAY ON Place_Hours(place_no, day_of_week);
 
 -- 6. 질문 상세 및 선택지
 CREATE TABLE Questions (
@@ -288,6 +309,8 @@ CREATE SEQUENCE SEQ_PLACE_NO START WITH 1 INCREMENT BY 1;
 -- 질문 및 옵션 번호 시퀀스
 CREATE SEQUENCE SEQ_QUESTION_NUM START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SEQ_OPTION_ID START WITH 1 INCREMENT BY 1;
+-- 운영시간 고유 번호 시퀀스
+CREATE SEQUENCE SEQ_HOURS_ID START WITH 1 INCREMENT BY 1;
 
 -- 사용자-태그 매핑 번호 시퀀스
 CREATE SEQUENCE SEQ_USER_TAG_MAP_NO START WITH 1 INCREMENT BY 1;
