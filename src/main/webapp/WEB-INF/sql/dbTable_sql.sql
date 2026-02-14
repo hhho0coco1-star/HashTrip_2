@@ -1,3 +1,69 @@
+-- ==============================
+-- FULL RESET (DROP ALL)
+-- ==============================
+-- Run this section first when you want a clean rebuild.
+
+BEGIN
+    FOR t IN (
+        SELECT table_name
+        FROM user_tables
+        WHERE table_name IN (
+            'PHOTO_DATA',
+            'PLACE_REVIEW',
+            'TRAVEL_LOGS',
+            'PLAN_DETAILS',
+            'WISHLIST',
+            'CATEGORY',
+            'TRAVEL_PLANS',
+            'TRAVEL_STYLES',
+            'PLACE_TAG_MAP',
+            'USER_TAG_MAP',
+            'QUSETION_OPTIONS',
+            'QUESTIONS',
+            'PLACE',
+            'TAG_MASTER',
+            'QUESTIONS_CATEGORIES',
+            'COMMON_CODE',
+            'CODE_GROUP',
+            'USER_ADDRESS',
+            'USER_AUTHENTICATION',
+            'USERS'
+        )
+    ) LOOP
+        EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS PURGE';
+    END LOOP;
+END;
+/
+
+BEGIN
+    FOR s IN (
+        SELECT sequence_name
+        FROM user_sequences
+        WHERE sequence_name IN (
+            'SEQ_QUESTION_CAT_NO',
+            'SEQ_PLACE_NO',
+            'SEQ_QUESTION_NUM',
+            'SEQ_OPTION_ID',
+            'SEQ_USER_TAG_MAP_NO',
+            'SEQ_PLACE_TAG_MAP_NO',
+            'SEQ_STYLE_USER_NO',
+            'SEQ_PLAN_NO',
+            'SEQ_PLAN_DETAIL_NO',
+            'SEQ_LOG_NO',
+            'SEQ_COMMENT_NO',
+            'SEQ_PHOTO_NO',
+            'SEQ_CATEGORY_NO',
+            'SEQ_WISH_NO',
+            'SEQ_USER_NO',
+            'SEQ_USER_AUTH_NO',
+            'SEQ_USER_ADDRESS_NO'
+        )
+    ) LOOP
+        EXECUTE IMMEDIATE 'DROP SEQUENCE ' || s.sequence_name;
+    END LOOP;
+END;
+/
+
 CREATE TABLE Users (
     user_no NUMBER(19) PRIMARY KEY,
     user_type VARCHAR2(20),
@@ -66,15 +132,14 @@ CREATE TABLE Questions_categories (
 -- 5. 장소 마스터 데이터
 CREATE TABLE Place (
     place_no NUMBER(19) PRIMARY KEY,
-    place_name VARCHAR2(100) NOT NULL,
+    place_name VARCHAR2(200 CHAR) NOT NULL,
     place_category VARCHAR2(50) NOT NULL,
-    place_address VARCHAR2(255),
+    place_address VARCHAR2(500 CHAR),
     place_latitude NUMBER(12, 8),
     place_longitude NUMBER(13, 8),
     place_rating NUMBER(3, 2),
-    place_number VARCHAR2(20),
-    place_thumbnail_url VARCHAR2(1000),
-    place_tags VARCHAR2(1000)
+    place_number VARCHAR2(255 CHAR),
+    place_thumbnail_url VARCHAR2(1000 CHAR)
 );
 
 -- 6. 질문 상세 및 선택지
@@ -108,11 +173,20 @@ CREATE TABLE User_Tag_Map (
 -- 8. 장소 태그 매핑
 CREATE TABLE Place_Tag_Map (
     place_tag_no NUMBER(19) PRIMARY KEY,
-    place_no NUMBER(19),
-    tag_code VARCHAR2(50),
+    place_no NUMBER(19) NOT NULL,
+    tag_code VARCHAR2(50) NOT NULL,
+    tag_weight NUMBER(4, 3) DEFAULT 1 NOT NULL CHECK (tag_weight >= 0 AND tag_weight <= 1),
+    tag_source VARCHAR2(20) DEFAULT 'RULE' NOT NULL CHECK (tag_source IN ('RULE', 'MANUAL', 'ML')),
+    tag_confidence NUMBER(4, 3) DEFAULT 1 NOT NULL CHECK (tag_confidence >= 0 AND tag_confidence <= 1),
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    updated_at DATE DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT uk_ptag_place_tag UNIQUE (place_no, tag_code),
     CONSTRAINT fk_ptag_place FOREIGN KEY (place_no) REFERENCES Place(place_no),
     CONSTRAINT fk_ptag_tag FOREIGN KEY (tag_code) REFERENCES Tag_Master(tag_code)
 );
+
+CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON Place_Tag_Map(tag_code);
+CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON Place_Tag_Map(place_no);
 
 -- 9. 여행 성향 분석 결과 (Users 참조)
 CREATE TABLE Travel_Styles (
@@ -256,3 +330,7 @@ CREATE SEQUENCE SEQ_USER_ADDRESS_NO
 START WITH 1
 INCREMENT BY 1
 NOCACHE;
+
+-- 조회성능을 높이기 위한 인덱스 이걸 하면 자동으로 오라클이 빨리 조회 할수 있음 물론 PLACE_TAG_MAP테이블을 테그 코드와 플레이스번호로 조회했을떄,,,
+CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON PLACE_TAG_MAP(TAG_CODE);
+CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON PLACE_TAG_MAP(PLACE_NO);

@@ -10,7 +10,7 @@
 	</settings>
 
 	<typeAliases>
-		
+		<typeAlias type="com.app.dto.PlaceDTO" alias="placeDTO"/>
 	</typeAliases>
 	
 </configuration>
