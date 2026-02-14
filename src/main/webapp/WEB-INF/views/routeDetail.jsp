@@ -41,11 +41,6 @@
         </c:forEach>
     </section>
 
-    <div class="action-center-row">
-        <button class="btn-detail-action btn-back-light" onclick="history.back()">뒤로가기</button>
-        <button class="btn-detail-action btn-review-main" onclick="focusReview()">✍️ 리뷰쓰기</button>
-    </div>
-
     <section class="review-container">
         <h3 style="font-family:'Gmarket Sans'; margin-bottom:24px;">여행자 리뷰 <span style="color:var(--primary-blue);" id="review-count">${fn:length(reviews)}</span></h3>
 
@@ -91,14 +86,6 @@
 
 <script>
     const contextPath = '${pageContext.request.contextPath}';
-
-    function focusReview() {
-        const el = document.getElementById('review-content');
-        if (el) {
-            el.focus();
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
 
     async function submitReview(event, routeId) {
         event.preventDefault();
