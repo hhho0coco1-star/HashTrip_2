@@ -26,6 +26,9 @@ http://www.springframework.org/schema/context/spring-context.xsd">
 	
 	<resources location="/resources/" mapping="/**"></resources>
 
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+
 
 	<annotation-driven>						
 		<message-converters>					
