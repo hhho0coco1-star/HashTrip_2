@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.app.dao.PlaceDAO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlaceTagMapDTO;
 
 @Repository
@@ -25,6 +26,10 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String CREATE_SEQ_PLACE_NO_STATEMENT_ID = "place_mapper.createSeqPlaceNo";
 	private static final String DROP_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID = "place_mapper.dropSeqPlaceTagMapNo";
 	private static final String CREATE_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID = "place_mapper.createSeqPlaceTagMapNo";
+	private static final String SELECT_PLACE_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceByPlaceNo";
+	private static final String SELECT_PLACE_TAG_NAMES_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceTagNamesByPlaceNo";
+	private static final String SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlacePhotoUrlsByPlaceNo";
+	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -92,5 +97,25 @@ public class PlaceDAOImpl implements PlaceDAO {
 		} finally {
 			batchSession.close();
 		}
+	}
+
+	@Override
+	public PlaceDTO selectPlaceByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.selectOne(SELECT_PLACE_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public List<String> selectPlaceTagNamesByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_PLACE_TAG_NAMES_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public List<String> selectPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID, placeNo);
 	}
 }

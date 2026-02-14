@@ -69,4 +69,51 @@
 			SEQ_PLACE_TAG_MAP_NO.NEXTVAL, #{placeNo}, #{tagCode}, #{tagWeight}, #{tagSource}, #{tagConfidence}
 		)
 	</insert>
+
+	<select id="selectPlaceByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceDTO">
+		SELECT
+			PLACE_NO,
+			PLACE_NAME,
+			PLACE_CATEGORY,
+			PLACE_ADDRESS,
+			PLACE_LATITUDE,
+			PLACE_LONGITUDE,
+			PLACE_RATING,
+			PLACE_NUMBER,
+			PLACE_THUMBNAIL_URL
+		FROM PLACE
+		WHERE PLACE_NO = #{placeNo}
+	</select>
+
+	<select id="selectPlaceTagNamesByPlaceNo" parameterType="long" resultType="string">
+		SELECT TM.TAG_NAME
+		FROM PLACE_TAG_MAP PTM
+		JOIN TAG_MASTER TM
+			ON TM.TAG_CODE = PTM.TAG_CODE
+		WHERE PTM.PLACE_NO = #{placeNo}
+		ORDER BY PTM.TAG_WEIGHT DESC, TM.TAG_NAME ASC
+	</select>
+
+	<select id="selectPlacePhotoUrlsByPlaceNo" parameterType="long" resultType="string">
+		SELECT PD.LOG_PHOTO_URL
+		FROM PLACE_REVIEW PR
+		JOIN PHOTO_DATA PD
+			ON PD.COMMENT_NO = PR.COMMENT_NO
+		WHERE PR.PLACE_NO = #{placeNo}
+		  AND PD.LOG_PHOTO_URL IS NOT NULL
+		ORDER BY PD.PHOTO_NO DESC
+	</select>
+
+	<select id="selectPlaceReviewsByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceReviewDTO">
+		SELECT
+			COMMENT_NO,
+			LOG_NO,
+			PLACE_NO,
+			COMMENT_CONTENT,
+			NVL(CREATED_BY, 'anonymous') AS CREATED_BY,
+			CREATED_AT
+		FROM PLACE_REVIEW
+		WHERE PLACE_NO = #{placeNo}
+		ORDER BY CREATED_AT DESC, COMMENT_NO DESC
+	</select>
 </mapper>

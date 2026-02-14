@@ -1,7 +1,9 @@
 package com.app.service.impl;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.app.dao.AreaBasedList2Repository;
 import com.app.dao.PlaceDAO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlaceTagMapDTO;
 import com.app.dto.TourResponseDTO;
 import com.app.service.PlaceService;
@@ -79,6 +82,36 @@ public class PlaceServiceImpl implements PlaceService {
 		}
 
 		return result;
+	}
+
+	@Override
+	public PlaceDTO getPlaceByPlaceNo(Long placeNo) throws Exception {
+		return placeDAO.selectPlaceByPlaceNo(placeNo);
+	}
+
+	@Override
+	public List<String> getPlaceTagNamesByPlaceNo(Long placeNo) throws Exception {
+		return placeDAO.selectPlaceTagNamesByPlaceNo(placeNo);
+	}
+
+	@Override
+	public List<String> getPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception {
+		List<String> photoUrlList = placeDAO.selectPlacePhotoUrlsByPlaceNo(placeNo);
+		if (photoUrlList == null || photoUrlList.isEmpty()) {
+			return new ArrayList<>();
+		}
+		Set<String> uniquePhotoUrlSet = new LinkedHashSet<>();
+		for (String photoUrl : photoUrlList) {
+			if (photoUrl != null && !photoUrl.isBlank()) {
+				uniquePhotoUrlSet.add(photoUrl.trim());
+			}
+		}
+		return new ArrayList<>(uniquePhotoUrlSet);
+	}
+
+	@Override
+	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception {
+		return placeDAO.selectPlaceReviewsByPlaceNo(placeNo);
 	}
 
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {
