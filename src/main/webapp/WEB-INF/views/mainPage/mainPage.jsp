@@ -568,7 +568,7 @@ to {
 					10가지 카테고리 테스트로 나만의 여행자 유형을 찾고,<br> 비슷한 여행자들의 추천 루트를 발견해보세요.
 				</p>
 				<div class="analysis-action">
-					<a href="/analysis" class="btn-analysis">여행유형 테스트 시작하기</a>
+					<a href="/hashTrip/analysis" class="btn-analysis">여행유형 테스트 시작하기</a>
 					<p id="changing-text" class="sub-text">"당신의 마음이 머물고 싶어 하는 그곳으로 안내해 드릴게요."</p>
 				</div>
 			</div>
@@ -699,10 +699,8 @@ to {
 		let currentIndex = 0;
 
 		function rotateText() {
-		    // 1. 글자를 투명하게 (Fade Out)
 		    textElement.classList.add('fade-out');
 
-		    // 2. 0.5초 뒤(완전히 투명해진 후) 글자 교체 및 다시 표시 (Fade In)
 		    setTimeout(() => {
 		        currentIndex = (currentIndex + 1) % messages.length;
 		        textElement.textContent = messages[currentIndex];
