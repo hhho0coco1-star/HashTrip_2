@@ -10,6 +10,7 @@ BEGIN
         WHERE table_name IN (
             'PHOTO_DATA',
             'PLACE_REVIEW',
+            'COMMUNITY',
             'TRAVEL_LOGS',
             'PLAN_DETAILS',
             'WISHLIST',
@@ -51,6 +52,7 @@ BEGIN
             'SEQ_PLAN_DETAIL_NO',
             'SEQ_LOG_NO',
             'SEQ_COMMENT_NO',
+            'SEQ_COMMUNITY_REVIEW_NO',
             'SEQ_PHOTO_NO',
             'SEQ_CATEGORY_NO',
             'SEQ_WISH_NO',
@@ -237,6 +239,16 @@ CREATE TABLE Travel_Logs (
     CONSTRAINT fk_log_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
+CREATE TABLE Community (
+    review_no NUMBER(19) PRIMARY KEY,
+    plan_no NUMBER(19),
+    user_no NUMBER(19),
+    review_content VARCHAR2(2000),
+    review_rating NUMBER(1),
+    CONSTRAINT fk_comm_plan FOREIGN KEY (plan_no) REFERENCES Travel_Plans(plan_no),
+    CONSTRAINT fk_comm_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
+);
+
 CREATE TABLE Place_Review (
     comment_no NUMBER(19) PRIMARY KEY,
     log_no NUMBER(19),
@@ -305,6 +317,7 @@ CREATE SEQUENCE SEQ_PLAN_DETAIL_NO START WITH 1 INCREMENT BY 1;
 -- 여행 로그 및 리뷰 시퀀스
 CREATE SEQUENCE SEQ_LOG_NO START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SEQ_COMMENT_NO START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_COMMUNITY_REVIEW_NO START WITH 1 INCREMENT BY 1;
 
 -- 사진 데이터 고유 번호 시퀀스
 CREATE SEQUENCE SEQ_PHOTO_NO START WITH 1 INCREMENT BY 1;
