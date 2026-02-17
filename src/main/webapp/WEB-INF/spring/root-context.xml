@@ -55,10 +55,10 @@
 	<context:component-scan	base-package="com.app.service"/>
 	<context:component-scan	base-package="com.app.dao"/>
 	
-	 <bean id="sampleScheduler" class="com.app.scheduler.DailyCheckScheduler" />
-	 <task:scheduler id="mainScheduler" pool-size="10" />
-	 <task:executor id="mainTaskExecutor" pool-size="10" />
-	 <task:annotation-driven executor="mainTaskExecutor" scheduler="mainScheduler" />
+<!-- 	 <bean id="sampleScheduler" class="com.app.scheduler.DailyCheckScheduler" /> -->
+<!-- 	 <task:scheduler id="mainScheduler" pool-size="10" /> -->
+<!-- 	 <task:executor id="mainTaskExecutor" pool-size="10" /> -->
+<!-- 	 <task:annotation-driven executor="mainTaskExecutor" scheduler="mainScheduler" /> -->
 	
 
 </beans>
