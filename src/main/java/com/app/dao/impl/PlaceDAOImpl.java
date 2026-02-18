@@ -149,6 +149,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception {
 		if (placeHoursDTOList == null || placeHoursDTOList.isEmpty()) {
 			return 0;

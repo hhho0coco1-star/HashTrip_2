@@ -172,6 +172,8 @@
 		FROM PLACE_HOURS
 		WHERE PLACE_NO = #{placeNo}
 		ORDER BY DAY_OF_WEEK ASC
+	</select>	
+	
 	<insert id="insertPlaceHours" parameterType="com.app.dto.PlaceHoursDTO">
 		INSERT INTO PLACE_HOURS (
 			HOURS_ID, PLACE_NO, DAY_OF_WEEK, OPEN_TIME, CLOSE_TIME,
