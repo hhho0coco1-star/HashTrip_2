@@ -9,6 +9,7 @@ public class PlaceReviewDTO {
 	private Long commentNo;
 	private Long logNo;
 	private Long placeNo;
+	private String placeName;
 	private Integer rating;
 	private String commentContent;
 	private String createdByAuthId;

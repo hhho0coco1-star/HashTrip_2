@@ -47,6 +47,8 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_TAG_NAMES_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceTagNamesByPlaceNo";
 	private static final String SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlacePhotoUrlsByPlaceNo";
 	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
+	private static final String COUNT_PLACE_REVIEWS_BY_CREATED_BY_STATEMENT_ID = "place_mapper.countPlaceReviewsByCreatedBy";
+	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPaged";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
 	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
 	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
@@ -152,6 +154,21 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public int countPlaceReviewsByCreatedBy(String createdBy) throws Exception {
+		Integer count = sqlSessionTemplate.selectOne(COUNT_PLACE_REVIEWS_BY_CREATED_BY_STATEMENT_ID, createdBy);
+		return count == null ? 0 : count;
+	}
+
+	@Override
+	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow) throws Exception {
+		Map<String, Object> params = new HashMap<>();
+		params.put("createdBy", createdBy);
+		params.put("startRow", startRow);
+		params.put("endRow", endRow);
+		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID, params);
 	}
 
 	@Override

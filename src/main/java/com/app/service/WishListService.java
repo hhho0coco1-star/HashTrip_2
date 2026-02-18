@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.List;
 
 import com.app.dto.CategoryDTO;
+import com.app.dto.PlaceDTO;
 import com.app.dto.WishListDTO;
 
 public interface WishListService {
@@ -20,4 +21,10 @@ public interface WishListService {
 	public boolean deleteWishList(String authId, Long wishNo) throws Exception;
 
 	public int getWishUserCountByPlaceNo(Long placeNo) throws Exception;
+
+	public int getWishPlaceCountByAuthId(String authId) throws Exception;
+
+	public List<PlaceDTO> getWishPlacesByAuthId(String authId) throws Exception;
+
+	public List<WishListDTO> getWishListWithPlaceByAuthId(String authId) throws Exception;
 }

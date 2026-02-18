@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.app.dao.WishListDAO;
 import com.app.dto.CategoryDTO;
+import com.app.dto.PlaceDTO;
 import com.app.dto.WishListDTO;
 
 @Repository
@@ -26,6 +27,9 @@ public class WishListDAOImpl implements WishListDAO {
 	private static final String SELECT_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID = "place_mapper.selectWishlistByUserAndPlace";
 	private static final String COUNT_WISHLIST_BY_USER_AND_PLACE_AND_CATEGORY_STATEMENT_ID = "place_mapper.countWishlistByUserAndPlaceAndCategory";
 	private static final String COUNT_WISH_USERS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.countWishUsersByPlaceNo";
+	private static final String COUNT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID = "place_mapper.countWishPlacesByAuthId";
+	private static final String SELECT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID = "place_mapper.selectWishPlacesByAuthId";
+	private static final String SELECT_WISH_LIST_WITH_PLACE_BY_AUTH_ID_STATEMENT_ID = "place_mapper.selectWishListWithPlaceByAuthId";
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -99,5 +103,21 @@ public class WishListDAOImpl implements WishListDAO {
 	public int countWishUsersByPlaceNo(Long placeNo) throws Exception {
 		Integer count = sqlSessionTemplate.selectOne(COUNT_WISH_USERS_BY_PLACE_NO_STATEMENT_ID, placeNo);
 		return count == null ? 0 : count;
+	}
+
+	@Override
+	public int countWishPlacesByAuthId(String authId) throws Exception {
+		Integer count = sqlSessionTemplate.selectOne(COUNT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID, authId);
+		return count == null ? 0 : count;
+	}
+
+	@Override
+	public List<PlaceDTO> selectWishPlacesByAuthId(String authId) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID, authId);
+	}
+
+	@Override
+	public List<WishListDTO> selectWishListWithPlaceByAuthId(String authId) throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_WISH_LIST_WITH_PLACE_BY_AUTH_ID_STATEMENT_ID, authId);
 	}
 }

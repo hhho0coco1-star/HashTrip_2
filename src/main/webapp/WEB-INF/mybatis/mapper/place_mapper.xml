@@ -267,6 +267,48 @@
 		ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC
 	</select>
 
+	<select id="countPlaceReviewsByCreatedBy" parameterType="string" resultType="int">
+		SELECT COUNT(1)
+		FROM PLACE_REVIEW
+		WHERE CREATED_BY = #{value}
+	</select>
+
+	<select id="selectPlaceReviewsByCreatedByPaged" parameterType="map" resultType="com.app.dto.PlaceReviewDTO">
+		SELECT
+			r.COMMENT_NO,
+			r.LOG_NO,
+			r.PLACE_NO,
+			r.PLACE_NAME,
+			r.COMMENT_CONTENT,
+			r.RATING,
+			r.CREATED_BY_AUTH_ID,
+			r.CREATED_BY,
+			r.CREATED_AT
+		FROM (
+			SELECT
+				pr.COMMENT_NO,
+				pr.LOG_NO,
+				pr.PLACE_NO,
+				p.PLACE_NAME,
+				pr.COMMENT_CONTENT,
+				pr.RATING,
+				pr.CREATED_BY AS CREATED_BY_AUTH_ID,
+				NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
+				pr.CREATED_AT,
+				ROW_NUMBER() OVER (ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC) AS rn
+			FROM PLACE_REVIEW pr
+			LEFT JOIN PLACE p
+				ON p.PLACE_NO = pr.PLACE_NO
+			LEFT JOIN USER_AUTHENTICATION ua
+				ON ua.USER_AUTH_ID = pr.CREATED_BY
+			LEFT JOIN USERS u
+				ON u.USER_NO = ua.USER_NO
+			WHERE pr.CREATED_BY = #{createdBy}
+		) r
+		WHERE r.rn BETWEEN #{startRow} AND #{endRow}
+		ORDER BY r.rn
+	</select>
+
 	<select id="selectWishlistCategoriesByUserNo" parameterType="long" resultType="com.app.dto.CategoryDTO">
 		SELECT
 			CATEGORY_NO,
@@ -308,6 +350,61 @@
 		SELECT COUNT(DISTINCT USER_NO)
 		FROM WISHLIST
 		WHERE PLACE_NO = #{placeNo}
+	</select>
+
+	<select id="countWishPlacesByAuthId" parameterType="string" resultType="int">
+		SELECT COUNT(DISTINCT w.PLACE_NO)
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+	</select>
+
+	<select id="selectWishPlacesByAuthId" parameterType="string" resultType="com.app.dto.PlaceDTO">
+		SELECT DISTINCT
+			p.PLACE_NO,
+			p.PLACE_CONTENT_ID,
+			p.PLACE_NAME,
+			p.PLACE_CATEGORY,
+			p.PLACE_ADDRESS,
+			p.PLACE_LATITUDE,
+			p.PLACE_LONGITUDE,
+			p.PLACE_RATING,
+			p.PLACE_NUMBER,
+			p.PLACE_THUMBNAIL_URL
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		JOIN PLACE p
+			ON p.PLACE_NO = w.PLACE_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+		ORDER BY p.PLACE_NAME ASC
+	</select>
+
+	<select id="selectWishListWithPlaceByAuthId" parameterType="string" resultType="com.app.dto.WishListDTO">
+		SELECT
+			w.WISH_NO,
+			w.PLACE_NO,
+			w.CATEGORY_NO,
+			w.USER_NO,
+			w.WISH_DATE,
+			c.CATEGORY_TYPE,
+			c.CATEGORY_IS_USED,
+			p.PLACE_NAME,
+			p.PLACE_ADDRESS,
+			p.PLACE_LATITUDE,
+			p.PLACE_LONGITUDE,
+			p.PLACE_THUMBNAIL_URL
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		JOIN CATEGORY c
+			ON c.CATEGORY_NO = w.CATEGORY_NO
+		   AND c.USER_NO = w.USER_NO
+		JOIN PLACE p
+			ON p.PLACE_NO = w.PLACE_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+		ORDER BY c.CATEGORY_TYPE ASC, p.PLACE_NAME ASC, w.WISH_NO DESC
 	</select>
 
 	<select id="selectPlaceHoursByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceHoursDTO">

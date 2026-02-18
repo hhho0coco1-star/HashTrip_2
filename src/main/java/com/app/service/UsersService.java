@@ -1,7 +1,19 @@
 package com.app.service;
 
+import java.util.List;
+
+import com.app.dto.TagMasterDTO;
+import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 	
 public interface UsersService {
-	UsersDTO getUser(String id);
+	UsersDTO getUserByAuthId(String authId);
+
+	List<UserTagMapDTO> getUserTagsByAuthId(String authId);
+
+	List<TagMasterDTO> getTagMasterList();
+
+	boolean addUserTagByAuthId(String authId, String tagCode);
+
+	boolean removeUserTagByAuthId(String authId, String tagCode);
 }
