@@ -62,14 +62,7 @@
 	
 	<context:component-scan	base-package="com.app.service"/>
 	<context:component-scan	base-package="com.app.dao"/>
-	
-<<<<<<< HEAD
-=======
-<!-- 	 <bean id="sampleScheduler" class="com.app.scheduler.DailyCheckScheduler" />
-	 <task:scheduler id="mainScheduler" pool-size="10" />
-	 <task:executor id="mainTaskExecutor" pool-size="10" />
-	 <task:annotation-driven executor="mainTaskExecutor" scheduler="mainScheduler" /> -->
-	
->>>>>>> d662dada63fe74ca4e37c67d4330c7460615a9a9
+	<context:component-scan	base-package="com.app.config"/>
+	<context:property-placeholder location="classpath:oauth2.properties" ignore-resource-not-found="true"/>
 
 </beans>

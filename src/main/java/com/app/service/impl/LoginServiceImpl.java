@@ -152,6 +152,60 @@ public class LoginServiceImpl implements LoginService {
         return authDAO.findByAuthId(userId.trim());
     }
 
+    @Override
+    public boolean isSocialUserMissingAdditionalInfo(String userId) {
+        UserDTO user = findByAuthId(userId);
+        if (user == null) {
+            return false;
+        }
+        if (!ACTIVE_STATUS.equalsIgnoreCase(user.getUserStatus())) {
+            return false;
+        }
+
+        String snsType = user.getAuthSnsType();
+        boolean isSocial = StringUtils.hasText(snsType) && !DEFAULT_SNS_TYPE.equalsIgnoreCase(snsType.trim());
+        if (!isSocial) {
+            return false;
+        }
+
+        return !StringUtils.hasText(user.getUserPhoneNumber())
+                || !StringUtils.hasText(user.getUserRegistrationNo());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSocialAdditionalInfo(String userId, String userPhoneNumber, String userRegistrationNo) {
+        if (!StringUtils.hasText(userId)
+                || !StringUtils.hasText(userPhoneNumber)
+                || !StringUtils.hasText(userRegistrationNo)) {
+            throw new IllegalArgumentException("연락처와 생년월일은 필수 입력입니다.");
+        }
+
+        UserDTO user = findByAuthId(userId.trim());
+        if (user == null) {
+            throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+        }
+        if (!ACTIVE_STATUS.equalsIgnoreCase(user.getUserStatus())) {
+            throw new IllegalArgumentException("비활성 계정은 수정할 수 없습니다.");
+        }
+
+        String snsType = user.getAuthSnsType();
+        boolean isSocial = StringUtils.hasText(snsType) && !DEFAULT_SNS_TYPE.equalsIgnoreCase(snsType.trim());
+        if (!isSocial) {
+            throw new IllegalArgumentException("소셜 로그인 계정만 추가 정보를 입력할 수 있습니다.");
+        }
+
+        String normalizedPhone = userPhoneNumber.trim();
+        String normalizedRegistrationNo = userRegistrationNo.trim();
+        int updatedRows = authDAO.updateSocialAdditionalInfoByAuthId(
+                user.getAuthId(),
+                normalizedPhone,
+                normalizedRegistrationNo);
+        if (updatedRows != 1) {
+            throw new IllegalStateException("추가 정보 저장에 실패했습니다.");
+        }
+    }
+
     private String generateTemporaryPassword(int length) {
         StringBuilder builder = new StringBuilder(length);
         for (int i = 0; i < length; i++) {

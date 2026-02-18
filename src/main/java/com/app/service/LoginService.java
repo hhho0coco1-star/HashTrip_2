@@ -21,4 +21,8 @@ public interface LoginService {
     String resetPassword(String userId, String email);
 
     UserDTO findByAuthId(String userId);
+
+    boolean isSocialUserMissingAdditionalInfo(String userId);
+
+    void updateSocialAdditionalInfo(String userId, String userPhoneNumber, String userRegistrationNo);
 }
