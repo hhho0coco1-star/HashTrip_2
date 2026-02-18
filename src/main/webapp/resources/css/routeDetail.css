@@ -1,0 +1,323 @@
+/* ── Route Detail Page Final Styles ── */
+
+:root {
+    --primary-blue-rgb: 59, 130, 246; /* 포커스 효과용 RGB 값 추가 */
+}
+
+.detail-container { 
+    max-width: 900px; 
+    margin: 120px auto 100px; 
+    padding: 0 24px; 
+}
+
+/* 1. 상단 제목 & 헤더 */
+.detail-header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.route-title {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 2.6rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.btn-like-raw {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s;
+    line-height: 1;
+}
+
+.btn-like-raw:hover { transform: scale(1.2); }
+
+.like-count-text {
+    font-size: .95rem;
+    color: var(--text-secondary);
+}
+
+.like-count-text b {
+    color: var(--primary-blue);
+    font-weight: 800;
+}
+
+/* 2. 일정 카드 */
+.step-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 24px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-place-save {
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: var(--bg-gray-100);
+    color: var(--text-secondary);
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-place-save:hover {
+    background: var(--bg-gray-200);
+}
+
+/* 3. 액션 버튼 영역 (중앙 정렬) */
+.action-center-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 50px 0;
+}
+
+.btn-detail-action {
+    padding: 14px 32px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-back-light { background: var(--bg-gray-100); color: var(--text-secondary); }
+.btn-back-light:hover { background: var(--bg-gray-200); }
+
+.btn-review-main { background: var(--primary-blue); color: white; }
+.btn-review-main:hover { 
+    background: #2563eb; 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* 4. 하단 리뷰 섹션 */
+.review-container {
+    position: relative;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border: 1px solid #e6ebf3;
+    border-radius: 24px;
+    padding: 34px;
+    margin-top: 40px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.review-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #5b8dee, #60a5fa, #22c55e);
+}
+
+/* "여행자 리뷰" 타이틀 */
+.review-container h3 {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 리뷰 작성 폼 배경 */
+.review-form {
+    margin-bottom: 26px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e8edf5;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+/* 리뷰 입력창 */
+.review-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 120px;
+    resize: vertical;
+    border: 1.5px solid #dbe3ee;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Pretendard', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    background: #ffffff;
+    line-height: 1.65;
+}
+
+.review-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(var(--primary-blue-rgb), 0.14);
+}
+
+.review-input::placeholder {
+    color: #98a2b3;
+}
+
+/* 평점 선택 & 등록 버튼 정렬 */
+.review-form-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.review-form-row > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8faff;
+    border: 1px solid #e8edf5;
+    border-radius: 12px;
+    padding: 8px 12px;
+}
+
+.review-form-row label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-right: 0;
+    white-space: nowrap;
+}
+
+/* 평점 Select 커스텀 */
+.review-form-row select {
+    border: 1px solid #d7e0ec;
+    border-radius: 10px;
+    padding: 8px 34px 8px 12px;
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.93rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background-color: #fff;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236B7280' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.review-form-row .btn-review-main {
+    min-width: 120px;
+    padding: 11px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(var(--primary-blue-rgb), 0.24);
+}
+
+/* 리뷰 리스트 아이템 */
+.review-item {
+    padding: 18px 20px;
+    border: 1px solid #edf1f7;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.03);
+}
+
+.review-item:last-child {
+    border-bottom: 1px solid #edf1f7;
+}
+
+.review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.review-head strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.review-rating {
+    color: #f59e0b;
+    font-weight: 700;
+    background: #fff7e3;
+    border: 1px solid #f6dd9f;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.review-content {
+    color: #4b5563;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.96rem;
+}
+
+/* 빈 상태 */
+.review-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.95rem;
+    border: 2px dashed #e6ebf3;
+    border-radius: 16px;
+    background: #f9fbff;
+}
+
+@media (max-width: 768px) {
+    .review-container {
+        padding: 22px;
+        border-radius: 18px;
+    }
+
+    .review-form {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .review-form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .review-form-row > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .review-form-row .btn-review-main {
+        width: 100%;
+    }
+
+    .review-item {
+        padding: 16px;
+    }
+}
