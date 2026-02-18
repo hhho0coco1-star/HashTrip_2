@@ -21,9 +21,16 @@ public interface PlaceService {
 	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception;
+
 	public int updatePlaceHours() throws Exception;
 
 	public int updatePlaceHours(int batchSize) throws Exception;
 
 	public int updatePlaceHours(int batchSize, int parallelism) throws Exception;
+
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception;
+
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception;
+
+	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
 }

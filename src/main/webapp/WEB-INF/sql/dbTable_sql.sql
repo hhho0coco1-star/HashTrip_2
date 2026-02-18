@@ -275,8 +275,10 @@ CREATE TABLE Place_Review (
     log_no NUMBER(19),
     place_no NUMBER(19),
     comment_content VARCHAR2(2000),
+    rating NUMBER(1) DEFAULT 5 NOT NULL,
     created_by VARCHAR2(100), -- user_no 또는 nickName 기록
     created_at DATE DEFAULT SYSDATE,
+    CONSTRAINT ck_place_review_rating CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT fk_rev_log FOREIGN KEY (log_no) REFERENCES Travel_Logs(log_no),
     CONSTRAINT fk_rev_place FOREIGN KEY (place_no) REFERENCES Place(place_no)
 );
@@ -293,7 +295,7 @@ CREATE TABLE Category (
     category_no NUMBER(19) PRIMARY KEY,
     user_no NUMBER(19),
     category_type VARCHAR2(100),
-    category_is_used CHAR(1) CHECK (category_is_used IN ('Y', 'N')),
+    category_is_used CHAR(1) DEFAULT 'Y' NOT NULL CHECK (category_is_used IN ('Y', 'N')),
     CONSTRAINT fk_cat_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
@@ -304,6 +306,7 @@ CREATE TABLE wishlist (
     category_no NUMBER(19),
     user_no NUMBER(19),
     wish_date DATE DEFAULT SYSDATE,
+    CONSTRAINT uk_wish_user_place_category UNIQUE (user_no, place_no, category_no),
     CONSTRAINT fk_wish_place FOREIGN KEY (place_no) REFERENCES Place(place_no),
     CONSTRAINT fk_wish_cat FOREIGN KEY (category_no) REFERENCES Category(category_no),
     CONSTRAINT fk_wish_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
