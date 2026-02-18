@@ -17,7 +17,7 @@
         <intercept-url pattern="/auth/find-id**" access="permitAll" />
         <intercept-url pattern="/auth/find-password**" access="permitAll" />
         <intercept-url pattern="/error/**" access="permitAll" />
-        <intercept-url pattern="/**" access="isAuthenticated()" />
+        <intercept-url pattern="/**" access="permitAll" />
 
         <form-login
             login-page="/auth/login"

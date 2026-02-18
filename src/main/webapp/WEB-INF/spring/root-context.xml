@@ -50,13 +50,8 @@ http://www.springframework.org/schema/context/spring-context.xsd">
 	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="data_source" />
 	</bean>
-
-	
-	
 	
 	<context:component-scan	base-package="com.app.service"/>
 	<context:component-scan	base-package="com.app.dao"/>
-	
-
 
 </beans>
