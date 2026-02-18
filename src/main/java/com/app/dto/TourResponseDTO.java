@@ -30,6 +30,7 @@ public class TourResponseDTO {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PlaceDto {
+        private String contentid;
         private String title;       // PLACE_NAME
         private String contenttypeid; // PLACE_CATEGORY
         private String cat1;
