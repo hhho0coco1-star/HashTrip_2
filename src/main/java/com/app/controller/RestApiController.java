@@ -43,9 +43,10 @@ public class RestApiController {
 	@GetMapping("/restAPICon/hours")
 	@ResponseBody
 	public String restAPIConHours(
-			@RequestParam(defaultValue = "500") int batchSize) throws Exception {
-		int insertedCount = placeService.updatePlaceHours(batchSize);
-		return "place_hours_inserted=" + insertedCount + ", batchSize=" + batchSize;
+			@RequestParam(defaultValue = "500") int batchSize,
+			@RequestParam(defaultValue = "6") int parallelism) throws Exception {
+		int insertedCount = placeService.updatePlaceHours(batchSize, parallelism);
+		return "place_hours_inserted=" + insertedCount + ", batchSize=" + batchSize + ", parallelism=" + parallelism;
 	}
 
 	@GetMapping("/restAPICon/progress")

@@ -1,7 +1,12 @@
 package com.app.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +29,8 @@ public class PlaceServiceImpl implements PlaceService {
 	private static final int DEFAULT_PAGE_SIZE = 300;
 	private static final int DEFAULT_BATCH_SIZE = 300;
 	private static final int DEFAULT_HOURS_BATCH_SIZE = 500;
+	private static final int DEFAULT_HOURS_PARALLELISM = 6;
+	private static final int MAX_HOURS_PARALLELISM = 12;
 
 	@Autowired
 	private AreaBasedList2Repository apiRepository;
@@ -105,12 +112,19 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public int updatePlaceHours() throws Exception {
-		return updatePlaceHours(DEFAULT_HOURS_BATCH_SIZE);
+		return updatePlaceHours(DEFAULT_HOURS_BATCH_SIZE, DEFAULT_HOURS_PARALLELISM);
 	}
 
 	@Override
 	public int updatePlaceHours(int batchSize) throws Exception {
+		return updatePlaceHours(batchSize, DEFAULT_HOURS_PARALLELISM);
+	}
+
+	@Override
+	public int updatePlaceHours(int batchSize, int parallelism) throws Exception {
 		int safeBatchSize = Math.max(1, batchSize);
+		int safeParallelism = Math.max(1, Math.min(parallelism, MAX_HOURS_PARALLELISM));
+		ExecutorService executor = Executors.newFixedThreadPool(safeParallelism);
 
 		try {
 			placeDAO.resetPlaceHoursImportData();
@@ -123,25 +137,28 @@ public class PlaceServiceImpl implements PlaceService {
 			}
 
 			int insertedRows = 0;
-			int processedPlaces = 0;
 			List<PlaceHoursDTO> hoursBuffer = new ArrayList<>(safeBatchSize);
+			ExecutorCompletionService<List<PlaceHoursDTO>> completionService = new ExecutorCompletionService<>(executor);
+
+			int submitted = 0;
+			int completed = 0;
 			for (PlaceDTO place : places) {
-				processedPlaces++;
-				importProgressTracker.onHoursPlaceProcessed(processedPlaces);
+				completionService.submit(() -> loadAndParseHours(place));
+				submitted++;
 
-				String operatingHoursRawText = fetchOperatingHoursRawText(place.getPlaceContentId(), place.getPlaceCategory());
-				List<PlaceHoursDTO> parsed = placeHoursParser.parse(place.getPlaceNo(), operatingHoursRawText);
-				if (parsed == null || parsed.isEmpty()) {
-					continue;
+				if (submitted - completed >= safeParallelism) {
+					List<PlaceHoursDTO> parsed = takeCompletedHours(completionService);
+					completed++;
+					importProgressTracker.onHoursPlaceProcessed(completed);
+					insertedRows += appendHoursAndFlush(parsed, hoursBuffer, safeBatchSize);
 				}
-				hoursBuffer.addAll(parsed);
+			}
 
-				if (hoursBuffer.size() >= safeBatchSize) {
-					int inserted = placeDAO.insertPlaceHoursBatch(hoursBuffer);
-					insertedRows += inserted;
-					importProgressTracker.addInserted(inserted);
-					hoursBuffer.clear();
-				}
+			while (completed < submitted) {
+				List<PlaceHoursDTO> parsed = takeCompletedHours(completionService);
+				completed++;
+				importProgressTracker.onHoursPlaceProcessed(completed);
+				insertedRows += appendHoursAndFlush(parsed, hoursBuffer, safeBatchSize);
 			}
 
 			if (!hoursBuffer.isEmpty()) {
@@ -154,7 +171,46 @@ public class PlaceServiceImpl implements PlaceService {
 		} catch (Exception e) {
 			importProgressTracker.fail(e);
 			throw e;
+		} finally {
+			executor.shutdownNow();
 		}
+	}
+
+	private List<PlaceHoursDTO> loadAndParseHours(PlaceDTO place) {
+		String operatingHoursRawText = fetchOperatingHoursRawText(place.getPlaceContentId(), place.getPlaceCategory());
+		List<PlaceHoursDTO> parsed = placeHoursParser.parse(place.getPlaceNo(), operatingHoursRawText);
+		return parsed == null ? Collections.emptyList() : parsed;
+	}
+
+	private List<PlaceHoursDTO> takeCompletedHours(ExecutorCompletionService<List<PlaceHoursDTO>> completionService) throws Exception {
+		try {
+			return completionService.take().get();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw e;
+		} catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof Exception) {
+				throw (Exception) cause;
+			}
+			throw new RuntimeException(cause);
+		}
+	}
+
+	private int appendHoursAndFlush(List<PlaceHoursDTO> parsed, List<PlaceHoursDTO> hoursBuffer, int batchSize) throws Exception {
+		if (parsed == null || parsed.isEmpty()) {
+			return 0;
+		}
+
+		hoursBuffer.addAll(parsed);
+		if (hoursBuffer.size() < batchSize) {
+			return 0;
+		}
+
+		int inserted = placeDAO.insertPlaceHoursBatch(hoursBuffer);
+		importProgressTracker.addInserted(inserted);
+		hoursBuffer.clear();
+		return inserted;
 	}
 
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {
