@@ -130,7 +130,7 @@ CREATE TABLE Tag_Master (
 -- 4. 질문 카테고리
 CREATE TABLE Questions_categories (
     question_no NUMBER(1) PRIMARY KEY,
-    question_name VARCHAR2(10)
+    question_name VARCHAR2(50)
 );
 
 -- 5. 장소 마스터 데이터
@@ -168,7 +168,7 @@ CREATE UNIQUE INDEX UQ_PLACE_HOURS_PLACE_DAY ON Place_Hours(place_no, day_of_wee
 -- 6. 질문 상세 및 선택지
 CREATE TABLE Questions (
     question_number NUMBER(1) PRIMARY KEY,
-    question_no NUMBER(1),
+    question_no NUMBER(3),
     question_content VARCHAR2(2000) NOT NULL,
     question_img VARCHAR2(1000) NOT NULL,
     CONSTRAINT fk_q_category FOREIGN KEY (question_no) REFERENCES Questions_categories(question_no)
@@ -176,7 +176,7 @@ CREATE TABLE Questions (
 
 CREATE TABLE Qusetion_options (
     option_id NUMBER(19) PRIMARY KEY,
-    question_number NUMBER(1),
+    question_number NUMBER(3),
     question_no NUMBER(1),
     option_text VARCHAR2(500) NOT NULL,
     option_img VARCHAR2(1000) NOT NULL,
