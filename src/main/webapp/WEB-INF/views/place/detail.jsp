@@ -8,7 +8,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>여행지 상세</title>
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/place/detail-demo.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/place/detail.css">
 </head>
 <body>
 	<div class="page-shell">

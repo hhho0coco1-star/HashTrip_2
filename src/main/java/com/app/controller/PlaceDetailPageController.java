@@ -17,8 +17,8 @@ public class PlaceDetailPageController {
 	@Autowired
 	private PlaceService placeService;
 
-	@GetMapping("/place/detail/demo")
-	public String placeDetailDemoPage(
+	@GetMapping("/place/detail")
+	public String placeDetailPage(
 			@RequestParam(name = "place_no", required = false) Long placeNo,
 			@RequestParam(name = "placeNo", required = false) Long legacyPlaceNo,
 			Model model) throws Exception {
@@ -39,11 +39,11 @@ public class PlaceDetailPageController {
 		if (place == null) {
 			model.addAttribute("tagNameList", Collections.emptyList());
 			model.addAttribute("photoUrlList", Collections.emptyList());
-			return "place/detail-demo";
+			return "place/detail";
 		}
 
 		model.addAttribute("tagNameList", placeService.getPlaceTagNamesByPlaceNo(resolvedPlaceNo));
 		model.addAttribute("photoUrlList", placeService.getPlacePhotoUrlsByPlaceNo(resolvedPlaceNo));
-		return "place/detail-demo";
+		return "place/detail";
 	}
 }
