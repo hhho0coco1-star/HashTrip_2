@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="auth">
+
+    <resultMap id="userResultMap" type="com.app.dto.UserDTO">
+        <id property="userNo" column="USER_NO" />
+        <result property="userType" column="USER_TYPE" />
+        <result property="userStatus" column="USER_STATUS" />
+        <result property="userName" column="USER_NAME" />
+        <result property="userGender" column="USER_GENDER" />
+        <result property="userPhoneNumber" column="USER_PHONENUMBER" />
+        <result property="userRegistrationNo" column="USER_REGISTRATION_NO" />
+        <result property="userNickName" column="USER_NICKNAME" />
+        <result property="userProfileImg" column="USER_PROFILE_IMG" />
+        <result property="authId" column="AUTH_ID" />
+        <result property="authPassword" column="AUTH_PASSWORD" />
+        <result property="authEmail" column="AUTH_EMAIL" />
+        <result property="authSnsType" column="AUTH_SNS_TYPE" />
+    </resultMap>
+
+    <select id="countByAuthId" parameterType="string" resultType="int">
+        SELECT COUNT(1)
+        FROM USER_AUTHENTICATION
+        WHERE USER_AUTH_ID = #{value}
+    </select>
+
+    <select id="countByEmail" parameterType="string" resultType="int">
+        SELECT COUNT(1)
+        FROM USER_AUTHENTICATION
+        WHERE LOWER(USER_AUTH_EMAIL) = LOWER(#{value})
+    </select>
+
+    <select id="nextUserNo" resultType="long">
+        SELECT SEQ_USERS.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserNoAlt" resultType="long">
+        SELECT SEQ_USER_NO.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserAuthNo" resultType="long">
+        SELECT SEQ_USER_AUTH.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserAuthNoAlt" resultType="long">
+        SELECT SEQ_USER_AUTH_NO.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserNoByTable" resultType="long">
+        SELECT NVL(MAX(USER_NO), 0) + 1
+        FROM USERS
+    </select>
+
+    <select id="nextUserAuthNoByTable" resultType="long">
+        SELECT NVL(MAX(USER_AUTH_NO), 0) + 1
+        FROM USER_AUTHENTICATION
+    </select>
+
+    <select id="nextUserAddressNo" resultType="long">
+        SELECT SEQ_USER_ADDRESS_NO.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserAddressNoAlt" resultType="long">
+        SELECT SEQ_USER_ADDR_NO.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <select id="nextUserAddressNoByTable" resultType="long">
+        SELECT NVL(MAX(USER_ADDRESS_NO), 0) + 1
+        FROM USER_ADDRESS
+    </select>
+
+    <insert id="insertUser" parameterType="com.app.dto.UserDTO">
+        INSERT INTO USERS
+        (
+            USER_NO,
+            USER_TYPE,
+            USER_CREATED_AT,
+            USER_UPDATED_AT,
+            USER_STATUS,
+            USER_NAME,
+            USER_GENDER,
+            USER_PHONENUMBER,
+            USER_REGISTRATION_NO,
+            USER_NICKNAME,
+            USER_PROFILE_IMG
+        )
+        VALUES
+        (
+            #{userNo},
+            #{userType},
+            SYSTIMESTAMP,
+            SYSTIMESTAMP,
+            #{userStatus},
+            #{userName},
+            #{userGender},
+            #{userPhoneNumber},
+            #{userRegistrationNo},
+            #{userNickName},
+            #{userProfileImg}
+        )
+    </insert>
+
+    <insert id="insertUserAuthentication" parameterType="map">
+        INSERT INTO USER_AUTHENTICATION
+        (
+            USER_AUTH_NO,
+            USER_NO,
+            USER_AUTH_ID,
+            USER_AUTH_PW,
+            USER_AUTH_EMAIL,
+            USER_AUTH_SNS_TYPE
+        )
+        VALUES
+        (
+            #{userAuthNo},
+            #{user.userNo},
+            #{user.authId},
+            #{encodedPassword},
+            #{user.authEmail},
+            #{user.authSnsType}
+        )
+    </insert>
+
+    <insert id="insertUserAddress" parameterType="com.app.dto.UserDTO">
+        INSERT INTO USER_ADDRESS
+        (
+            USER_ADDRESS_NO,
+            USER_NO,
+            USER_ZIP_CODE,
+            USER_BASE_ADDRESS,
+            USER_DETAIL_ADDRESS
+        )
+        VALUES
+        (
+            #{userAddressNo},
+            #{userNo},
+            #{userZipCode},
+            #{userBaseAddress},
+            #{userDetailAddress}
+        )
+    </insert>
+
+    <select id="findByAuthId" parameterType="string" resultMap="userResultMap">
+        SELECT
+            u.USER_NO,
+            u.USER_TYPE,
+            u.USER_STATUS,
+            u.USER_NAME,
+            u.USER_GENDER,
+            u.USER_PHONENUMBER,
+            u.USER_REGISTRATION_NO,
+            u.USER_NICKNAME,
+            u.USER_PROFILE_IMG,
+            ua.USER_AUTH_ID AS AUTH_ID,
+            ua.USER_AUTH_PW AS AUTH_PASSWORD,
+            ua.USER_AUTH_EMAIL AS AUTH_EMAIL,
+            ua.USER_AUTH_SNS_TYPE AS AUTH_SNS_TYPE
+        FROM USERS u
+        JOIN USER_AUTHENTICATION ua
+            ON u.USER_NO = ua.USER_NO
+        WHERE ua.USER_AUTH_ID = #{value}
+    </select>
+
+    <select id="findAuthIdByEmail" parameterType="map" resultType="string">
+        SELECT ua.USER_AUTH_ID
+        FROM USER_AUTHENTICATION ua
+        JOIN USERS u
+            ON ua.USER_NO = u.USER_NO
+        WHERE LOWER(ua.USER_AUTH_EMAIL) = LOWER(#{email})
+          AND u.USER_STATUS = #{activeStatus}
+    </select>
+
+    <update id="updatePasswordByAuthIdAndEmail" parameterType="map">
+        UPDATE USER_AUTHENTICATION ua
+        SET ua.USER_AUTH_PW = #{encodedPassword}
+        WHERE ua.USER_AUTH_ID = #{userId}
+          AND LOWER(ua.USER_AUTH_EMAIL) = LOWER(#{email})
+          AND EXISTS (
+                SELECT 1
+                FROM USERS u
+                WHERE u.USER_NO = ua.USER_NO
+                  AND u.USER_STATUS = #{activeStatus}
+          )
+    </update>
+
+</mapper>

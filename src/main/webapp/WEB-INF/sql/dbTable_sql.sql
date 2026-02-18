@@ -1,3 +1,73 @@
+-- ==============================
+-- FULL RESET (DROP ALL)
+-- ==============================
+-- Run this section first when you want a clean rebuild.
+
+BEGIN
+    FOR t IN (
+        SELECT table_name
+        FROM user_tables
+        WHERE table_name IN (
+            'PHOTO_DATA',
+            'PLACE_REVIEW',
+            'COMMUNITY',
+            'TRAVEL_LOGS',
+            'PLAN_DETAILS',
+            'WISHLIST',
+            'CATEGORY',
+            'TRAVEL_PLANS',
+            'TRAVEL_STYLES',
+            'PLACE_TAG_MAP',
+            'PLACE_HOURS',
+            'USER_TAG_MAP',
+            'QUSETION_OPTIONS',
+            'QUESTIONS',
+            'PLACE',
+            'TAG_MASTER',
+            'QUESTIONS_CATEGORIES',
+            'COMMON_CODE',
+            'CODE_GROUP',
+            'USER_ADDRESS',
+            'USER_AUTHENTICATION',
+            'USERS'
+        )
+    ) LOOP
+        EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS PURGE';
+    END LOOP;
+END;
+/
+
+BEGIN
+    FOR s IN (
+        SELECT sequence_name
+        FROM user_sequences
+        WHERE sequence_name IN (
+            'SEQ_QUESTION_CAT_NO',
+            'SEQ_PLACE_NO',
+            'SEQ_QUESTION_NUM',
+            'SEQ_OPTION_ID',
+            'SEQ_USER_TAG_MAP_NO',
+            'SEQ_PLACE_TAG_MAP_NO',
+            'SEQ_HOURS_ID',
+            'SEQ_STYLE_USER_NO',
+            'SEQ_PLAN_NO',
+            'SEQ_PLAN_DETAIL_NO',
+            'SEQ_LOG_NO',
+            'SEQ_COMMENT_NO',
+            'SEQ_COMMUNITY_REVIEW_NO',
+            'SEQ_PHOTO_NO',
+            'SEQ_CATEGORY_NO',
+            'SEQ_WISH_NO',
+            'SEQ_USER_NO',
+            'SEQ_USER_AUTH_NO',
+            'SEQ_USER_ADDRESS_NO'
+        )
+    ) LOOP
+        EXECUTE IMMEDIATE 'DROP SEQUENCE ' || s.sequence_name;
+    END LOOP;
+END;
+/
+
 CREATE TABLE Users (
     user_no NUMBER(19) PRIMARY KEY,
     user_type VARCHAR2(20),
@@ -66,16 +136,34 @@ CREATE TABLE Questions_categories (
 -- 5. 장소 마스터 데이터
 CREATE TABLE Place (
     place_no NUMBER(19) PRIMARY KEY,
-    place_name VARCHAR2(100) NOT NULL,
+    place_content_id VARCHAR2(30 CHAR),
+    place_name VARCHAR2(200 CHAR) NOT NULL,
     place_category VARCHAR2(50) NOT NULL,
-    place_address VARCHAR2(255),
+    place_address VARCHAR2(500 CHAR),
     place_latitude NUMBER(12, 8),
     place_longitude NUMBER(13, 8),
     place_rating NUMBER(3, 2),
-    place_number VARCHAR2(20),
-    place_thumbnail_url VARCHAR2(1000),
-    place_tags VARCHAR2(1000)
+    place_number VARCHAR2(255 CHAR),
+    place_thumbnail_url VARCHAR2(1000 CHAR)
 );
+
+CREATE TABLE Place_Hours (
+    hours_id NUMBER(19) PRIMARY KEY,
+    place_no NUMBER(19) NOT NULL,
+    day_of_week NUMBER(10),
+    open_time VARCHAR2(10),
+    close_time VARCHAR2(10),
+    break_strat_time VARCHAR2(10),
+    break_end_time VARCHAR2(10),
+    last_order VARCHAR2(10),
+    is_closed CHAR(1) DEFAULT 'N',
+    CONSTRAINT fk_hours_place FOREIGN KEY (place_no) REFERENCES Place(place_no) ON DELETE CASCADE,
+    CONSTRAINT ck_hours_day CHECK (day_of_week BETWEEN 1 AND 7),
+    CONSTRAINT ck_hours_closed CHECK (is_closed IN ('Y', 'N'))
+);
+
+CREATE INDEX IDX_PLACE_HOURS_PLACE_NO ON Place_Hours(place_no);
+CREATE UNIQUE INDEX UQ_PLACE_HOURS_PLACE_DAY ON Place_Hours(place_no, day_of_week);
 
 -- 6. 질문 상세 및 선택지
 CREATE TABLE Questions (
@@ -108,11 +196,20 @@ CREATE TABLE User_Tag_Map (
 -- 8. 장소 태그 매핑
 CREATE TABLE Place_Tag_Map (
     place_tag_no NUMBER(19) PRIMARY KEY,
-    place_no NUMBER(19),
-    tag_code VARCHAR2(50),
+    place_no NUMBER(19) NOT NULL,
+    tag_code VARCHAR2(50) NOT NULL,
+    tag_weight NUMBER(4, 3) DEFAULT 1 NOT NULL CHECK (tag_weight >= 0 AND tag_weight <= 1),
+    tag_source VARCHAR2(20) DEFAULT 'RULE' NOT NULL CHECK (tag_source IN ('RULE', 'MANUAL', 'ML')),
+    tag_confidence NUMBER(4, 3) DEFAULT 1 NOT NULL CHECK (tag_confidence >= 0 AND tag_confidence <= 1),
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    updated_at DATE DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT uk_ptag_place_tag UNIQUE (place_no, tag_code),
     CONSTRAINT fk_ptag_place FOREIGN KEY (place_no) REFERENCES Place(place_no),
     CONSTRAINT fk_ptag_tag FOREIGN KEY (tag_code) REFERENCES Tag_Master(tag_code)
 );
+
+CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON Place_Tag_Map(tag_code);
+CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON Place_Tag_Map(place_no);
 
 -- 9. 여행 성향 분석 결과 (Users 참조)
 CREATE TABLE Travel_Styles (
@@ -163,13 +260,25 @@ CREATE TABLE Travel_Logs (
     CONSTRAINT fk_log_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
+CREATE TABLE Community (
+    review_no NUMBER(19) PRIMARY KEY,
+    plan_no NUMBER(19),
+    user_no NUMBER(19),
+    review_content VARCHAR2(2000),
+    review_rating NUMBER(1),
+    CONSTRAINT fk_comm_plan FOREIGN KEY (plan_no) REFERENCES Travel_Plans(plan_no),
+    CONSTRAINT fk_comm_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
+);
+
 CREATE TABLE Place_Review (
     comment_no NUMBER(19) PRIMARY KEY,
     log_no NUMBER(19),
     place_no NUMBER(19),
     comment_content VARCHAR2(2000),
+    rating NUMBER(1) DEFAULT 5 NOT NULL,
     created_by VARCHAR2(100), -- user_no 또는 nickName 기록
     created_at DATE DEFAULT SYSDATE,
+    CONSTRAINT ck_place_review_rating CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT fk_rev_log FOREIGN KEY (log_no) REFERENCES Travel_Logs(log_no),
     CONSTRAINT fk_rev_place FOREIGN KEY (place_no) REFERENCES Place(place_no)
 );
@@ -186,7 +295,7 @@ CREATE TABLE Category (
     category_no NUMBER(19) PRIMARY KEY,
     user_no NUMBER(19),
     category_type VARCHAR2(100),
-    category_is_used CHAR(1) CHECK (category_is_used IN ('Y', 'N')),
+    category_is_used CHAR(1) DEFAULT 'Y' NOT NULL CHECK (category_is_used IN ('Y', 'N')),
     CONSTRAINT fk_cat_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
@@ -197,6 +306,7 @@ CREATE TABLE wishlist (
     category_no NUMBER(19),
     user_no NUMBER(19),
     wish_date DATE DEFAULT SYSDATE,
+    CONSTRAINT uk_wish_user_place_category UNIQUE (user_no, place_no, category_no),
     CONSTRAINT fk_wish_place FOREIGN KEY (place_no) REFERENCES Place(place_no),
     CONSTRAINT fk_wish_cat FOREIGN KEY (category_no) REFERENCES Category(category_no),
     CONSTRAINT fk_wish_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
@@ -214,6 +324,8 @@ CREATE SEQUENCE SEQ_PLACE_NO START WITH 1 INCREMENT BY 1;
 -- 질문 및 옵션 번호 시퀀스
 CREATE SEQUENCE SEQ_QUESTION_NUM START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SEQ_OPTION_ID START WITH 1 INCREMENT BY 1;
+-- 운영시간 고유 번호 시퀀스
+CREATE SEQUENCE SEQ_HOURS_ID START WITH 1 INCREMENT BY 1;
 
 -- 사용자-태그 매핑 번호 시퀀스
 CREATE SEQUENCE SEQ_USER_TAG_MAP_NO START WITH 1 INCREMENT BY 1;
@@ -231,6 +343,7 @@ CREATE SEQUENCE SEQ_PLAN_DETAIL_NO START WITH 1 INCREMENT BY 1;
 -- 여행 로그 및 리뷰 시퀀스
 CREATE SEQUENCE SEQ_LOG_NO START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SEQ_COMMENT_NO START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_COMMUNITY_REVIEW_NO START WITH 1 INCREMENT BY 1;
 
 -- 사진 데이터 고유 번호 시퀀스
 CREATE SEQUENCE SEQ_PHOTO_NO START WITH 1 INCREMENT BY 1;
@@ -256,3 +369,7 @@ CREATE SEQUENCE SEQ_USER_ADDRESS_NO
 START WITH 1
 INCREMENT BY 1
 NOCACHE;
+
+-- 조회성능을 높이기 위한 인덱스 이걸 하면 자동으로 오라클이 빨리 조회 할수 있음 물론 PLACE_TAG_MAP테이블을 테그 코드와 플레이스번호로 조회했을떄,,,
+CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON PLACE_TAG_MAP(TAG_CODE);
+CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON PLACE_TAG_MAP(PLACE_NO);
