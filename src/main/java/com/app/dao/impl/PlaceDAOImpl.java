@@ -21,6 +21,14 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String STATEMENT_ID = "place_mapper.updateAreaBasedListPlaces";
 	private static final String NEXT_PLACE_NO_STATEMENT_ID = "place_mapper.getNextPlaceNo";
 	private static final String INSERT_PLACE_TAG_MAP_STATEMENT_ID = "place_mapper.insertPlaceTagMap";
+	private static final String INSERT_PLACE_HOURS_STATEMENT_ID = "place_mapper.insertPlaceHours";
+	private static final String SELECT_PLACES_FOR_HOURS_IMPORT_STATEMENT_ID = "place_mapper.selectPlacesForHoursImport";
+	private static final String DELETE_ALL_PHOTO_DATA_STATEMENT_ID = "place_mapper.deleteAllPhotoData";
+	private static final String DELETE_ALL_PLACE_REVIEW_STATEMENT_ID = "place_mapper.deleteAllPlaceReview";
+	private static final String DELETE_ALL_TRAVEL_LOGS_STATEMENT_ID = "place_mapper.deleteAllTravelLogs";
+	private static final String DELETE_ALL_PLAN_DETAILS_STATEMENT_ID = "place_mapper.deleteAllPlanDetails";
+	private static final String DELETE_ALL_WISHLIST_STATEMENT_ID = "place_mapper.deleteAllWishlist";
+	private static final String DELETE_ALL_PLACE_HOURS_STATEMENT_ID = "place_mapper.deleteAllPlaceHours";
 	private static final String DELETE_ALL_PLACE_TAG_MAP_STATEMENT_ID = "place_mapper.deleteAllPlaceTagMap";
 	private static final String DELETE_ALL_PLACE_STATEMENT_ID = "place_mapper.deleteAllPlace";
 	private static final String DROP_SEQ_PLACE_NO_STATEMENT_ID = "place_mapper.dropSeqPlaceNo";
@@ -32,6 +40,8 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlacePhotoUrlsByPlaceNo";
 	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
+	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
+	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -41,12 +51,27 @@ public class PlaceDAOImpl implements PlaceDAO {
 
 	@Override
 	public void resetPlaceImportData() throws Exception {
+		sqlSessionTemplate.delete(DELETE_ALL_PHOTO_DATA_STATEMENT_ID);
+		sqlSessionTemplate.delete(DELETE_ALL_PLACE_REVIEW_STATEMENT_ID);
+		sqlSessionTemplate.delete(DELETE_ALL_TRAVEL_LOGS_STATEMENT_ID);
+		sqlSessionTemplate.delete(DELETE_ALL_PLAN_DETAILS_STATEMENT_ID);
+		sqlSessionTemplate.delete(DELETE_ALL_WISHLIST_STATEMENT_ID);
 		sqlSessionTemplate.delete(DELETE_ALL_PLACE_TAG_MAP_STATEMENT_ID);
+		sqlSessionTemplate.delete(DELETE_ALL_PLACE_HOURS_STATEMENT_ID);
 		sqlSessionTemplate.delete(DELETE_ALL_PLACE_STATEMENT_ID);
 		sqlSessionTemplate.update(DROP_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID);
 		sqlSessionTemplate.update(CREATE_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID);
+		sqlSessionTemplate.update(DROP_SEQ_HOURS_ID_STATEMENT_ID);
+		sqlSessionTemplate.update(CREATE_SEQ_HOURS_ID_STATEMENT_ID);
 		sqlSessionTemplate.update(DROP_SEQ_PLACE_NO_STATEMENT_ID);
 		sqlSessionTemplate.update(CREATE_SEQ_PLACE_NO_STATEMENT_ID);
+	}
+
+	@Override
+	public void resetPlaceHoursImportData() throws Exception {
+		sqlSessionTemplate.delete(DELETE_ALL_PLACE_HOURS_STATEMENT_ID);
+		sqlSessionTemplate.update(DROP_SEQ_HOURS_ID_STATEMENT_ID);
+		sqlSessionTemplate.update(CREATE_SEQ_HOURS_ID_STATEMENT_ID);
 	}
 
 	@Override
@@ -124,5 +149,28 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception {
+		if (placeHoursDTOList == null || placeHoursDTOList.isEmpty()) {
+			return 0;
+		}
+
+		SqlSession batchSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false);
+		try {
+			for (PlaceHoursDTO placeHoursDTO : placeHoursDTOList) {
+				batchSession.insert(INSERT_PLACE_HOURS_STATEMENT_ID, placeHoursDTO);
+			}
+			batchSession.commit();
+			return placeHoursDTOList.size();
+		} catch (Exception e) {
+			batchSession.rollback();
+			throw e;
+		} finally {
+			batchSession.close();
+		}
+	}
+
+	@Override
+	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception {
+		return sqlSessionTemplate.selectList(SELECT_PLACES_FOR_HOURS_IMPORT_STATEMENT_ID);
 	}
 }

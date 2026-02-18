@@ -4,6 +4,30 @@
 		   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="place_mapper">
+	<delete id="deleteAllPhotoData">
+		DELETE FROM PHOTO_DATA
+	</delete>
+
+	<delete id="deleteAllPlaceReview">
+		DELETE FROM PLACE_REVIEW
+	</delete>
+
+	<delete id="deleteAllTravelLogs">
+		DELETE FROM TRAVEL_LOGS
+	</delete>
+
+	<delete id="deleteAllPlanDetails">
+		DELETE FROM PLAN_DETAILS
+	</delete>
+
+	<delete id="deleteAllWishlist">
+		DELETE FROM WISHLIST
+	</delete>
+
+	<delete id="deleteAllPlaceHours">
+		DELETE FROM PLACE_HOURS
+	</delete>
+
 	<delete id="deleteAllPlaceTagMap">
 		DELETE FROM PLACE_TAG_MAP
 	</delete>
@@ -46,17 +70,34 @@
 		END;
 	</update>
 
+	<update id="dropSeqHoursId" statementType="STATEMENT">
+		BEGIN
+			EXECUTE IMMEDIATE 'DROP SEQUENCE SEQ_HOURS_ID';
+		EXCEPTION
+			WHEN OTHERS THEN
+				IF SQLCODE != -2289 THEN
+					RAISE;
+				END IF;
+		END;
+	</update>
+
+	<update id="createSeqHoursId" statementType="STATEMENT">
+		BEGIN
+			EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_HOURS_ID START WITH 1 INCREMENT BY 1';
+		END;
+	</update>
+
 	<select id="getNextPlaceNo" resultType="long">
 		SELECT SEQ_PLACE_NO.NEXTVAL FROM DUAL
 	</select>
 
 	<insert id="updateAreaBasedListPlaces" parameterType="placeDTO">
 		INSERT INTO PLACE (
-        PLACE_NO, PLACE_NAME, PLACE_CATEGORY, PLACE_ADDRESS, 
+        PLACE_NO, PLACE_CONTENT_ID, PLACE_NAME, PLACE_CATEGORY, PLACE_ADDRESS, 
         PLACE_LATITUDE, PLACE_LONGITUDE, PLACE_RATING, 
         PLACE_NUMBER, PLACE_THUMBNAIL_URL
     ) VALUES (
-        #{placeNo}, #{placeName}, #{placeCategory}, #{placeAddress},
+        #{placeNo}, #{placeContentId}, #{placeName}, #{placeCategory}, #{placeAddress},
         #{placeLatitude}, #{placeLongitude}, 0, 
         #{placeNumber}, #{placeThumbnailUrl}
     )
@@ -131,5 +172,23 @@
 		FROM PLACE_HOURS
 		WHERE PLACE_NO = #{placeNo}
 		ORDER BY DAY_OF_WEEK ASC
+	<insert id="insertPlaceHours" parameterType="com.app.dto.PlaceHoursDTO">
+		INSERT INTO PLACE_HOURS (
+			HOURS_ID, PLACE_NO, DAY_OF_WEEK, OPEN_TIME, CLOSE_TIME,
+			BREAK_STRAT_TIME, BREAK_END_TIME, LAST_ORDER, IS_CLOSED
+		) VALUES (
+			SEQ_HOURS_ID.NEXTVAL, #{placeNo}, #{dayOfWeek}, #{openTime}, #{closeTime},
+			#{breakStratTime}, #{breakEndTime}, #{lastOrder}, #{isClosed}
+		)
+	</insert>
+
+	<select id="selectPlacesForHoursImport" resultType="placeDTO">
+		SELECT
+			PLACE_NO,
+			PLACE_CONTENT_ID,
+			PLACE_CATEGORY
+		FROM PLACE
+		WHERE PLACE_CONTENT_ID IS NOT NULL
+		ORDER BY PLACE_NO
 	</select>
 </mapper>

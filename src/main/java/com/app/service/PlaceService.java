@@ -21,4 +21,9 @@ public interface PlaceService {
 	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception;
+	public int updatePlaceHours() throws Exception;
+
+	public int updatePlaceHours(int batchSize) throws Exception;
+
+	public int updatePlaceHours(int batchSize, int parallelism) throws Exception;
 }

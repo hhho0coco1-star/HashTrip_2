@@ -11,6 +11,8 @@ public interface PlaceDAO {
 
 	public void resetPlaceImportData() throws Exception;
 
+	public void resetPlaceHoursImportData() throws Exception;
+
 	public Long getNextPlaceNo() throws Exception;
 
 	public int updateAreaBasedListPlaces(PlaceDTO placeDTO) throws Exception;
@@ -28,4 +30,7 @@ public interface PlaceDAO {
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception;
+	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
+
+	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
 }
