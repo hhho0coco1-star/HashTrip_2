@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="community_mapper">
+
+	<select id="getCommunityReviewsByPlanNo" parameterType="long"
+		resultType="com.app.dto.CommunityDTO">
+		SELECT
+			c.review_no,
+			c.plan_no,
+			c.user_no,
+			c.review_content,
+			c.review_rating AS rating,
+			NVL(u.user_nickname, u.user_name) AS created_by,
+			CAST(NULL AS TIMESTAMP) AS created_at
+		FROM Community c
+		LEFT JOIN Users u
+			ON u.user_no = c.user_no
+		WHERE c.plan_no = #{planNo}
+		  AND c.review_content IS NOT NULL
+		ORDER BY c.review_no DESC
+	</select>
+
+	<insert id="insertCommunityReview" parameterType="com.app.dto.CommunityDTO">
+		<selectKey keyProperty="reviewNo" resultType="long" order="BEFORE">
+			SELECT SEQ_COMMUNITY_REVIEW_NO.NEXTVAL FROM dual
+		</selectKey>
+		INSERT INTO Community (
+			review_no, plan_no, user_no, review_content, review_rating
+		) VALUES (
+			#{reviewNo}, #{planNo}, #{userNo}, #{reviewContent}, #{rating,jdbcType=NUMERIC}
+		)
+	</insert>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="plan_detail_mapper">
+
+	<select id="getPlanDetailsByPlanNo" parameterType="long"
+		resultType="com.app.dto.PlanDetailDTO">
+		SELECT
+			pd.plan_detail_no,
+			pd.plan_no,
+			pd.place_no,
+			pd.user_no,
+			pd.plan_visit_order,
+			pd.plan_meno,
+			pd.detail_start_date,
+			pd.detail_end_date,
+			p.place_name
+		FROM Plan_Details pd
+		LEFT JOIN Place p
+			ON p.place_no = pd.place_no
+		WHERE pd.plan_no = #{planNo}
+		ORDER BY NVL(pd.plan_visit_order, 9999), pd.plan_detail_no
+	</select>
+
+	<select id="getStepNamesByPlanNo" parameterType="long" resultType="string">
+		SELECT NVL(p.place_name, 'Unknown Place')
+		FROM Plan_Details pd
+		LEFT JOIN Place p
+			ON p.place_no = pd.place_no
+		WHERE pd.plan_no = #{planNo}
+		ORDER BY NVL(pd.plan_visit_order, 9999), pd.plan_detail_no
+	</select>
+
+	<select id="getTagNamesByPlanNo" parameterType="long" resultType="string">
+		SELECT DISTINCT tm.tag_name
+		FROM Plan_Details pd
+		INNER JOIN Place_Tag_Map ptm
+			ON ptm.place_no = pd.place_no
+		INNER JOIN Tag_Master tm
+			ON tm.tag_code = ptm.tag_code
+		WHERE pd.plan_no = #{planNo}
+		ORDER BY tm.tag_name
+	</select>
+
+	<select id="getTagCategoriesByPlanNo" parameterType="long" resultType="string">
+		SELECT DISTINCT tm.tag_category
+		FROM Plan_Details pd
+		INNER JOIN Place_Tag_Map ptm
+			ON ptm.place_no = pd.place_no
+		INNER JOIN Tag_Master tm
+			ON tm.tag_code = ptm.tag_code
+		WHERE pd.plan_no = #{planNo}
+		ORDER BY tm.tag_category
+	</select>
+
+	<select id="getRepresentativeMemoByPlanNo" parameterType="long" resultType="string">
+		SELECT MAX(pd.plan_meno) KEEP (
+			DENSE_RANK FIRST ORDER BY NVL(pd.plan_visit_order, 9999), pd.plan_detail_no
+		)
+		FROM Plan_Details pd
+		WHERE pd.plan_no = #{planNo}
+		  AND pd.plan_meno IS NOT NULL
+	</select>
+
+</mapper>
