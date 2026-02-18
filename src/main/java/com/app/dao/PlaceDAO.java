@@ -30,6 +30,17 @@ public interface PlaceDAO {
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception;
+
+	public Long getNextPlaceReviewCommentNo() throws Exception;
+
+	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception;
+
+	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception;
+
+	public int deletePlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
+
+	public int updatePlaceRatingByPlaceNo(Long placeNo) throws Exception;
+
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
 
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;

@@ -1,11 +1,10 @@
 package com.app.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -252,6 +251,58 @@ public class PlaceServiceImpl implements PlaceService {
 		return placeDAO.selectPlaceHoursByPlaceNo(placeNo);
 	}
 
+	@Override
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		String safeCreatedBy = normalizeCreatedBy(createdBy);
+		String safeContent = normalizeReviewContent(commentContent);
+		int safeRating = normalizeRating(rating);
+
+		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
+		placeReviewDTO.setCommentNo(placeDAO.getNextPlaceReviewCommentNo());
+		placeReviewDTO.setPlaceNo(placeNo);
+		placeReviewDTO.setLogNo(null);
+		placeReviewDTO.setCommentContent(safeContent);
+		placeReviewDTO.setRating(safeRating);
+		placeReviewDTO.setCreatedBy(safeCreatedBy);
+
+		int inserted = placeDAO.insertPlaceReview(placeReviewDTO);
+		if (inserted <= 0) {
+			throw new IllegalStateException("Failed to insert place review.");
+		}
+		placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		return placeReviewDTO;
+	}
+
+	@Override
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		String safeCreatedBy = normalizeCreatedBy(createdBy);
+		String safeContent = normalizeReviewContent(commentContent);
+		int safeRating = normalizeRating(rating);
+
+		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
+		placeReviewDTO.setCommentNo(commentNo);
+		placeReviewDTO.setPlaceNo(placeNo);
+		placeReviewDTO.setCommentContent(safeContent);
+		placeReviewDTO.setRating(safeRating);
+		placeReviewDTO.setCreatedBy(safeCreatedBy);
+
+		boolean updated = placeDAO.updatePlaceReviewByOwner(placeReviewDTO) > 0;
+		if (updated) {
+			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		}
+		return updated;
+	}
+
+	@Override
+	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception {
+		String safeCreatedBy = normalizeCreatedBy(createdBy);
+		boolean deleted = placeDAO.deletePlaceReviewByOwner(commentNo, placeNo, safeCreatedBy) > 0;
+		if (deleted) {
+			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		}
+		return deleted;
+	}
+
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {
 		PlaceDTO placeDTO = new PlaceDTO();
 		placeDTO.setPlaceNo(placeNo);
@@ -327,5 +378,32 @@ public class PlaceServiceImpl implements PlaceService {
 			return trimmed;
 		}
 		return trimmed.substring(0, maxLength);
+	}
+
+	private String normalizeCreatedBy(String createdBy) {
+		if (createdBy == null || createdBy.trim().isEmpty()) {
+			throw new IllegalArgumentException("Login user information is required.");
+		}
+		return truncate(createdBy, 100);
+	}
+
+	private String normalizeReviewContent(String commentContent) {
+		if (commentContent == null || commentContent.trim().isEmpty()) {
+			throw new IllegalArgumentException("Review content is required.");
+		}
+		return truncate(commentContent, 2000);
+	}
+
+	private int normalizeRating(Integer rating) {
+		if (rating == null) {
+			return 5;
+		}
+		if (rating < 1) {
+			return 1;
+		}
+		if (rating > 5) {
+			return 5;
+		}
+		return rating;
 	}
 }

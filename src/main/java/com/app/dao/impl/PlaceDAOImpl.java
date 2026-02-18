@@ -1,6 +1,8 @@
 package com.app.dao.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -20,8 +22,14 @@ public class PlaceDAOImpl implements PlaceDAO {
 
 	private static final String STATEMENT_ID = "place_mapper.updateAreaBasedListPlaces";
 	private static final String NEXT_PLACE_NO_STATEMENT_ID = "place_mapper.getNextPlaceNo";
+	private static final String NEXT_PLACE_REVIEW_COMMENT_NO_STATEMENT_ID = "place_mapper.getNextPlaceReviewCommentNo";
 	private static final String INSERT_PLACE_TAG_MAP_STATEMENT_ID = "place_mapper.insertPlaceTagMap";
 	private static final String INSERT_PLACE_HOURS_STATEMENT_ID = "place_mapper.insertPlaceHours";
+	private static final String INSERT_PLACE_REVIEW_STATEMENT_ID = "place_mapper.insertPlaceReview";
+	private static final String UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.updatePlaceReviewByOwner";
+	private static final String DELETE_PLACE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewPhotosByOwner";
+	private static final String DELETE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewByOwner";
+	private static final String UPDATE_PLACE_RATING_BY_PLACE_NO_STATEMENT_ID = "place_mapper.updatePlaceRatingByPlaceNo";
 	private static final String SELECT_PLACES_FOR_HOURS_IMPORT_STATEMENT_ID = "place_mapper.selectPlacesForHoursImport";
 	private static final String DELETE_ALL_PHOTO_DATA_STATEMENT_ID = "place_mapper.deleteAllPhotoData";
 	private static final String DELETE_ALL_PLACE_REVIEW_STATEMENT_ID = "place_mapper.deleteAllPlaceReview";
