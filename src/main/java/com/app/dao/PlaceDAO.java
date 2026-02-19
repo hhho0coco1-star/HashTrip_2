@@ -29,6 +29,10 @@ public interface PlaceDAO {
 
 	public List<PlaceReviewDTO> selectPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
+	public int countPlaceReviewsByCreatedBy(String createdBy) throws Exception;
+
+	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow) throws Exception;
+
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 
 	public Long getNextPlaceReviewCommentNo() throws Exception;

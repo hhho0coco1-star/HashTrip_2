@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.app.dto.UserDTO;
 import com.app.dto.UserTagMapDTO;
+import com.app.dto.UsersDTO;
 import com.app.service.UserTagMapService;
 
 @Controller
@@ -41,7 +41,7 @@ public class AnalysisController {
                                  Model model) {
         
         // 1. 세션에서 로그인한 유저 정보를 가져옴
-        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        UsersDTO loginUser = (UsersDTO) session.getAttribute("loginUser");
         
         // 2. 회원이면 userNo를, 비회원이면 null을 서비스에 전달
         Long userNo = (loginUser != null) ? (long) loginUser.getUserNo() : null;

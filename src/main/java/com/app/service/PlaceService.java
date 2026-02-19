@@ -20,6 +20,10 @@ public interface PlaceService {
 
 	public List<PlaceReviewDTO> getPlaceReviewsByPlaceNo(Long placeNo) throws Exception;
 
+	public int getMyPlaceReviewCount(String createdBy) throws Exception;
+
+	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize) throws Exception;
+
 	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 
 	public int updatePlaceHours() throws Exception;

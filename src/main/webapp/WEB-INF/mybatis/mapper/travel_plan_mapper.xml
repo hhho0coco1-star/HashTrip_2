@@ -3,7 +3,7 @@
 
 <mapper namespace="travel_plan_mapper">
 
-	<select id="getPublicTravelPlans" resultType="com.app.dto.TravelPlanDTO">
+	<select id="getPublicTravelPlans" resultType="TravelPlanDTO">
 		SELECT
 			tp.plan_no,
 			tp.user_no,
@@ -58,7 +58,7 @@
 	</select>
 
 	<select id="getTravelPlanById" parameterType="long"
-		resultType="com.app.dto.TravelPlanDTO">
+		resultType="TravelPlanDTO">
 		SELECT
 			tp.plan_no,
 			tp.user_no,
@@ -112,7 +112,7 @@
 	</select>
 
 	<select id="getTravelPlansByUserNo" parameterType="long"
-		resultType="com.app.dto.TravelPlanDTO">
+		resultType="TravelPlanDTO">
 		SELECT
 			tp.plan_no,
 			tp.user_no,

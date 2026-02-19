@@ -13,4 +13,9 @@ public class WishListDTO {
 	private Date wishDate;
 	private String categoryType;
 	private String categoryIsUsed;
+	private String placeName;
+	private String placeAddress;
+	private Double placeLatitude;
+	private Double placeLongitude;
+	private String placeThumbnailUrl;
 }

@@ -109,7 +109,7 @@
 		WHERE ua.USER_AUTH_ID = #{value}
 	</select>
 
-	<insert id="updateAreaBasedListPlaces" parameterType="placeDTO">
+	<insert id="updateAreaBasedListPlaces" parameterType="PlaceDTO">
 		INSERT INTO PLACE (
 			PLACE_NO, PLACE_CONTENT_ID, PLACE_NAME, PLACE_CATEGORY, PLACE_ADDRESS,
 			PLACE_LATITUDE, PLACE_LONGITUDE, PLACE_RATING,
@@ -121,7 +121,7 @@
 		)
 	</insert>
 
-	<insert id="insertPlaceTagMap" parameterType="com.app.dto.PlaceTagMapDTO">
+	<insert id="insertPlaceTagMap" parameterType="PlaceTagMapDTO">
 		INSERT INTO PLACE_TAG_MAP (
 			PLACE_TAG_NO, PLACE_NO, TAG_CODE, TAG_WEIGHT, TAG_SOURCE, TAG_CONFIDENCE
 		) VALUES (
@@ -129,7 +129,7 @@
 		)
 	</insert>
 
-	<insert id="insertPlaceHours" parameterType="com.app.dto.PlaceHoursDTO">
+	<insert id="insertPlaceHours" parameterType="PlaceHoursDTO">
 		INSERT INTO PLACE_HOURS (
 			HOURS_ID, PLACE_NO, DAY_OF_WEEK, OPEN_TIME, CLOSE_TIME,
 			BREAK_STRAT_TIME, BREAK_END_TIME, LAST_ORDER, IS_CLOSED
@@ -139,7 +139,7 @@
 		)
 	</insert>
 
-	<insert id="insertPlaceReview" parameterType="com.app.dto.PlaceReviewDTO">
+	<insert id="insertPlaceReview" parameterType="PlaceReviewDTO">
 		INSERT INTO PLACE_REVIEW (
 			COMMENT_NO, LOG_NO, PLACE_NO, COMMENT_CONTENT, RATING, CREATED_BY, CREATED_AT
 		) VALUES (
@@ -147,7 +147,7 @@
 		)
 	</insert>
 
-	<update id="updatePlaceReviewByOwner" parameterType="com.app.dto.PlaceReviewDTO">
+	<update id="updatePlaceReviewByOwner" parameterType="PlaceReviewDTO">
 		UPDATE PLACE_REVIEW
 		SET COMMENT_CONTENT = #{commentContent},
 		    RATING = #{rating}
@@ -156,7 +156,7 @@
 		  AND CREATED_BY = #{createdBy}
 	</update>
 
-	<insert id="insertWishlistCategory" parameterType="com.app.dto.CategoryDTO">
+	<insert id="insertWishlistCategory" parameterType="CategoryDTO">
 		INSERT INTO CATEGORY (
 			CATEGORY_NO, USER_NO, CATEGORY_TYPE, CATEGORY_IS_USED
 		) VALUES (
@@ -171,7 +171,7 @@
 		  AND USER_NO = #{userNo}
 	</update>
 
-	<insert id="insertWishlist" parameterType="com.app.dto.WishListDTO">
+	<insert id="insertWishlist" parameterType="WishListDTO">
 		INSERT INTO WISHLIST (
 			WISH_NO, PLACE_NO, CATEGORY_NO, USER_NO, WISH_DATE
 		) VALUES (
@@ -213,7 +213,7 @@
 		WHERE p.PLACE_NO = #{placeNo}
 	</update>
 
-	<select id="selectPlaceByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceDTO">
+	<select id="selectPlaceByPlaceNo" parameterType="long" resultType="PlaceDTO">
 		SELECT
 			PLACE_NO,
 			PLACE_CONTENT_ID,
@@ -248,7 +248,7 @@
 		ORDER BY PD.PHOTO_NO DESC
 	</select>
 
-	<select id="selectPlaceReviewsByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceReviewDTO">
+	<select id="selectPlaceReviewsByPlaceNo" parameterType="long" resultType="PlaceReviewDTO">
 		SELECT
 			pr.COMMENT_NO,
 			pr.LOG_NO,
@@ -267,7 +267,49 @@
 		ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC
 	</select>
 
-	<select id="selectWishlistCategoriesByUserNo" parameterType="long" resultType="com.app.dto.CategoryDTO">
+	<select id="countPlaceReviewsByCreatedBy" parameterType="string" resultType="int">
+		SELECT COUNT(1)
+		FROM PLACE_REVIEW
+		WHERE CREATED_BY = #{value}
+	</select>
+
+	<select id="selectPlaceReviewsByCreatedByPaged" parameterType="map" resultType="PlaceReviewDTO">
+		SELECT
+			r.COMMENT_NO,
+			r.LOG_NO,
+			r.PLACE_NO,
+			r.PLACE_NAME,
+			r.COMMENT_CONTENT,
+			r.RATING,
+			r.CREATED_BY_AUTH_ID,
+			r.CREATED_BY,
+			r.CREATED_AT
+		FROM (
+			SELECT
+				pr.COMMENT_NO,
+				pr.LOG_NO,
+				pr.PLACE_NO,
+				p.PLACE_NAME,
+				pr.COMMENT_CONTENT,
+				pr.RATING,
+				pr.CREATED_BY AS CREATED_BY_AUTH_ID,
+				NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
+				pr.CREATED_AT,
+				ROW_NUMBER() OVER (ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC) AS rn
+			FROM PLACE_REVIEW pr
+			LEFT JOIN PLACE p
+				ON p.PLACE_NO = pr.PLACE_NO
+			LEFT JOIN USER_AUTHENTICATION ua
+				ON ua.USER_AUTH_ID = pr.CREATED_BY
+			LEFT JOIN USERS u
+				ON u.USER_NO = ua.USER_NO
+			WHERE pr.CREATED_BY = #{createdBy}
+		) r
+		WHERE r.rn BETWEEN #{startRow} AND #{endRow}
+		ORDER BY r.rn
+	</select>
+
+	<select id="selectWishlistCategoriesByUserNo" parameterType="long" resultType="CategoryDTO">
 		SELECT
 			CATEGORY_NO,
 			USER_NO,
@@ -278,7 +320,7 @@
 		ORDER BY CATEGORY_NO DESC
 	</select>
 
-	<select id="selectWishlistByUserAndPlace" parameterType="map" resultType="com.app.dto.WishListDTO">
+	<select id="selectWishlistByUserAndPlace" parameterType="map" resultType="WishListDTO">
 		SELECT
 			w.WISH_NO,
 			w.PLACE_NO,
@@ -310,7 +352,62 @@
 		WHERE PLACE_NO = #{placeNo}
 	</select>
 
-	<select id="selectPlaceHoursByPlaceNo" parameterType="long" resultType="com.app.dto.PlaceHoursDTO">
+	<select id="countWishPlacesByAuthId" parameterType="string" resultType="int">
+		SELECT COUNT(DISTINCT w.PLACE_NO)
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+	</select>
+
+	<select id="selectWishPlacesByAuthId" parameterType="string" resultType="PlaceDTO">
+		SELECT DISTINCT
+			p.PLACE_NO,
+			p.PLACE_CONTENT_ID,
+			p.PLACE_NAME,
+			p.PLACE_CATEGORY,
+			p.PLACE_ADDRESS,
+			p.PLACE_LATITUDE,
+			p.PLACE_LONGITUDE,
+			p.PLACE_RATING,
+			p.PLACE_NUMBER,
+			p.PLACE_THUMBNAIL_URL
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		JOIN PLACE p
+			ON p.PLACE_NO = w.PLACE_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+		ORDER BY p.PLACE_NAME ASC
+	</select>
+
+	<select id="selectWishListWithPlaceByAuthId" parameterType="string" resultType="WishListDTO">
+		SELECT
+			w.WISH_NO,
+			w.PLACE_NO,
+			w.CATEGORY_NO,
+			w.USER_NO,
+			w.WISH_DATE,
+			c.CATEGORY_TYPE,
+			c.CATEGORY_IS_USED,
+			p.PLACE_NAME,
+			p.PLACE_ADDRESS,
+			p.PLACE_LATITUDE,
+			p.PLACE_LONGITUDE,
+			p.PLACE_THUMBNAIL_URL
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+			ON ua.USER_NO = w.USER_NO
+		JOIN CATEGORY c
+			ON c.CATEGORY_NO = w.CATEGORY_NO
+		   AND c.USER_NO = w.USER_NO
+		JOIN PLACE p
+			ON p.PLACE_NO = w.PLACE_NO
+		WHERE ua.USER_AUTH_ID = #{value}
+		ORDER BY c.CATEGORY_TYPE ASC, p.PLACE_NAME ASC, w.WISH_NO DESC
+	</select>
+
+	<select id="selectPlaceHoursByPlaceNo" parameterType="long" resultType="PlaceHoursDTO">
 		SELECT
 			HOURS_ID,
 			PLACE_NO,
@@ -325,8 +422,8 @@
 		WHERE PLACE_NO = #{placeNo}
 		ORDER BY DAY_OF_WEEK ASC
 	</select>	
-
-	<select id="selectPlacesForHoursImport" resultType="placeDTO">
+	
+	<select id="selectPlacesForHoursImport" resultType="PlaceDTO">
 		SELECT
 			PLACE_NO,
 			PLACE_CONTENT_ID,

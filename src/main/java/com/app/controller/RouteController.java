@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.CommunityDTO;
 import com.app.dto.RouteDTO;
-import com.app.service.UserService;
+import com.app.service.UsersService;
 import com.app.service.impl.CommunityService;
 import com.app.service.impl.RouteService;
 
@@ -30,14 +30,14 @@ public class RouteController {
     private RouteService routeService;
 
     @Autowired
-    private UserService userService;
+    private UsersService usersService;
 
     @Autowired
     private CommunityService communityService;
 
     @GetMapping
     public String routesPage(Model model, HttpServletRequest request) {
-        String name = userService.findUserName(1);
+        String name = usersService.findUserName(1);
         request.setAttribute("userName", name);
 
         model.addAttribute("routes", routeService.getAllRoutes());
@@ -96,6 +96,6 @@ public class RouteController {
 
     @GetMapping("/api/user-info")
     public String getUserInfo(@RequestParam int userNo) {
-        return userService.findUserName(userNo);
+        return usersService.findUserName(userNo);
     }
 }

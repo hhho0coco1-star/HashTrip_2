@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.app.dao.WishListDAO;
 import com.app.dto.CategoryDTO;
+import com.app.dto.PlaceDTO;
 import com.app.dto.WishListDTO;
 import com.app.service.WishListService;
 
@@ -97,6 +98,24 @@ public class WishListServiceImpl implements WishListService {
 			return 0;
 		}
 		return wishListDAO.countWishUsersByPlaceNo(placeNo);
+	}
+
+	@Override
+	public int getWishPlaceCountByAuthId(String authId) throws Exception {
+		String safeAuthId = normalizeAuthId(authId);
+		return wishListDAO.countWishPlacesByAuthId(safeAuthId);
+	}
+
+	@Override
+	public List<PlaceDTO> getWishPlacesByAuthId(String authId) throws Exception {
+		String safeAuthId = normalizeAuthId(authId);
+		return wishListDAO.selectWishPlacesByAuthId(safeAuthId);
+	}
+
+	@Override
+	public List<WishListDTO> getWishListWithPlaceByAuthId(String authId) throws Exception {
+		String safeAuthId = normalizeAuthId(authId);
+		return wishListDAO.selectWishListWithPlaceByAuthId(safeAuthId);
 	}
 
 	private Long resolveUserNoByAuthId(String authId) throws Exception {

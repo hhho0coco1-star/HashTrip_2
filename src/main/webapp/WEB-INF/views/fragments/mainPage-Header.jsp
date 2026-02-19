@@ -3,29 +3,29 @@
 
 <nav class="main-header">
     <div class="header-container">
-        <a class="header-logo" href="/hashTrip">
+        <a class="header-logo" href="<c:url value='/hashTrip' />">
             <strong style="color: #007bff;">#Trip</strong>
         </a>
 
         <div class="header-menu-wrapper">
             <ul class="nav-menu">
-                <li><a href="/hashTrip">홈</a></li>
-                <li><a href="/test1">추천 루트</a></li>
-                <li><a href="/test2">여행 일정</a></li>
-                <li><a href="/test3">마이페이지</a></li>
+                <li><a href="<c:url value='/hashTrip' />">홈</a></li>
+                <li><a href="<c:url value='/routes' />">추천 루트</a></li>
+                <li><a href="<c:url value='/plan' />">여행 일정</a></li>
+                <li><a href="<c:url value='/mypage' />">마이페이지</a></li>
             </ul>
 
             <div class="user-auth">
                 <c:choose>
-                    <c:when test="${empty sessionScope.loginUser}">
-                        <a href="/login" class="btn-login">로그인</a>
-                        <a href="/signup" class="btn-signup">회원가입</a>
+                    <c:when test="${pageContext.request.userPrincipal == null}">
+                        <a href="<c:url value='/auth/login' />" class="btn-login">로그인</a>
+                        <a href="<c:url value='/auth/signup' />" class="btn-signup">회원가입</a>
                     </c:when>
                     <c:otherwise>
                         <span class="user-info">
-                            <strong>${sessionScope.loginUser.user_nickName}</strong>님 환영합니다!
+                            <strong>${pageContext.request.userPrincipal.name}</strong>님 환영합니다!
                         </span>
-                        <a href="/logout" class="btn-logout">로그아웃</a>
+                        <a href="<c:url value='/auth/logout' />" class="btn-logout">로그아웃</a>
                     </c:otherwise>
                 </c:choose>
             </div>

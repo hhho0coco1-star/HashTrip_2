@@ -3,6 +3,7 @@ package com.app.dao;
 import java.util.List;
 
 import com.app.dto.CategoryDTO;
+import com.app.dto.PlaceDTO;
 import com.app.dto.WishListDTO;
 
 public interface WishListDAO {
@@ -28,4 +29,10 @@ public interface WishListDAO {
 	public int countWishListByUserAndPlaceAndCategory(Long userNo, Long placeNo, Long categoryNo) throws Exception;
 
 	public int countWishUsersByPlaceNo(Long placeNo) throws Exception;
+
+	public int countWishPlacesByAuthId(String authId) throws Exception;
+
+	public List<PlaceDTO> selectWishPlacesByAuthId(String authId) throws Exception;
+
+	public List<WishListDTO> selectWishListWithPlaceByAuthId(String authId) throws Exception;
 }

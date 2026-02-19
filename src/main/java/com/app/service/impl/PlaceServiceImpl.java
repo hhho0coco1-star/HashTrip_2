@@ -247,6 +247,22 @@ public class PlaceServiceImpl implements PlaceService {
 	}
 
 	@Override
+	public int getMyPlaceReviewCount(String createdBy) throws Exception {
+		String safeCreatedBy = normalizeCreatedBy(createdBy);
+		return placeDAO.countPlaceReviewsByCreatedBy(safeCreatedBy);
+	}
+
+	@Override
+	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize) throws Exception {
+		String safeCreatedBy = normalizeCreatedBy(createdBy);
+		int safePage = Math.max(1, page);
+		int safePageSize = Math.max(1, pageSize);
+		int startRow = ((safePage - 1) * safePageSize) + 1;
+		int endRow = safePage * safePageSize;
+		return placeDAO.selectPlaceReviewsByCreatedByPaged(safeCreatedBy, startRow, endRow);
+	}
+
+	@Override
 	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception {
 		return placeDAO.selectPlaceHoursByPlaceNo(placeNo);
 	}
@@ -329,14 +345,6 @@ public class PlaceServiceImpl implements PlaceService {
 			list.add(placeTagMapDTO);
 		}
 		return list;
-	}
-
-	private String fetchOperatingHoursRawText(TourResponseDTO.PlaceDto item) {
-		try {
-			return apiRepository.requestApi_detailIntro2OperatingHours(item.getContentid(), item.getContenttypeid());
-		} catch (Exception e) {
-			return "";
-		}
 	}
 
 	private String fetchOperatingHoursRawText(String contentId, String contentTypeId) {
