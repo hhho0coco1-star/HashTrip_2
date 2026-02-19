@@ -158,6 +158,39 @@ public class PlaceDAOImpl implements PlaceDAO {
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID, placeNo);
 	}
+
+	@Override
+	public Long getNextPlaceReviewCommentNo() throws Exception {
+		return sqlSessionTemplate.selectOne(NEXT_PLACE_REVIEW_COMMENT_NO_STATEMENT_ID);
+	}
+
+	@Override
+	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception {
+		return sqlSessionTemplate.insert(INSERT_PLACE_REVIEW_STATEMENT_ID, placeReviewDTO);
+	}
+
+	@Override
+	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception {
+		return sqlSessionTemplate.update(UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, placeReviewDTO);
+	}
+
+	@Override
+	public int deletePlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception {
+		Map<String, Object> params = new HashMap<>();
+		params.put("commentNo", commentNo);
+		params.put("placeNo", placeNo);
+		params.put("createdBy", createdBy);
+
+		sqlSessionTemplate.delete(DELETE_PLACE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID, params);
+		return sqlSessionTemplate.delete(DELETE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, params);
+	}
+
+	@Override
+	public int updatePlaceRatingByPlaceNo(Long placeNo) throws Exception {
+		return sqlSessionTemplate.update(UPDATE_PLACE_RATING_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception {
 		if (placeHoursDTOList == null || placeHoursDTOList.isEmpty()) {
 			return 0;
