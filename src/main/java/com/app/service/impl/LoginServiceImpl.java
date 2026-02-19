@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.app.dao.auth.AuthDAO;
-import com.app.dto.UserDTO;
+import com.app.dao.AuthDAO;
+import com.app.dto.UsersDTO;
 import com.app.service.LoginService;
 
 @Service
@@ -32,7 +32,7 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public UserDTO register(String userId,
+    public UsersDTO register(String userId,
                             String email,
                             String rawPassword,
                             String userName,
@@ -72,7 +72,7 @@ public class LoginServiceImpl implements LoginService {
         Long userNo = authDAO.nextUserNo();
         Long userAuthNo = authDAO.nextUserAuthNo();
 
-        UserDTO newUser = new UserDTO();
+        UsersDTO newUser = new UsersDTO();
         newUser.setUserNo(userNo);
         newUser.setUserType(DEFAULT_USER_TYPE);
         newUser.setUserStatus(ACTIVE_STATUS);
@@ -124,7 +124,7 @@ public class LoginServiceImpl implements LoginService {
 
         String normalizedUserId = userId.trim();
         String normalizedEmail = email.trim().toLowerCase();
-        UserDTO matchedUser = authDAO.findByAuthId(normalizedUserId);
+        UsersDTO matchedUser = authDAO.findByAuthId(normalizedUserId);
 
         if (matchedUser == null || !ACTIVE_STATUS.equalsIgnoreCase(matchedUser.getUserStatus())) {
             return null;
@@ -145,7 +145,7 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
-    public UserDTO findByAuthId(String userId) {
+    public UsersDTO findByAuthId(String userId) {
         if (!StringUtils.hasText(userId)) {
             return null;
         }
@@ -176,7 +176,7 @@ public class LoginServiceImpl implements LoginService {
         return value;
     }
 
-    private boolean hasAnyAddress(UserDTO user) {
+    private boolean hasAnyAddress(UsersDTO user) {
         return StringUtils.hasText(user.getUserZipCode())
                 || StringUtils.hasText(user.getUserBaseAddress())
                 || StringUtils.hasText(user.getUserDetailAddress());

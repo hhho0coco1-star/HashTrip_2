@@ -9,6 +9,8 @@ import com.app.dto.UsersDTO;
 public interface UsersService {
 	UsersDTO getUserByAuthId(String authId);
 
+	String findUserName(int userNo);
+
 	List<UserTagMapDTO> getUserTagsByAuthId(String authId);
 
 	List<TagMasterDTO> getTagMasterList();

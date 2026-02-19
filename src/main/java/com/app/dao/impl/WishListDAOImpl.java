@@ -56,11 +56,8 @@ public class WishListDAOImpl implements WishListDAO {
 
 	@Override
 	public int updateCategoryUsageByOwner(Long categoryNo, Long userNo, String categoryIsUsed) throws Exception {
-		Map<String, Object> params = new HashMap<>();
-		params.put("categoryNo", categoryNo);
-		params.put("userNo", userNo);
-		params.put("categoryIsUsed", categoryIsUsed);
-		return sqlSessionTemplate.update(UPDATE_CATEGORY_USAGE_BY_OWNER_STATEMENT_ID, params);
+		return sqlSessionTemplate.update(UPDATE_CATEGORY_USAGE_BY_OWNER_STATEMENT_ID,
+				buildCategoryUsageParams(categoryNo, userNo, categoryIsUsed));
 	}
 
 	@Override
@@ -75,40 +72,30 @@ public class WishListDAOImpl implements WishListDAO {
 
 	@Override
 	public int deleteWishListByOwner(Long wishNo, Long userNo) throws Exception {
-		Map<String, Object> params = new HashMap<>();
-		params.put("wishNo", wishNo);
-		params.put("userNo", userNo);
-		return sqlSessionTemplate.delete(DELETE_WISHLIST_BY_OWNER_STATEMENT_ID, params);
+		return sqlSessionTemplate.delete(DELETE_WISHLIST_BY_OWNER_STATEMENT_ID, buildWishOwnerParams(wishNo, userNo));
 	}
 
 	@Override
 	public List<WishListDTO> selectWishListByUserAndPlace(Long userNo, Long placeNo) throws Exception {
-		Map<String, Object> params = new HashMap<>();
-		params.put("userNo", userNo);
-		params.put("placeNo", placeNo);
-		return sqlSessionTemplate.selectList(SELECT_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID, params);
+		return sqlSessionTemplate.selectList(SELECT_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID,
+				buildWishLookupParams(userNo, placeNo));
 	}
 
 	@Override
 	public int countWishListByUserAndPlaceAndCategory(Long userNo, Long placeNo, Long categoryNo) throws Exception {
-		Map<String, Object> params = new HashMap<>();
-		params.put("userNo", userNo);
-		params.put("placeNo", placeNo);
-		params.put("categoryNo", categoryNo);
-		Integer count = sqlSessionTemplate.selectOne(COUNT_WISHLIST_BY_USER_AND_PLACE_AND_CATEGORY_STATEMENT_ID, params);
-		return count == null ? 0 : count;
+		Integer count = sqlSessionTemplate.selectOne(COUNT_WISHLIST_BY_USER_AND_PLACE_AND_CATEGORY_STATEMENT_ID,
+				buildWishCategoryCountParams(userNo, placeNo, categoryNo));
+		return toCount(count);
 	}
 
 	@Override
 	public int countWishUsersByPlaceNo(Long placeNo) throws Exception {
-		Integer count = sqlSessionTemplate.selectOne(COUNT_WISH_USERS_BY_PLACE_NO_STATEMENT_ID, placeNo);
-		return count == null ? 0 : count;
+		return toCount(sqlSessionTemplate.selectOne(COUNT_WISH_USERS_BY_PLACE_NO_STATEMENT_ID, placeNo));
 	}
 
 	@Override
 	public int countWishPlacesByAuthId(String authId) throws Exception {
-		Integer count = sqlSessionTemplate.selectOne(COUNT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID, authId);
-		return count == null ? 0 : count;
+		return toCount(sqlSessionTemplate.selectOne(COUNT_WISH_PLACES_BY_AUTH_ID_STATEMENT_ID, authId));
 	}
 
 	@Override
@@ -119,5 +106,39 @@ public class WishListDAOImpl implements WishListDAO {
 	@Override
 	public List<WishListDTO> selectWishListWithPlaceByAuthId(String authId) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_WISH_LIST_WITH_PLACE_BY_AUTH_ID_STATEMENT_ID, authId);
+	}
+
+	private int toCount(Integer count) {
+		return count == null ? 0 : count;
+	}
+
+	private Map<String, Object> buildCategoryUsageParams(Long categoryNo, Long userNo, String categoryIsUsed) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("categoryNo", categoryNo);
+		params.put("userNo", userNo);
+		params.put("categoryIsUsed", categoryIsUsed);
+		return params;
+	}
+
+	private Map<String, Object> buildWishOwnerParams(Long wishNo, Long userNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("wishNo", wishNo);
+		params.put("userNo", userNo);
+		return params;
+	}
+
+	private Map<String, Object> buildWishLookupParams(Long userNo, Long placeNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("placeNo", placeNo);
+		return params;
+	}
+
+	private Map<String, Object> buildWishCategoryCountParams(Long userNo, Long placeNo, Long categoryNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("userNo", userNo);
+		params.put("placeNo", placeNo);
+		params.put("categoryNo", categoryNo);
+		return params;
 	}
 }

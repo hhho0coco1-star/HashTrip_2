@@ -4,7 +4,7 @@
 <mapper namespace="community_mapper">
 
 	<select id="getCommunityReviewsByPlanNo" parameterType="long"
-		resultType="com.app.dto.CommunityDTO">
+		resultType="CommunityDTO">
 		SELECT
 			c.review_no,
 			c.plan_no,
@@ -21,7 +21,7 @@
 		ORDER BY c.review_no DESC
 	</select>
 
-	<insert id="insertCommunityReview" parameterType="com.app.dto.CommunityDTO">
+	<insert id="insertCommunityReview" parameterType="CommunityDTO">
 		<selectKey keyProperty="reviewNo" resultType="long" order="BEFORE">
 			SELECT SEQ_COMMUNITY_REVIEW_NO.NEXTVAL FROM dual
 		</selectKey>

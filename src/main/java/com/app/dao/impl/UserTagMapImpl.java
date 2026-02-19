@@ -12,24 +12,25 @@ import com.app.dto.UserTagMapDTO;
 @Repository
 public class UserTagMapImpl implements UserTagMapDAO {
 
-    @Autowired
-    private SqlSessionTemplate sqlSessionTemplate;
+	private static final String DELETE_USER_TAGS_BY_USER_NO_STATEMENT_ID = "users_mapper.deleteUserTagsByUserNo";
+	private static final String INSERT_USER_TAG_BY_USER_NO_STATEMENT_ID = "users_mapper.insertUserTagByUserNo";
+	private static final String FIND_USER_TAGS_BY_USER_NO_STATEMENT_ID = "users_mapper.findUserTagsByUserNo";
 
-    private static final String NAMESPACE = "com.app.mapper.UserTagMapMapper";
+	@Autowired
+	private SqlSessionTemplate sqlSessionTemplate;
 
-    @Override
-    public void deleteByUserId(Long userNo) {
-        // sqlSessionTemplate.delete("네임스페이스.아이디", 파라미터)
-        sqlSessionTemplate.delete(NAMESPACE + ".deleteByUserId", userNo);
-    }
+	@Override
+	public void deleteByUserId(Long userNo) {
+		sqlSessionTemplate.delete(DELETE_USER_TAGS_BY_USER_NO_STATEMENT_ID, userNo);
+	}
 
-    @Override
-    public void insertTag(UserTagMapDTO dto) {
-        sqlSessionTemplate.insert(NAMESPACE + ".insertTag", dto);
-    }
+	@Override
+	public void insertTag(UserTagMapDTO dto) {
+		sqlSessionTemplate.insert(INSERT_USER_TAG_BY_USER_NO_STATEMENT_ID, dto);
+	}
 
-    @Override
-    public List<UserTagMapDTO> findByUserId(Long userNo) {
-        return sqlSessionTemplate.selectList(NAMESPACE + ".findByUserId", userNo);
-    }
+	@Override
+	public List<UserTagMapDTO> findByUserId(Long userNo) {
+		return sqlSessionTemplate.selectList(FIND_USER_TAGS_BY_USER_NO_STATEMENT_ID, userNo);
+	}
 }

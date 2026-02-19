@@ -24,6 +24,11 @@ public class UsersServiceImpl implements UsersService {
 	}
 
 	@Override
+	public String findUserName(int userNo) {
+		return usersDAO.getUserNickname(userNo);
+	}
+
+	@Override
 	public List<UserTagMapDTO> getUserTagsByAuthId(String authId) {
 		return usersDAO.getUserTagsByAuthId(authId);
 	}

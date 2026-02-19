@@ -24,7 +24,7 @@
             login-processing-url="/auth/login"
             username-parameter="username"
             password-parameter="password"
-            default-target-url="/main"
+            default-target-url="/hashTrip"
             authentication-failure-url="/auth/login?error=true" />
 
         <logout

@@ -4,7 +4,7 @@
 <mapper namespace="plan_detail_mapper">
 
 	<select id="getPlanDetailsByPlanNo" parameterType="long"
-		resultType="com.app.dto.PlanDetailDTO">
+		resultType="PlanDetailDTO">
 		SELECT
 			pd.plan_detail_no,
 			pd.plan_no,

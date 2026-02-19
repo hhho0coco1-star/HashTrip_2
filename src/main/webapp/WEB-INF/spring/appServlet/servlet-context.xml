@@ -11,7 +11,7 @@
 	<context:component-scan base-package="com.app.service" />
 	<context:component-scan base-package="com.app.dao" />
 
-	<resources mapping="/css/**" location="classpath:/static/css/" />
+	<resources mapping="/css/**" location="/resources/css/" />
 	<resources mapping="/resources/**" location="/resources/" />
 	
 	<default-servlet-handler />
@@ -21,8 +21,6 @@
 		<beans:property name="suffix" value=".jsp"></beans:property>
 	</beans:bean>
 	
-	<resources location="/resources/" mapping="/resources/**"></resources>
-
 	<beans:bean id="multipartResolver"
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 

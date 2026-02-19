@@ -1,6 +1,6 @@
-package com.app.dao.auth;
+package com.app.dao;
 
-import com.app.dto.UserDTO;
+import com.app.dto.UsersDTO;
 
 public interface AuthDAO {
     boolean existsAuthId(String userId);
@@ -13,13 +13,13 @@ public interface AuthDAO {
 
     Long nextUserAddressNo();
 
-    int insertUser(UserDTO user);
+    int insertUser(UsersDTO user);
 
-    int insertUserAuthentication(UserDTO user, Long userAuthNo, String encodedPassword);
+    int insertUserAuthentication(UsersDTO user, Long userAuthNo, String encodedPassword);
 
-    int insertUserAddress(UserDTO user);
+    int insertUserAddress(UsersDTO user);
 
-    UserDTO findByAuthId(String userId);
+    UsersDTO findByAuthId(String userId);
 
     String findAuthIdByEmail(String email);
 

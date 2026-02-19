@@ -43,7 +43,7 @@ public class AuthController {
     @GetMapping("/login")
     public String loginPage(Authentication authentication) {
         if (isAuthenticated(authentication)) {
-            return "redirect:/main";
+            return "redirect:/hashTrip";
         }
         return "auth/login";
     }

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class MainPageController {
 	 
-	@GetMapping("/hashTrip") // 메인 페이지
+	@GetMapping({"/", "/main", "/hashTrip"}) // 메인 페이지
 	public String hashTag() {
 		return "mainPage/mainPage";
 	}

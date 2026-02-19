@@ -347,14 +347,6 @@ public class PlaceServiceImpl implements PlaceService {
 		return list;
 	}
 
-	private String fetchOperatingHoursRawText(TourResponseDTO.PlaceDto item) {
-		try {
-			return apiRepository.requestApi_detailIntro2OperatingHours(item.getContentid(), item.getContenttypeid());
-		} catch (Exception e) {
-			return "";
-		}
-	}
-
 	private String fetchOperatingHoursRawText(String contentId, String contentTypeId) {
 		try {
 			return apiRepository.requestApi_detailIntro2OperatingHours(contentId, contentTypeId);
