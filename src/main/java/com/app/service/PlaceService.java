@@ -14,6 +14,9 @@ public interface PlaceService {
 
 	public PlaceDTO getPlaceByPlaceNo(Long placeNo) throws Exception;
 
+	public Long resolvePlaceNoForPlan(String placeName, String placeAddress, Double placeLatitude, Double placeLongitude)
+			throws Exception;
+
 	public List<String> getPlaceTagNamesByPlaceNo(Long placeNo) throws Exception;
 
 	public List<String> getPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception;

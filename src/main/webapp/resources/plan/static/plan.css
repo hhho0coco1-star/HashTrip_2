@@ -28,6 +28,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 2px solid #e0f2fe;
@@ -39,8 +40,29 @@ body {
     border: none;
     outline: none;
     flex: 1;
+    min-width: 0;
     padding: 10px;
     color: #1e3a5f;
+}
+
+.plan-list-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.plan-list-link:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
 }
 
 .status-badge {
@@ -81,6 +103,15 @@ body {
 .btn-success:hover { background: #0284c7; }
 .btn-complete { background: #6366f1; color: #fff; }
 .btn-save { background: #64748b; color: #fff; }
+.btn-list {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: #e2e8f0;
+    color: #334155;
+}
+.btn-list:hover { background: #cbd5e1; }
 
 /* 타임라인 */
 .timeline-container {
@@ -306,6 +337,21 @@ body {
     font-weight: bold;
     color: #1e3a5f;
     margin-bottom: 10px;
+}
+
+.place-name.place-link {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+.place-name.place-link:hover {
+    color: #1d4ed8;
 }
 
 .place-datetime {

@@ -18,4 +18,7 @@ public class PlanDetailDTO {
 
     // Joined fields
     private String placeName;
+    private String placeAddress;
+    private Double placeLatitude;
+    private Double placeLongitude;
 }

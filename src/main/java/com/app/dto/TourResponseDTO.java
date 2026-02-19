@@ -37,6 +37,7 @@ public class TourResponseDTO {
         private String cat2;
         private String cat3;
         private String addr1;       // PLACE_ADDRESS
+        private String addr2;       // PLACE_ADDRESS_DETAIL
         private String mapy;        // PLACE_LATITUDE
         private String mapx;        // PLACE_LONGITUDE
         private String tel;         // PLACE_NUMBER

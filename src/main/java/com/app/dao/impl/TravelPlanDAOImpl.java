@@ -15,6 +15,7 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
 	private static final String GET_PUBLIC_TRAVEL_PLANS_STATEMENT_ID = "travel_plan_mapper.getPublicTravelPlans";
 	private static final String GET_TRAVEL_PLAN_BY_ID_STATEMENT_ID = "travel_plan_mapper.getTravelPlanById";
 	private static final String GET_TRAVEL_PLANS_BY_USER_NO_STATEMENT_ID = "travel_plan_mapper.getTravelPlansByUserNo";
+	private static final String UPDATE_TRAVEL_PLAN_STATEMENT_ID = "travel_plan_mapper.updateTravelPlan";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -37,6 +38,11 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
     @Override
     public int insertTravelPlan(TravelPlanDTO travelPlan) {
         return sqlSessionTemplate.insert("travel_plan_mapper.insertTravelPlan", travelPlan);
+    }
+
+    @Override
+    public int updateTravelPlan(TravelPlanDTO travelPlan) {
+        return sqlSessionTemplate.update(UPDATE_TRAVEL_PLAN_STATEMENT_ID, travelPlan);
     }
     
 }

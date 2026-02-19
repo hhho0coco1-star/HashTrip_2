@@ -229,6 +229,74 @@
 		WHERE PLACE_NO = #{placeNo}
 	</select>
 
+	<select id="selectPlaceByContentId" parameterType="string" resultType="PlaceDTO">
+		SELECT
+			PLACE_NO,
+			PLACE_CONTENT_ID,
+			PLACE_NAME,
+			PLACE_CATEGORY,
+			PLACE_ADDRESS,
+			PLACE_LATITUDE,
+			PLACE_LONGITUDE,
+			PLACE_RATING,
+			PLACE_NUMBER,
+			PLACE_THUMBNAIL_URL
+		FROM PLACE
+		WHERE PLACE_CONTENT_ID = #{value}
+		  AND PLACE_CONTENT_ID IS NOT NULL
+		  AND ROWNUM = 1
+	</select>
+
+	<select id="selectPlaceByNameAddress" parameterType="map" resultType="PlaceDTO">
+		SELECT *
+		FROM (
+			SELECT
+				PLACE_NO,
+				PLACE_CONTENT_ID,
+				PLACE_NAME,
+				PLACE_CATEGORY,
+				PLACE_ADDRESS,
+				PLACE_LATITUDE,
+				PLACE_LONGITUDE,
+				PLACE_RATING,
+				PLACE_NUMBER,
+				PLACE_THUMBNAIL_URL
+			FROM PLACE
+			WHERE PLACE_NAME = #{placeName}
+			  AND (
+					(#{placeAddress} IS NOT NULL AND PLACE_ADDRESS = #{placeAddress})
+				 OR (#{placeAddress} IS NULL AND (PLACE_ADDRESS IS NULL OR TRIM(PLACE_ADDRESS) = ''))
+			  )
+			ORDER BY PLACE_NO
+		)
+		WHERE ROWNUM = 1
+	</select>
+
+	<select id="selectPlaceByNameNearLatLng" parameterType="map" resultType="PlaceDTO">
+		SELECT *
+		FROM (
+			SELECT
+				PLACE_NO,
+				PLACE_CONTENT_ID,
+				PLACE_NAME,
+				PLACE_CATEGORY,
+				PLACE_ADDRESS,
+				PLACE_LATITUDE,
+				PLACE_LONGITUDE,
+				PLACE_RATING,
+				PLACE_NUMBER,
+				PLACE_THUMBNAIL_URL
+			FROM PLACE
+			WHERE PLACE_NAME = #{placeName}
+			  AND PLACE_LATITUDE IS NOT NULL
+			  AND PLACE_LONGITUDE IS NOT NULL
+			  AND ABS(PLACE_LATITUDE - #{placeLatitude}) &lt;= 0.0001
+			  AND ABS(PLACE_LONGITUDE - #{placeLongitude}) &lt;= 0.0001
+			ORDER BY PLACE_NO
+		)
+		WHERE ROWNUM = 1
+	</select>
+
 	<select id="selectPlaceTagNamesByPlaceNo" parameterType="long" resultType="string">
 		SELECT TM.TAG_NAME
 		FROM PLACE_TAG_MAP PTM

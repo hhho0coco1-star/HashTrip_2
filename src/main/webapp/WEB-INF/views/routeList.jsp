@@ -25,7 +25,7 @@
         <li><a class="nav-btn" href="${pageContext.request.contextPath}/mypage">마이페이지</a></li>
     </ul>
     <div class="header-right">
-        <button class="btn-login" onclick="location.href='${pageContext.request.contextPath}/login'">로그인</button>
+        <button class="btn-login" onclick="location.href='${pageContext.request.contextPath}/auth/login'">로그인</button>
         <button class="btn-signup" onclick="location.href='${pageContext.request.contextPath}/quiz'">테스트 시작</button>
     </div>
 </nav>
@@ -141,7 +141,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-    // 카테고리 필터 AJAX
+    const csrfHeader = '${_csrf.headerName}';
+    const csrfToken = '${_csrf.token}';
+
     function filterRoutes(category, btn) {
         document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -151,7 +153,6 @@
             .catch(() => showToast('오류가 발생했어요'));
     }
 
-    // AJAX 응답으로 리스트 재생성 (JS 템플릿 리터럴 활용)
     function renderRouteGrid(routes) {
         const grid = document.getElementById('route-grid');
         if (!routes || routes.length === 0) {
@@ -168,7 +169,7 @@
             const type = typeMap[route.typeId] || {};
             const sim = route.matchScore;
             const barClr = sim >= 80 ? 'var(--green)' : 'var(--primary-blue)';
-            
+
             return `
             <div class="route-card" style="cursor:pointer" onclick="location.href='${pageContext.request.contextPath}/routes/\${route.id}'">
                 <div class="route-head">
@@ -187,7 +188,7 @@
                 </div>
                 <div class="route-foot">
                     <div class="route-stats">
-                        <div class="route-stat">🔖 \${route.savedCount}</div>
+                        <div class="route-stat">💾 \${route.savedCount}</div>
                     </div>
                     <button class="btn-save-route" onclick="event.stopPropagation(); saveRoute(\${route.id}, this)">저장</button>
                 </div>
@@ -195,18 +196,51 @@
         }).join('');
     }
 
-    function saveRoute(routeId, btn) {
-        fetch('${pageContext.request.contextPath}/routes/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'routeId=' + routeId
-        })
-        .then(res => res.json())
-        .then(data => {
-            showToast(data.message || '저장 완료!');
-            btn.textContent = '저장됨 ✓';
-            btn.disabled = true;
-        });
+    async function saveRoute(routeId, btn) {
+        const headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+        if (csrfHeader && csrfToken) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        try {
+            const response = await fetch('${pageContext.request.contextPath}/routes/save', {
+                method: 'POST',
+                headers,
+                body: 'routeId=' + encodeURIComponent(routeId)
+            });
+
+            const text = await response.text();
+            let data = null;
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (e) {
+                data = {success: false, message: '서버 응답을 처리하지 못했습니다.'};
+            }
+
+            if (data && data.loginRequired) {
+                showToast(data.message || '로그인이 필요합니다.');
+                setTimeout(() => {
+                    const redirectUrl = data.redirectUrl || '/auth/login';
+                    if (redirectUrl.startsWith('http')) {
+                        location.href = redirectUrl;
+                    } else {
+                        location.href = '${pageContext.request.contextPath}' + redirectUrl;
+                    }
+                }, 500);
+                return;
+            }
+
+            if (response.ok && data && data.success) {
+                showToast(data.message || '저장되었습니다.');
+                btn.textContent = '저장됨';
+                btn.disabled = true;
+                return;
+            }
+
+            showToast(data && data.message ? data.message : '저장 중 오류가 발생했습니다.');
+        } catch (e) {
+            showToast('저장 중 오류가 발생했습니다.');
+        }
     }
 
     function showToast(msg) {
@@ -223,5 +257,3 @@
 
 </body>
 </html>
-
-
