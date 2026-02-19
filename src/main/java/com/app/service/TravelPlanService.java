@@ -11,4 +11,6 @@ public interface TravelPlanService {
     TravelPlanDTO findTravelPlan(Long planNo);
 
     List<TravelPlanDTO> findUserTravelPlans(Long userNo);
+
+	int insertTravelPlan(TravelPlanDTO travelPlan);
 }

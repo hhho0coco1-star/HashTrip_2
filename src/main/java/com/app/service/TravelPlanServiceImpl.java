@@ -28,4 +28,9 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     public List<TravelPlanDTO> findUserTravelPlans(Long userNo) {
         return travelPlanDAO.getTravelPlansByUserNo(userNo);
     }
+    
+    @Override
+    public int insertTravelPlan(TravelPlanDTO travelPlan) {
+    	        return travelPlanDAO.insertTravelPlan(travelPlan);
+    }
 }

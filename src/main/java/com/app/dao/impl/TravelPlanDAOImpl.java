@@ -29,4 +29,10 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
     public List<TravelPlanDTO> getTravelPlansByUserNo(Long userNo) {
         return sqlSessionTemplate.selectList("travel_plan_mapper.getTravelPlansByUserNo", userNo);
     }
+    
+    @Override
+    public int insertTravelPlan(TravelPlanDTO travelPlan) {
+        return sqlSessionTemplate.insert("travel_plan_mapper.insertTravelPlan", travelPlan);
+    }
+    
 }

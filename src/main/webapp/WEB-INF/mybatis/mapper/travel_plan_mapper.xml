@@ -165,5 +165,14 @@
 		WHERE tp.user_no = #{userNo}
 		ORDER BY tp.plan_no DESC
 	</select>
+	
+	<insert id="insertTravelPlan" parameterType="com.app.dto.TravelPlanDTO">
+		INSERT INTO TRAVEL_PLANS (
+			PLAN_NO, USER_NO, PLAN_TITLE, PLAN_IS_PUBLIC, PLAN_STATUS, PLAN_START_DATE, PLAN_END_DATE
+		) VALUES (
+			SEQ_PLAN_NO.NEXTVAL, #{userNo}, #{planTitle}, #{planIsPublic}, #{planStatus},
+        #{planStartDate}, #{planEndDate}
+		)
+	</insert>
 
 </mapper>

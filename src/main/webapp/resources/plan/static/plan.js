@@ -84,7 +84,7 @@ function renderPlaces() {
 
 		// 완료 버튼 (기록 중 + 현재 장소일 때만)
 		const completeBtn = (currentStatus === TripStatus.RECORDING && index === currentPlaceIndex)
-			? `<button class="complete-place-btn" onclick="completeCurrentPlace()">✓ 방문 완료</button>`
+			? `<button type="button" class="complete-place-btn" onclick="completeCurrentPlace()">✓ 방문 완료</button>`
 			: '';
 
 		// 완료 상태에서도 사진/코멘트 수정 가능 여부
@@ -123,7 +123,7 @@ function renderPlaces() {
             ${isEditable ? renderRecordingFields(place, index) : ''}
             ${completeBtn}
             ${currentStatus !== TripStatus.COMPLETE ?
-				`<button class="delete-place" onclick="deletePlace(${index})">×</button>` : ''}
+				`<button type="button" class="delete-place" onclick="deletePlace(${index})">×</button>` : ''}
         `;
 
 		placeList.appendChild(card);
@@ -159,14 +159,14 @@ function renderRecordingFields(place, index) {
             <div class="photo-upload">
                 <input type="file" id="photo-${place.id}" multiple accept="image/*"
                        onchange="handlePhotoUpload(${place.id}, this)" style="display:none;">
-                <button class="upload-btn" onclick="triggerPhotoUpload(${place.id})">
+                <button type="button" class="upload-btn" onclick="triggerPhotoUpload(${place.id})">
                     <i class="fas fa-camera"></i> 사진 ${isComplete ? '수정' : '추가'}
                 </button>
                 <div class="photo-preview">
                     ${(place.photos || []).map((photo, photoIndex) => `
                         <div class="photo-item">
                             <img src="${photo}" alt="사진">
-                            <button class="delete-photo-btn" onclick="deletePhoto(${place.id}, ${photoIndex})">×</button>
+                            <button type="button" class="delete-photo-btn" onclick="deletePhoto(${place.id}, ${photoIndex})">×</button>
                         </div>
                     `).join('')}
                 </div>
