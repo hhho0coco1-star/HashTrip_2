@@ -18,25 +18,27 @@
 </head>
 <body>
 	<form action="/plan" method="post">
-	<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+		<input type="hidden" name="${_csrf.parameterName}"
+			value="${_csrf.token}" />
 		<div class="container">
 			<!-- 헤더 -->
 			<div class="plan-header">
-				<input type="text" class="trip-title-input" id="tripTitle" name="planTitle"
-					placeholder="여행 제목을 입력하세요"> <span class="status-badge"
-					id="statusBadge"  name="planStatus">계획 중</span>
+				<input type="text" class="trip-title-input" id="tripTitle"
+					name="planTitle" placeholder="여행 제목을 입력하세요"> <span
+					class="status-badge" id="statusBadge">계획 중</span> 
+					<input type="hidden" id="planStatus" name="planStatus" value="PLANNING">
 			</div>
 
 			<!-- 여행 기간 섹션 추가 -->
 			<div class="trip-period-section">
 				<div class="period-row">
 					<div class="period-item">
-						<label>🛫 여행 시작일</label> <input type="date" id="tripStartDate" name="planStartDate"
-							onchange="updateTripPeriod()">
+						<label>🛫 여행 시작일</label> <input type="date" id="tripStartDate"
+							name="planStartDate" onchange="updateTripPeriod()">
 					</div>
 					<div class="period-item">
-						<label>🛬 여행 종료일</label> <input type="date" id="tripEndDate" name="planEndDate"
-							onchange="updateTripPeriod()">
+						<label>🛬 여행 종료일</label> <input type="date" id="tripEndDate"
+							name="planEndDate" onchange="updateTripPeriod()">
 					</div>
 					<div class="period-summary" id="periodSummary">
 						<!-- 여행 기간 요약 표시 -->
@@ -96,12 +98,14 @@
 			<!-- 하단 버튼 -->
 			<div class="action-buttons">
 				<div class="visibility-toggle">
-					<label> <input type="checkbox" id="isPublic" name="planIsPublic" value="Y"> 공개
+					<label> <input type="checkbox" id="isPublic"
+						name="planIsPublic" value="Y"> 공개
 					</label>
 				</div>
-				<button type="button" id="startTripBtn" class="btn btn-success">여행 시작!</button>
-				<button type="button" id="completeTripBtn" class="btn btn-complete hidden">여행
-					완료</button>
+				<button type="button" id="startTripBtn" class="btn btn-success">여행
+					시작!</button>
+				<button type="button" id="completeTripBtn"
+					class="btn btn-complete hidden">여행 완료</button>
 				<button id="saveBtn" class="btn btn-save">저장</button>
 			</div>
 		</div>
@@ -124,7 +128,8 @@
 					<div id="searchResults" class="search-results"></div>
 				</div>
 				<div class="modal-footer">
-					<button type="button" id="confirmPlace" class="btn btn-primary">선택 완료</button>
+					<button type="button" id="confirmPlace" class="btn btn-primary">선택
+						완료</button>
 				</div>
 			</div>
 		</div>

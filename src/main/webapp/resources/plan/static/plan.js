@@ -220,6 +220,7 @@ function startTrip() {
 	}
 
 	currentStatus = TripStatus.RECORDING;
+	document.getElementById('planStatus').value = 'RECORDING';
 	currentPlaceIndex = 0;
 	updateUI();
 	renderPlaces();
@@ -228,6 +229,7 @@ function startTrip() {
 // 여행 완료
 function completeTrip() {
 	currentStatus = TripStatus.COMPLETE;
+	document.getElementById('planStatus').value = 'COMPLETED';
 	updateUI();
 	renderPlaces();
 }
@@ -247,8 +249,8 @@ function updateUI() {
 			startTripBtn.classList.remove('hidden');
 			completeTripBtn.classList.add('hidden');
 			reviewSection.classList.add('hidden');
-			if (tripStartDateInput) tripStartDateInput.disabled = false;
-			if (tripEndDateInput) tripEndDateInput.disabled = false;
+			if (tripStartDateInput) tripStartDateInput.readOnly = false;
+			if (tripEndDateInput) tripEndDateInput.readOnly = false;
 			break;
 		case TripStatus.RECORDING:
 			statusBadge.textContent = '기록 중';
@@ -258,8 +260,8 @@ function updateUI() {
 			startTripBtn.classList.add('hidden');
 			completeTripBtn.classList.remove('hidden');
 			reviewSection.classList.remove('hidden');
-			if (tripStartDateInput) tripStartDateInput.disabled = true;
-			if (tripEndDateInput) tripEndDateInput.disabled = true;
+			if (tripStartDateInput) tripStartDateInput.readOnly = true;
+			if (tripEndDateInput) tripEndDateInput.readOnly = true;
 			break;
 		case TripStatus.COMPLETE:
 			statusBadge.textContent = '완료';
@@ -268,8 +270,8 @@ function updateUI() {
 			startTripBtn.classList.add('hidden');
 			completeTripBtn.classList.add('hidden');
 			reviewSection.classList.remove('hidden');
-			if (tripStartDateInput) tripStartDateInput.disabled = true;
-			if (tripEndDateInput) tripEndDateInput.disabled = true;
+			if (tripStartDateInput) tripStartDateInput.readOnly = true;
+			if (tripEndDateInput) tripEndDateInput.readOnly = true;
 			break;
 	}
 
@@ -590,6 +592,7 @@ function formatDate(dateStr) {
 
 // 저장
 function savePlan() {
+		
 	var totalStarsEl = document.getElementById('totalStars');
 	var totalReviewEl = document.getElementById('totalReview');
 
