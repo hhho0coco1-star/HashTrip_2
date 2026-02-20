@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -27,7 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.app.dto.UserDTO;
+import com.app.dto.UsersDTO;
 import com.app.service.LoginService;
 import com.app.service.impl.SocialUserProvisionService;
 
@@ -61,6 +64,14 @@ public class AuthController {
     @GetMapping("/signup")
     public String signupPage() {
         return "auth/signup";
+    }
+
+    @GetMapping("/logout")
+    public String logoutViaGet(HttpServletRequest request,
+                               HttpServletResponse response,
+                               Authentication authentication) {
+        new SecurityContextLogoutHandler().logout(request, response, authentication);
+        return "redirect:/auth/login?logout=true";
     }
 
     @PostMapping("/signup")
@@ -140,7 +151,7 @@ public class AuthController {
             return "redirect:/main";
         }
 
-        UserDTO user = loginService.findByAuthId(authId);
+        UsersDTO user = loginService.findByAuthId(authId);
         if (user != null) {
             model.addAttribute("userPhoneNumber", user.getUserPhoneNumber());
             model.addAttribute("birthDate", formatBirthDateForInput(user.getUserRegistrationNo()));
@@ -171,12 +182,12 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             redirectAttributes.addFlashAttribute("userPhoneNumber", userPhoneNumber);
             redirectAttributes.addFlashAttribute("birthDate", birthDate);
-            return "redirect:/mypage/additional-info";
+            return "redirect:/auth/social/additional-info";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "추가 정보 저장 중 오류가 발생했습니다.");
             redirectAttributes.addFlashAttribute("userPhoneNumber", userPhoneNumber);
             redirectAttributes.addFlashAttribute("birthDate", birthDate);
-            return "redirect:/mypage/additional-info";
+            return "redirect:/auth/social/additional-info";
         }
     }
 

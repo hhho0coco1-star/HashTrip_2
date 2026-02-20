@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.app.dao.auth.AuthDAO;
-import com.app.dto.UserDTO;
+import com.app.dao.AuthDAO;
+import com.app.dto.UsersDTO;
 
 @Service
 public class SocialUserProvisionService {
@@ -57,7 +57,7 @@ public class SocialUserProvisionService {
                 extractNickname(normalizedProvider, safeAttributes),
                 userName), NICKNAME_MAX_LENGTH);
 
-        UserDTO user = new UserDTO();
+        UsersDTO user = new UsersDTO();
         user.setUserNo(authDAO.nextUserNo());
         user.setUserType(SOCIAL_USER_TYPE);
         user.setUserStatus(ACTIVE_STATUS);

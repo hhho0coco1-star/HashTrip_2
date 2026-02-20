@@ -22,7 +22,7 @@ import com.app.service.impl.SocialUserProvisionService;
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final String DEFAULT_TARGET_URL = "/main";
-    private static final String SOCIAL_ADDITIONAL_INFO_URL = "/mypage/additional-info";
+    private static final String SOCIAL_ADDITIONAL_INFO_URL = "/auth/social/additional-info";
 
     private final LoginService loginService;
     private final SocialUserProvisionService socialUserProvisionService;

@@ -14,6 +14,7 @@
 	<resources mapping="/css/**" location="/resources/css/" />
 	<resources mapping="/js/**" location="/resources/js/" />
 	<resources mapping="/resources/**" location="/resources/" />
+	<resources mapping="/images/**" location="/resources/images/" />
 	
 	<default-servlet-handler />
 

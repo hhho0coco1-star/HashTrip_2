@@ -6,12 +6,14 @@
 <meta charset="UTF-8">
 <title>로그인</title>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/auth.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css" rel="stylesheet">
 </head>
 <body>
-
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
+    <main class="auth-page">
     <div class="auth-container">
         <div class="auth-logo">
             <h1>#trip</h1>
@@ -67,19 +69,19 @@
         <div class="social-login">
             <a class="social-btn google" href="${pageContext.request.contextPath}/oauth2/authorization/google">
                 <span class="social-content">
-                    <img class="social-icon" src="${pageContext.request.contextPath}/images/social/google.svg" alt="Google">
+                    <img class="social-icon" src="<c:url value='/resources/images/social/google.svg' />" alt="Google">
                     <span class="social-text">구글로 시작하기</span>
                 </span>
             </a>
             <a class="social-btn kakao" href="${pageContext.request.contextPath}/oauth2/authorization/kakao">
                 <span class="social-content">
-                    <img class="social-icon" src="${pageContext.request.contextPath}/images/social/kakao.svg" alt="Kakao">
+                    <img class="social-icon" src="<c:url value='/resources/images/social/kakao.svg' />" alt="Kakao">
                     <span class="social-text">카카오로 시작하기</span>
                 </span>
             </a>
             <a class="social-btn naver" href="${pageContext.request.contextPath}/oauth2/authorization/naver">
                 <span class="social-content">
-                    <img class="social-icon" src="${pageContext.request.contextPath}/images/social/naver.svg" alt="Naver">
+                    <img class="social-icon" src="<c:url value='/resources/images/social/naver.svg' />" alt="Naver">
                     <span class="social-text">네이버로 시작하기</span>
                 </span>
             </a>
@@ -91,6 +93,7 @@
             <a href="${pageContext.request.contextPath}/auth/find-password">비밀번호 찾기</a>
         </div>
     </div>
-
+    </main>
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 </body>
 </html>

@@ -6,9 +6,11 @@
 <meta charset="UTF-8">
 <title>추가 정보 입력</title>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/css/auth.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 </head>
 <body>
-
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
+    <main class="auth-page">
     <div class="auth-container">
         <div class="auth-logo">
             <h1>추가 정보 입력</h1>
@@ -19,7 +21,7 @@
             <p class="auth-message error">${errorMessage}</p>
         </c:if>
 
-        <form action="${pageContext.request.contextPath}/mypage/additional-info" method="post">
+        <form action="${pageContext.request.contextPath}/auth/social/additional-info" method="post">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="input-group">
@@ -36,6 +38,7 @@
             <button type="submit" class="auth-btn">저장하기</button>
         </form>
     </div>
-
+    </main>
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 </body>
 </html>

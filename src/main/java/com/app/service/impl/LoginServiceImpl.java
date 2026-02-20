@@ -154,7 +154,7 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public boolean isSocialUserMissingAdditionalInfo(String userId) {
-        UserDTO user = findByAuthId(userId);
+        UsersDTO user = findByAuthId(userId);
         if (user == null) {
             return false;
         }
@@ -181,7 +181,7 @@ public class LoginServiceImpl implements LoginService {
             throw new IllegalArgumentException("연락처와 생년월일은 필수 입력입니다.");
         }
 
-        UserDTO user = findByAuthId(userId.trim());
+        UsersDTO user = findByAuthId(userId.trim());
         if (user == null) {
             throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
         }
