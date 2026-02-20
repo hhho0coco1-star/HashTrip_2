@@ -27,7 +27,7 @@
 				<p id="my-desc" class="profile-desc">태그를 추가/삭제하면 여행 매칭 추천에 반영됩니다.</p>
 				<p class="profile-sub"><c:out value="${currentAuthId}" /></p>
 				<div class="profile-actions">
-					<button class="profile-action-btn" type="button">회원정보 수정</button>
+					<a class="profile-action-btn" href="${pageContext.request.contextPath}/mypage/edit">회원정보 수정</a>
 					<button class="profile-action-btn danger" type="button">회원 탈퇴</button>
 				</div>
 			</section>

@@ -9,6 +9,10 @@ import com.app.dto.UsersDTO;
 public interface UsersService {
 	UsersDTO getUserByAuthId(String authId);
 
+	UsersDTO updateProfileByAuthId(String authId, UsersDTO users);
+
+	void changePasswordByAuthId(String authId, String currentPassword, String newPassword);
+
 	String findUserName(int userNo);
 
 	List<UserTagMapDTO> getUserTagsByAuthId(String authId);

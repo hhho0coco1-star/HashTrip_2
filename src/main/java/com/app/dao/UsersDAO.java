@@ -20,4 +20,12 @@ public interface UsersDAO {
 	int insertUserTagByAuthId(String authId, String tagCode, String questionId);
 
 	int deleteUserTagByAuthId(String authId, String tagCode);
+
+	int updateUserProfileByAuthId(String authId, UsersDTO usersDTO);
+
+	int upsertUserAddressByAuthId(String authId, UsersDTO usersDTO);
+
+	String findAuthPasswordByAuthId(String authId);
+
+	int updateAuthPasswordByAuthId(String authId, String encodedPassword);
 }
