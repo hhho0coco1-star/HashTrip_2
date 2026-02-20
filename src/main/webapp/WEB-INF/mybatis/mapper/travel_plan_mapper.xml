@@ -190,4 +190,10 @@
 		  AND USER_NO = #{userNo}
 	</update>
 
+	<delete id="deleteTravelPlanByOwner" parameterType="map">
+		DELETE FROM TRAVEL_PLANS
+		WHERE PLAN_NO = #{planNo}
+		  AND USER_NO = #{userNo}
+	</delete>
+
 </mapper>

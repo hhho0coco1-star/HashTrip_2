@@ -12,6 +12,7 @@
 	<context:component-scan base-package="com.app.dao" />
 
 	<resources mapping="/css/**" location="/resources/css/" />
+	<resources mapping="/js/**" location="/resources/js/" />
 	<resources mapping="/resources/**" location="/resources/" />
 	
 	<default-servlet-handler />
@@ -27,7 +28,7 @@
 
 	<annotation-driven>						
 		<message-converters>					
-			<!-- @ResponseBody로 String 처리할때 한글처리 -->				
+			<!-- @ResponseBody濡?String 泥섎━?좊븣 ?쒓?泥섎━ -->				
 			<beans:bean	class="org.springframework.http.converter.StringHttpMessageConverter">			
 				<beans:property name="supportedMediaTypes">			
 					<beans:list>		

@@ -1,6 +1,7 @@
 package com.app.dao.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
 	private static final String GET_TRAVEL_PLAN_BY_ID_STATEMENT_ID = "travel_plan_mapper.getTravelPlanById";
 	private static final String GET_TRAVEL_PLANS_BY_USER_NO_STATEMENT_ID = "travel_plan_mapper.getTravelPlansByUserNo";
 	private static final String UPDATE_TRAVEL_PLAN_STATEMENT_ID = "travel_plan_mapper.updateTravelPlan";
+    private static final String DELETE_TRAVEL_PLAN_BY_OWNER_STATEMENT_ID = "travel_plan_mapper.deleteTravelPlanByOwner";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -43,6 +45,13 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
     @Override
     public int updateTravelPlan(TravelPlanDTO travelPlan) {
         return sqlSessionTemplate.update(UPDATE_TRAVEL_PLAN_STATEMENT_ID, travelPlan);
+    }
+
+    @Override
+    public int deleteTravelPlanByOwner(Long planNo, Long userNo) {
+        return sqlSessionTemplate.delete(
+                DELETE_TRAVEL_PLAN_BY_OWNER_STATEMENT_ID,
+                Map.of("planNo", planNo, "userNo", userNo));
     }
     
 }

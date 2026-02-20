@@ -11,7 +11,7 @@
 			PLAN_DETAIL_NO, PLAN_NO, PLACE_NO, USER_NO, PLAN_VISIT_ORDER, PLAN_MENO, DETAIL_START_DATE, DETAIL_END_DATE
 		) VALUES (
 			#{planDetailNo}, #{planNo}, #{placeNo}, #{userNo}, #{planVisitOrder}, #{planMeno},
-			#{detailStartDate}, #{detailEndDate}
+			#{detailStartDate,jdbcType=TIMESTAMP}, #{detailEndDate,jdbcType=TIMESTAMP}
 		)
 	</insert>
 

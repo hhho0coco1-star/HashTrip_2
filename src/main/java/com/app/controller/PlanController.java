@@ -1,8 +1,11 @@
 package com.app.controller;
 
 import java.io.IOException;
-import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +39,17 @@ public class PlanController {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final int PLAN_MEMO_MAX_LENGTH = 1000;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String MSG_LOGIN_REQUIRED = "\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
+    private static final String MSG_PLAN_NOT_FOUND = "\uD574\uB2F9 \uC77C\uC815\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_PLAN_FORBIDDEN = "\uD574\uB2F9 \uC77C\uC815\uC744 \uC218\uC815\uD560 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_PLAN_SAVE_FAILED = "\uC77C\uC815 \uC800\uC7A5 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_PLAN_UPDATE_FAILED = "\uC77C\uC815 \uC218\uC815 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_PLAN_DELETE_FAILED = "\uC77C\uC815 \uC0AD\uC81C \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_TITLE_REQUIRED = "\uC77C\uC815 \uC81C\uBAA9\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.";
+    private static final String MSG_DETAIL_REQUIRED = "\uC77C\uC815 \uC7A5\uC18C\uB97C \uCD5C\uC18C 1\uAC1C \uC774\uC0C1 \uCD94\uAC00\uD574\uC8FC\uC138\uC694.";
+    private static final String MSG_DETAIL_JSON_INVALID = "\uC77C\uC815 \uC0C1\uC138 \uB370\uC774\uD130 \uCC98\uB9AC \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.";
+    private static final String MSG_PLACE_RESOLVE_FAILED = "\uC7A5\uC18C \uC815\uBCF4 \uC870\uD68C \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.";
 
     @Autowired
     private TravelPlanService planService;
@@ -53,7 +67,7 @@ public class PlanController {
     public String planList(Authentication authentication, RedirectAttributes redirectAttributes, Model model) {
         UsersDTO currentUser = resolveCurrentUser(authentication);
         if (currentUser == null || currentUser.getUserNo() == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "로그인이 필요합니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
             return "redirect:/auth/login";
         }
 
@@ -65,7 +79,7 @@ public class PlanController {
     public String planCreatePage(Authentication authentication, RedirectAttributes redirectAttributes, Model model) {
         UsersDTO currentUser = resolveCurrentUser(authentication);
         if (currentUser == null || currentUser.getUserNo() == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "로그인이 필요합니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
             return "redirect:/auth/login";
         }
 
@@ -86,22 +100,21 @@ public class PlanController {
                                Model model) {
         UsersDTO currentUser = resolveCurrentUser(authentication);
         if (currentUser == null || currentUser.getUserNo() == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "로그인이 필요합니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
             return "redirect:/auth/login";
         }
 
         TravelPlanDTO plan = planService.findTravelPlan(planNo);
         if (plan == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "일정을 찾을 수 없습니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_PLAN_NOT_FOUND);
             return "redirect:/plan";
         }
         if (plan.getUserNo() == null || !currentUser.getUserNo().equals(plan.getUserNo())) {
-            redirectAttributes.addFlashAttribute("planSaveError", "본인 일정만 수정할 수 있습니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_PLAN_FORBIDDEN);
             return "redirect:/plan";
         }
 
-        List<PlanDetailViewInput> detailViewList = toPlanDetailViewInputs(
-                planDetailService.findPlanDetails(planNo));
+        List<PlanDetailViewInput> detailViewList = toPlanDetailViewInputs(planDetailService.findPlanDetails(planNo));
 
         model.addAttribute("editMode", true);
         model.addAttribute("plan", plan);
@@ -116,7 +129,7 @@ public class PlanController {
                              RedirectAttributes redirectAttributes) {
         UsersDTO usersDTO = resolveCurrentUser(authentication);
         if (usersDTO == null || usersDTO.getUserNo() == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "로그인이 필요합니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
             return "redirect:/auth/login";
         }
 
@@ -127,13 +140,13 @@ public class PlanController {
             sanitizePlanHeader(travelPlanDTO);
 
             Long createdPlanNo = planService.insertTravelPlanWithDetails(travelPlanDTO, planDetails);
-            redirectAttributes.addFlashAttribute("planSaveMessage", "일정이 저장되었습니다.");
+            redirectAttributes.addFlashAttribute("planSaveMessage", "\uC77C\uC815\uC774 \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
             return "redirect:/plan/" + createdPlanNo + "/edit";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("planSaveError", e.getMessage());
             return "redirect:/plan/new";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("planSaveError", "일정 저장 중 오류가 발생했습니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_PLAN_SAVE_FAILED);
             return "redirect:/plan/new";
         }
     }
@@ -146,7 +159,7 @@ public class PlanController {
                              RedirectAttributes redirectAttributes) {
         UsersDTO usersDTO = resolveCurrentUser(authentication);
         if (usersDTO == null || usersDTO.getUserNo() == null) {
-            redirectAttributes.addFlashAttribute("planSaveError", "로그인이 필요합니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
             return "redirect:/auth/login";
         }
 
@@ -158,15 +171,36 @@ public class PlanController {
             sanitizePlanHeader(travelPlanDTO);
 
             planService.updateTravelPlanWithDetails(travelPlanDTO, planDetails, usersDTO.getUserNo());
-            redirectAttributes.addFlashAttribute("planSaveMessage", "일정이 수정되었습니다.");
+            redirectAttributes.addFlashAttribute("planSaveMessage", "\uC77C\uC815\uC774 \uC218\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
             return "redirect:/plan/" + planNo + "/edit";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("planSaveError", e.getMessage());
             return "redirect:/plan/" + planNo + "/edit";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("planSaveError", "일정 수정 중 오류가 발생했습니다.");
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_PLAN_UPDATE_FAILED);
             return "redirect:/plan/" + planNo + "/edit";
         }
+    }
+
+    @PostMapping("/plan/{planNo}/delete")
+    public String deletePlan(@PathVariable Long planNo,
+                             Authentication authentication,
+                             RedirectAttributes redirectAttributes) {
+        UsersDTO usersDTO = resolveCurrentUser(authentication);
+        if (usersDTO == null || usersDTO.getUserNo() == null) {
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_LOGIN_REQUIRED);
+            return "redirect:/auth/login";
+        }
+
+        try {
+            planService.deleteTravelPlan(planNo, usersDTO.getUserNo());
+            redirectAttributes.addFlashAttribute("planSaveMessage", "\uC77C\uC815\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("planSaveError", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("planSaveError", MSG_PLAN_DELETE_FAILED);
+        }
+        return "redirect:/plan";
     }
 
     private UsersDTO resolveCurrentUser(Authentication authentication) {
@@ -179,7 +213,7 @@ public class PlanController {
 
     private void sanitizePlanHeader(TravelPlanDTO travelPlanDTO) {
         if (!StringUtils.hasText(travelPlanDTO.getPlanTitle())) {
-            throw new IllegalArgumentException("일정 제목을 입력해 주세요.");
+            throw new IllegalArgumentException(MSG_TITLE_REQUIRED);
         }
 
         travelPlanDTO.setPlanTitle(travelPlanDTO.getPlanTitle().trim());
@@ -196,7 +230,7 @@ public class PlanController {
         List<PlanDetailInput> detailInputs = parsePlanDetailsJson(planDetailsJson);
         List<PlanDetailDTO> planDetails = toPlanDetailDTOs(detailInputs, userNo);
         if (planDetails.isEmpty()) {
-            throw new IllegalArgumentException("일정에 장소를 최소 1개 이상 추가해 주세요.");
+            throw new IllegalArgumentException(MSG_DETAIL_REQUIRED);
         }
         return planDetails;
     }
@@ -205,10 +239,11 @@ public class PlanController {
         if (!StringUtils.hasText(planDetailsJson)) {
             return Collections.emptyList();
         }
+
         try {
             return OBJECT_MAPPER.readValue(planDetailsJson, new TypeReference<List<PlanDetailInput>>() {});
         } catch (IOException e) {
-            throw new IllegalArgumentException("일정 상세 데이터 형식이 올바르지 않습니다.");
+            throw new IllegalArgumentException(MSG_DETAIL_JSON_INVALID);
         }
     }
 
@@ -227,8 +262,8 @@ public class PlanController {
             Double placeLatitude = input.getPlaceLatitude();
             Double placeLongitude = input.getPlaceLongitude();
             String memo = normalizeText(input.getMemo());
-            Date startDate = parseSqlDate(input.getDate());
-            Date endDate = parseSqlDate(input.getEndDate());
+            Timestamp startDate = parseSqlTimestamp(input.getDate(), input.getTime());
+            Timestamp endDate = parseSqlTimestamp(input.getEndDate(), input.getEndTime());
 
             if (placeNo == null && !StringUtils.hasText(placeAddress) && StringUtils.hasText(memo)) {
                 String inferredAddress = extractAddressFromMemo(memo);
@@ -265,7 +300,7 @@ public class PlanController {
         try {
             return placeService.resolvePlaceNoForPlan(placeName, placeAddress, placeLatitude, placeLongitude);
         } catch (Exception e) {
-            throw new IllegalArgumentException("장소 정보를 저장하는 중 오류가 발생했습니다.");
+            throw new IllegalArgumentException(MSG_PLACE_RESOLVE_FAILED);
         }
     }
 
@@ -347,8 +382,10 @@ public class PlanController {
             viewInput.setPlaceAddress(placeAddress);
             viewInput.setPlaceLatitude(placeLatitude);
             viewInput.setPlaceLongitude(placeLongitude);
-            viewInput.setDate(detail.getDetailStartDate() == null ? "" : detail.getDetailStartDate().toString());
-            viewInput.setEndDate(detail.getDetailEndDate() == null ? "" : detail.getDetailEndDate().toString());
+            viewInput.setDate(toDateString(detail.getDetailStartDate()));
+            viewInput.setTime(toTimeString(detail.getDetailStartDate()));
+            viewInput.setEndDate(toDateString(detail.getDetailEndDate()));
+            viewInput.setEndTime(toTimeString(detail.getDetailEndDate()));
             viewInput.setMemo(memo);
             result.add(viewInput);
         }
@@ -371,16 +408,39 @@ public class PlanController {
         return placeNo;
     }
 
-    private Date parseSqlDate(String dateValue) {
+    private Timestamp parseSqlTimestamp(String dateValue, String timeValue) {
         if (!StringUtils.hasText(dateValue)) {
             return null;
         }
+
         try {
             LocalDate localDate = LocalDate.parse(dateValue.trim());
-            return Date.valueOf(localDate);
+            LocalTime localTime = LocalTime.MIDNIGHT;
+
+            if (StringUtils.hasText(timeValue)) {
+                localTime = LocalTime.parse(timeValue.trim());
+            }
+
+            return Timestamp.valueOf(LocalDateTime.of(localDate, localTime));
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    private String toDateString(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+        return timestamp.toLocalDateTime().toLocalDate().toString();
+    }
+
+    private String toTimeString(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        LocalTime localTime = timestamp.toLocalDateTime().toLocalTime().withSecond(0).withNano(0);
+        return localTime.format(TIME_FORMATTER);
     }
 
     private String normalizeText(String value) {
@@ -391,6 +451,7 @@ public class PlanController {
         if (!StringUtils.hasText(memo)) {
             return null;
         }
+
         int newlineIndex = memo.indexOf('\n');
         String firstLine = newlineIndex >= 0 ? memo.substring(0, newlineIndex).trim() : memo.trim();
         if (!looksLikeAddress(firstLine)) {
@@ -403,10 +464,12 @@ public class PlanController {
         if (!StringUtils.hasText(value)) {
             return null;
         }
+
         int newlineIndex = value.indexOf('\n');
         if (newlineIndex < 0) {
             return null;
         }
+
         String remaining = value.substring(newlineIndex + 1).trim();
         return StringUtils.hasText(remaining) ? remaining : null;
     }
@@ -415,24 +478,15 @@ public class PlanController {
         if (!StringUtils.hasText(value)) {
             return false;
         }
+
         String text = value.trim();
         if (text.length() < 5) {
             return false;
         }
-        if (text.matches(".*\\d+.*")) {
-            return true;
-        }
-        return text.contains("로")
-                || text.contains("길")
-                || text.contains("동")
-                || text.contains("읍")
-                || text.contains("면")
-                || text.contains("리")
-                || text.contains("시")
-                || text.contains("구")
-                || text.contains("군");
-    }
 
+        // Basic fallback: addresses usually include at least one number.
+        return text.matches(".*\\d+.*");
+    }
     private String truncate(String value, int maxLength) {
         if (value == null || value.length() <= maxLength) {
             return value;
@@ -554,7 +608,9 @@ public class PlanController {
         private Double placeLatitude;
         private Double placeLongitude;
         private String date;
+        private String time;
         private String endDate;
+        private String endTime;
         private String memo;
 
         public Long getPlaceNo() {
@@ -605,12 +661,28 @@ public class PlanController {
             this.date = date;
         }
 
+        public String getTime() {
+            return time;
+        }
+
+        public void setTime(String time) {
+            this.time = time;
+        }
+
         public String getEndDate() {
             return endDate;
         }
 
         public void setEndDate(String endDate) {
             this.endDate = endDate;
+        }
+
+        public String getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(String endTime) {
+            this.endTime = endTime;
         }
 
         public String getMemo() {

@@ -24,4 +24,6 @@ public interface TravelPlanService {
     int appendPlanDetailsToExistingPlan(Long sourcePlanNo, Long targetPlanNo, Long targetUserNo);
 
     int appendSinglePlanDetailToExistingPlan(Long sourcePlanNo, Long sourcePlanDetailNo, Long targetPlanNo, Long targetUserNo);
+
+    void deleteTravelPlan(Long planNo, Long ownerUserNo);
 }

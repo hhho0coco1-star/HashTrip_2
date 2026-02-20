@@ -197,6 +197,26 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         return planDetailDAO.insertPlanDetail(copiedDetail);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteTravelPlan(Long planNo, Long ownerUserNo) {
+        if (ownerUserNo == null || ownerUserNo <= 0L) {
+            throw new IllegalArgumentException("사용자 정보가 필요합니다.");
+        }
+
+        TravelPlanDTO existingPlan = requireTravelPlan(planNo);
+        if (existingPlan.getUserNo() == null || !ownerUserNo.equals(existingPlan.getUserNo())) {
+            throw new IllegalArgumentException("본인 일정만 삭제할 수 있습니다.");
+        }
+
+        planDetailDAO.deletePlanDetailsByPlanNo(planNo);
+
+        int deleted = travelPlanDAO.deleteTravelPlanByOwner(planNo, ownerUserNo);
+        if (deleted != 1) {
+            throw new IllegalStateException("일정 삭제에 실패했습니다.");
+        }
+    }
+
     private TravelPlanDTO requireTravelPlan(Long planNo) {
         if (planNo == null || planNo <= 0L) {
             throw new IllegalArgumentException("일정 번호가 필요합니다.");
