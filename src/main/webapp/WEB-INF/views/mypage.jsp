@@ -8,6 +8,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>마이페이지</title>
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/mypage.css">
 </head>
 <body>
@@ -156,39 +157,7 @@
 		</div>
 	</div>
 
-	<footer class="main-footer">
-		<div class="footer-container">
-			<div class="footer-top">
-				<div class="footer-brand">
-					<h2 class="footer-logo">#Trip</h2>
-					<p class="brand-desc">취향 기반 여행 유형 분석 플랫폼</p>
-					<p class="brand-sub">나만의 여행을 찾아드립니다.</p>
-				</div>
-
-				<div class="footer-links">
-					<h3>법적 고지</h3>
-					<ul>
-						<li><a href="/hashTrip/privacy">개인정보처리방침</a></li>
-						<li><a href="/hashTrip/terms">이용약관</a></li>
-						<li><a href="/hashTrip/location">위치기반서비스</a></li>
-					</ul>
-				</div>
-
-				<div class="footer-links">
-					<h3>고객 지원</h3>
-					<ul>
-						<li><a href="/hashTrip/faq">자주 묻는 질문</a></li>
-						<li><a href="/hashTrip/contact">1:1 문의</a></li>
-						<li><a href="/hashTrip/notice">공지사항</a></li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="footer-bottom">
-				<p>&copy; 2025 WAYGO. All rights reserved.</p>
-			</div>
-		</div>
-	</footer>
+	<jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 
 	<div id="mypage-toast" class="mypage-toast"></div>
 

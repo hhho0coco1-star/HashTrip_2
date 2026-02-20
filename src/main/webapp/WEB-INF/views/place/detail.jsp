@@ -8,9 +8,12 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>여행지 상세</title>
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/place/detail.css">
 </head>
 <body>
+	<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
+
 	<div class="page-shell">
 		<header class="appbar">
 			<button class="ghost-btn" type="button" onclick="history.back()">뒤로</button>
@@ -258,19 +261,43 @@
 
 						<c:choose>
 							<c:when test="${not empty reviewList}">
-								<div class="review-list">
-									<c:forEach var="review" items="${reviewList}">
-										<article class="review-card">
-											<p class="review-content">
-												<c:choose>
-													<c:when test="${not empty review.commentContent}">
-														<c:out value="${review.commentContent}" />
-													</c:when>
+									<div class="review-list">
+										<c:forEach var="review" items="${reviewList}">
+											<article class="review-card">
+												<div class="review-top">
+													<div>
+														<p class="review-author">
+															<c:out value="${review.createdBy}" />
+														</p>
+															<p class="review-rating">
+																<c:forEach var="star" begin="1" end="5">
+																	<c:choose>
+																		<c:when test="${star <= (empty review.rating ? 0 : review.rating)}">
+																			<span class="review-star is-filled">★</span>
+																		</c:when>
+																		<c:otherwise>
+																			<span class="review-star is-empty">☆</span>
+																		</c:otherwise>
+																	</c:choose>
+																</c:forEach>
+															</p>
+													</div>
+													<p class="review-date">
+														<c:choose>
+															<c:when test="${not empty review.createdAt}">
+																<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+															</c:when>
+															<c:otherwise>-</c:otherwise>
+														</c:choose>
+													</p>
+												</div>
+												<p class="review-content">
+													<c:choose>
+														<c:when test="${not empty review.commentContent}">
+															<c:out value="${review.commentContent}" />
+														</c:when>
 													<c:otherwise>(내용 없음)</c:otherwise>
 												</c:choose>
-											</p>
-											<p class="review-author-line">
-												작성자: <c:out value="${review.createdBy}" />
 											</p>
 
 											<c:if test="${not empty currentAuthId and review.createdByAuthId eq currentAuthId}">
@@ -284,7 +311,6 @@
 															<button type="submit" class="review-action-btn review-delete-btn">삭제</button>
 														</form>
 													</div>
-
 													<form id="review-edit-form-${review.commentNo}"
 														  class="review-edit-form review-edit-form-hidden"
 														  method="post"
@@ -428,6 +454,8 @@
 			</div>
 		</div>
 	</c:if>
+
+	<jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 
 	<script>
 		(function() {
