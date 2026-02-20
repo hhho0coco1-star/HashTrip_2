@@ -20,7 +20,7 @@ public class CommunityService {
 
     public CommunityDTO addCommunityReview(Long planNo, Long userNo, String reviewContent, Integer rating) {
         if (reviewContent == null || reviewContent.trim().isEmpty()) {
-            throw new IllegalArgumentException("Review content is required.");
+            throw new IllegalArgumentException("리뷰 내용을 입력해 주세요.");
         }
 
         CommunityDTO dto = new CommunityDTO();

@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.app.dao.AreaBasedList2Repository;
 import com.app.dao.PlaceDAO;
@@ -34,6 +35,7 @@ public class PlaceServiceImpl implements PlaceService {
 	private static final int DEFAULT_HOURS_BATCH_SIZE = 500;
 	private static final int DEFAULT_HOURS_PARALLELISM = 6;
 	private static final int MAX_HOURS_PARALLELISM = 12;
+	private static final String FALLBACK_PLACE_CATEGORY = "USER_MAP";
 
 	@Autowired
 	private AreaBasedList2Repository apiRepository;
@@ -222,6 +224,68 @@ public class PlaceServiceImpl implements PlaceService {
 	}
 
 	@Override
+	public Long resolvePlaceNoForPlan(String placeName, String placeAddress, Double placeLatitude, Double placeLongitude)
+			throws Exception {
+		String safeName = truncate(normalizeText(placeName), 200);
+		if (!StringUtils.hasText(safeName)) {
+			return null;
+		}
+
+		String safeAddress = truncate(normalizeText(placeAddress), 500);
+		Double safeLatitude = placeLatitude;
+		Double safeLongitude = placeLongitude;
+
+		PlaceDTO existing = findExistingPlace(null, safeName, safeAddress, safeLatitude, safeLongitude);
+		if (existing != null && existing.getPlaceNo() != null) {
+			return existing.getPlaceNo();
+		}
+
+		TourResponseDTO.PlaceDto candidate = null;
+		try {
+			List<TourResponseDTO.PlaceDto> candidates = apiRepository.requestApi_searchKeyword2(safeName, 1, 10);
+			candidate = pickBestKeywordCandidate(candidates, safeName, safeAddress, safeLatitude, safeLongitude);
+		} catch (Exception e) {
+			candidate = null;
+		}
+
+		// Avoid mismatches like "천안역" -> "천안역점".
+		if (candidate != null && isSuspiciousKeywordCandidate(safeName, candidate.getTitle())) {
+			candidate = null;
+		}
+
+		if (candidate != null) {
+			String contentId = truncate(normalizeText(candidate.getContentid()), 30);
+			String candidateName = truncate(normalizeText(candidate.getTitle()), 200);
+			String candidateAddress = truncate(buildCombinedAddress(candidate.getAddr1(), candidate.getAddr2()), 500);
+			Double candidateLatitude = parseDoubleOrNull(candidate.getMapy());
+			Double candidateLongitude = parseDoubleOrNull(candidate.getMapx());
+
+			PlaceDTO matchedByCandidate = findExistingPlace(
+					contentId,
+					StringUtils.hasText(candidateName) ? candidateName : safeName,
+					StringUtils.hasText(candidateAddress) ? candidateAddress : safeAddress,
+					candidateLatitude != null ? candidateLatitude : safeLatitude,
+					candidateLongitude != null ? candidateLongitude : safeLongitude);
+			if (matchedByCandidate != null && matchedByCandidate.getPlaceNo() != null) {
+				return matchedByCandidate.getPlaceNo();
+			}
+
+			PlaceDTO placeToInsert = toPlaceDTOForKeywordCandidate(candidate, safeName, safeAddress, safeLatitude, safeLongitude);
+			return insertSinglePlaceWithTags(placeToInsert);
+		}
+
+		// Prevent low-quality PLACE rows that only keep a name.
+		// If both address and coordinates are missing, keep it as memo-only in plan details.
+		boolean hasAddress = StringUtils.hasText(safeAddress);
+		boolean hasCoordinates = safeLatitude != null && safeLongitude != null;
+		if (!hasAddress && !hasCoordinates) {
+			return null;
+		}
+
+		return insertSinglePlaceWithTags(toPlaceDTOForMapSelection(safeName, safeAddress, safeLatitude, safeLongitude));
+	}
+
+	@Override
 	public List<String> getPlaceTagNamesByPlaceNo(Long placeNo) throws Exception {
 		return placeDAO.selectPlaceTagNamesByPlaceNo(placeNo);
 	}
@@ -325,7 +389,7 @@ public class PlaceServiceImpl implements PlaceService {
 		placeDTO.setPlaceContentId(truncate(item.getContentid(), 30));
 		placeDTO.setPlaceName(truncate(item.getTitle(), 200));
 		placeDTO.setPlaceCategory(truncate(item.getContenttypeid(), 50));
-		placeDTO.setPlaceAddress(truncate(item.getAddr1(), 500));
+		placeDTO.setPlaceAddress(truncate(buildCombinedAddress(item.getAddr1(), item.getAddr2()), 500));
 		placeDTO.setPlaceLatitude(parseDoubleOrNull(item.getMapy()));
 		placeDTO.setPlaceLongitude(parseDoubleOrNull(item.getMapx()));
 		placeDTO.setPlaceNumber(preserveOriginalPlaceNumber(item.getTel()));
@@ -353,6 +417,224 @@ public class PlaceServiceImpl implements PlaceService {
 		} catch (Exception e) {
 			return "";
 		}
+	}
+
+	private PlaceDTO findExistingPlace(String contentId,
+			String placeName,
+			String placeAddress,
+			Double placeLatitude,
+			Double placeLongitude) throws Exception {
+		if (StringUtils.hasText(contentId)) {
+			PlaceDTO byContentId = placeDAO.selectPlaceByContentId(contentId);
+			if (byContentId != null) {
+				return byContentId;
+			}
+		}
+
+		if (StringUtils.hasText(placeName)) {
+			PlaceDTO byNameAddress = placeDAO.selectPlaceByNameAddress(placeName, placeAddress);
+			if (byNameAddress != null) {
+				return byNameAddress;
+			}
+		}
+
+		if (StringUtils.hasText(placeName) && placeLatitude != null && placeLongitude != null) {
+			PlaceDTO byNameLatLng = placeDAO.selectPlaceByNameNearLatLng(placeName, placeLatitude, placeLongitude);
+			if (byNameLatLng != null) {
+				return byNameLatLng;
+			}
+		}
+
+		return null;
+	}
+
+	private Long insertSinglePlaceWithTags(PlaceDTO placeDTO) throws Exception {
+		Long placeNo = placeDAO.getNextPlaceNo();
+		placeDTO.setPlaceNo(placeNo);
+
+		int inserted = placeDAO.updateAreaBasedListPlaces(placeDTO);
+		if (inserted <= 0) {
+			throw new IllegalStateException("Failed to insert place.");
+		}
+
+		List<String> tagCodes = placeTagClassifier.classifyTagCodes(toClassifiablePlace(placeDTO));
+		if (tagCodes != null && !tagCodes.isEmpty()) {
+			placeDAO.insertPlaceTagMapBatch(toPlaceTagMapDTOList(placeNo, tagCodes));
+		}
+
+		insertPlaceHoursSafely(placeNo, placeDTO.getPlaceContentId(), placeDTO.getPlaceCategory());
+
+		return placeNo;
+	}
+
+	private TourResponseDTO.PlaceDto toClassifiablePlace(PlaceDTO placeDTO) {
+		TourResponseDTO.PlaceDto placeDto = new TourResponseDTO.PlaceDto();
+		placeDto.setContentid(placeDTO.getPlaceContentId());
+		placeDto.setTitle(placeDTO.getPlaceName());
+		placeDto.setContenttypeid(placeDTO.getPlaceCategory());
+		placeDto.setAddr1(placeDTO.getPlaceAddress());
+		placeDto.setMapy(placeDTO.getPlaceLatitude() == null ? null : String.valueOf(placeDTO.getPlaceLatitude()));
+		placeDto.setMapx(placeDTO.getPlaceLongitude() == null ? null : String.valueOf(placeDTO.getPlaceLongitude()));
+		placeDto.setTel(placeDTO.getPlaceNumber());
+		placeDto.setFirstimage2(placeDTO.getPlaceThumbnailUrl());
+		return placeDto;
+	}
+
+	private PlaceDTO toPlaceDTOForKeywordCandidate(TourResponseDTO.PlaceDto candidate,
+			String fallbackName,
+			String fallbackAddress,
+			Double fallbackLatitude,
+			Double fallbackLongitude) {
+		PlaceDTO placeDTO = new PlaceDTO();
+		placeDTO.setPlaceContentId(truncate(normalizeText(candidate.getContentid()), 30));
+		// Prefer user-selected values from map for stable UX.
+		placeDTO.setPlaceName(truncate(resolveFirstText(fallbackName, candidate.getTitle(), "Unknown Place"), 200));
+		placeDTO.setPlaceCategory(truncate(resolveFirstText(candidate.getContenttypeid(), FALLBACK_PLACE_CATEGORY), 50));
+		placeDTO.setPlaceAddress(truncate(resolveFirstText(
+				fallbackAddress,
+				buildCombinedAddress(candidate.getAddr1(), candidate.getAddr2())), 500));
+
+		Double latitude = parseDoubleOrNull(candidate.getMapy());
+		Double longitude = parseDoubleOrNull(candidate.getMapx());
+		placeDTO.setPlaceLatitude(fallbackLatitude != null ? fallbackLatitude : latitude);
+		placeDTO.setPlaceLongitude(fallbackLongitude != null ? fallbackLongitude : longitude);
+
+		placeDTO.setPlaceNumber(preserveOriginalPlaceNumber(candidate.getTel()));
+		placeDTO.setPlaceThumbnailUrl(truncate(normalizeText(candidate.getFirstimage2()), 1000));
+		return placeDTO;
+	}
+
+	private PlaceDTO toPlaceDTOForMapSelection(String placeName,
+			String placeAddress,
+			Double placeLatitude,
+			Double placeLongitude) {
+		PlaceDTO placeDTO = new PlaceDTO();
+		placeDTO.setPlaceContentId(null);
+		placeDTO.setPlaceName(truncate(resolveFirstText(placeName, "Unknown Place"), 200));
+		placeDTO.setPlaceCategory(FALLBACK_PLACE_CATEGORY);
+		placeDTO.setPlaceAddress(truncate(placeAddress, 500));
+		placeDTO.setPlaceLatitude(placeLatitude);
+		placeDTO.setPlaceLongitude(placeLongitude);
+		placeDTO.setPlaceNumber(null);
+		placeDTO.setPlaceThumbnailUrl(null);
+		return placeDTO;
+	}
+
+	private TourResponseDTO.PlaceDto pickBestKeywordCandidate(List<TourResponseDTO.PlaceDto> candidates,
+			String requestedName,
+			String requestedAddress,
+			Double requestedLatitude,
+			Double requestedLongitude) {
+		if (candidates == null || candidates.isEmpty()) {
+			return null;
+		}
+
+		TourResponseDTO.PlaceDto best = null;
+		int bestScore = Integer.MIN_VALUE;
+
+		String normalizedName = normalizeCompareKey(requestedName);
+		String normalizedAddress = normalizeCompareKey(requestedAddress);
+
+		for (TourResponseDTO.PlaceDto candidate : candidates) {
+			if (candidate == null) {
+				continue;
+			}
+
+			int score = 0;
+			String candidateName = normalizeCompareKey(candidate.getTitle());
+			String candidateAddress = normalizeCompareKey(buildCombinedAddress(candidate.getAddr1(), candidate.getAddr2()));
+
+			if (StringUtils.hasText(normalizedName) && normalizedName.equals(candidateName)) {
+				score += 60;
+			} else if (StringUtils.hasText(normalizedName)
+					&& (candidateName.contains(normalizedName) || normalizedName.contains(candidateName))) {
+				score += 35;
+			}
+
+			if (StringUtils.hasText(normalizedAddress) && normalizedAddress.equals(candidateAddress)) {
+				score += 30;
+			} else if (StringUtils.hasText(normalizedAddress)
+					&& (candidateAddress.contains(normalizedAddress) || normalizedAddress.contains(candidateAddress))) {
+				score += 15;
+			}
+
+			Double candidateLatitude = parseDoubleOrNull(candidate.getMapy());
+			Double candidateLongitude = parseDoubleOrNull(candidate.getMapx());
+			if (requestedLatitude != null && requestedLongitude != null
+					&& candidateLatitude != null && candidateLongitude != null) {
+				double diff = Math.abs(requestedLatitude - candidateLatitude)
+						+ Math.abs(requestedLongitude - candidateLongitude);
+				if (diff <= 0.0008d) {
+					score += 35;
+				} else if (diff <= 0.004d) {
+					score += 20;
+				} else if (diff <= 0.02d) {
+					score += 10;
+				}
+			}
+
+			if (StringUtils.hasText(candidate.getContentid())) {
+				score += 5;
+			}
+
+			if (best == null || score > bestScore) {
+				best = candidate;
+				bestScore = score;
+			}
+		}
+
+		return best;
+	}
+
+	private boolean isSuspiciousKeywordCandidate(String requestedName, String candidateName) {
+		String req = normalizeText(requestedName);
+		String cand = normalizeText(candidateName);
+		if (!StringUtils.hasText(req) || !StringUtils.hasText(cand)) {
+			return false;
+		}
+
+		String reqNorm = req.replace(" ", "").toLowerCase();
+		String candNorm = cand.replace(" ", "").toLowerCase();
+
+		if (reqNorm.equals(candNorm)) {
+			return false;
+		}
+
+		boolean reqHasStoreSuffix = reqNorm.contains("점") || reqNorm.contains("지점");
+		boolean candHasStoreSuffix = candNorm.contains("점") || candNorm.contains("지점");
+
+		// Example: requested "천안역" but candidate "천안역점"
+		if (!reqHasStoreSuffix && candHasStoreSuffix) {
+			return true;
+		}
+
+		// Station-like keyword should not map to store branch name.
+		if (reqNorm.endsWith("역") && candHasStoreSuffix) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private String normalizeCompareKey(String value) {
+		String normalized = normalizeText(value);
+		if (!StringUtils.hasText(normalized)) {
+			return "";
+		}
+		return normalized.toLowerCase().replace(" ", "");
+	}
+
+	private String resolveFirstText(String... values) {
+		if (values == null) {
+			return null;
+		}
+		for (String value : values) {
+			String normalized = normalizeText(value);
+			if (StringUtils.hasText(normalized)) {
+				return normalized;
+			}
+		}
+		return null;
 	}
 
 	private Double parseDoubleOrNull(String value) {
@@ -386,6 +668,51 @@ public class PlaceServiceImpl implements PlaceService {
 			return trimmed;
 		}
 		return trimmed.substring(0, maxLength);
+	}
+
+	private void insertPlaceHoursSafely(Long placeNo, String contentId, String contentTypeId) {
+		try {
+			if (placeNo == null || !StringUtils.hasText(contentId) || !StringUtils.hasText(contentTypeId)) {
+				return;
+			}
+
+			String operatingHoursRawText = fetchOperatingHoursRawText(contentId, contentTypeId);
+			if (!StringUtils.hasText(operatingHoursRawText)) {
+				return;
+			}
+
+			List<PlaceHoursDTO> parsedHours = placeHoursParser.parse(placeNo, operatingHoursRawText);
+			if (parsedHours == null || parsedHours.isEmpty()) {
+				return;
+			}
+
+			placeDAO.insertPlaceHoursBatch(parsedHours);
+		} catch (Exception ignored) {
+			// Place save should not fail because of hours fetch/parse issues.
+		}
+	}
+
+	private String normalizeText(String value) {
+		if (!StringUtils.hasText(value)) {
+			return null;
+		}
+		return value.trim();
+	}
+
+	private String buildCombinedAddress(String addr1, String addr2) {
+		String a1 = normalizeText(addr1);
+		String a2 = normalizeText(addr2);
+
+		if (!StringUtils.hasText(a1) && !StringUtils.hasText(a2)) {
+			return null;
+		}
+		if (!StringUtils.hasText(a1)) {
+			return a2;
+		}
+		if (!StringUtils.hasText(a2)) {
+			return a1;
+		}
+		return a1 + " " + a2;
 	}
 
 	private String normalizeCreatedBy(String createdBy) {

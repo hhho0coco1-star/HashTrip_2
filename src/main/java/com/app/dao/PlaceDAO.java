@@ -23,6 +23,13 @@ public interface PlaceDAO {
 
 	public PlaceDTO selectPlaceByPlaceNo(Long placeNo) throws Exception;
 
+	public PlaceDTO selectPlaceByContentId(String placeContentId) throws Exception;
+
+	public PlaceDTO selectPlaceByNameAddress(String placeName, String placeAddress) throws Exception;
+
+	public PlaceDTO selectPlaceByNameNearLatLng(String placeName, Double placeLatitude, Double placeLongitude)
+			throws Exception;
+
 	public List<String> selectPlaceTagNamesByPlaceNo(Long placeNo) throws Exception;
 
 	public List<String> selectPlacePhotoUrlsByPlaceNo(Long placeNo) throws Exception;

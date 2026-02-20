@@ -25,7 +25,7 @@ import com.app.service.UsersService;
 import com.app.service.WishListService;
 
 @Controller
-public class MypageController {
+public class MyPageController {
 
 	private static final int REVIEW_PAGE_SIZE = 10;
 
@@ -38,7 +38,7 @@ public class MypageController {
 	@Autowired
 	private WishListService wishListService;
 
-	@GetMapping("/mypage")
+	@GetMapping({ "/mypage", "/mypage/", "/myPage", "/my-page", "/hashTrip/mypage" })
 	public String mypage(
 			@RequestParam(name = "page", defaultValue = "1") int page,
 			Authentication authentication,

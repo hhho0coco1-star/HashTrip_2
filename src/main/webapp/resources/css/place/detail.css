@@ -578,9 +578,28 @@ body.modal-open {
 
 .review-rating {
 	margin: 4px 0 0;
-	font-size: 12px;
+	font-size: 14px;
 	font-weight: 700;
-	color: #2d5a99;
+	letter-spacing: 0;
+	font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+.review-star {
+	display: inline-block;
+	line-height: 1;
+	margin-right: -1px;
+}
+
+.review-star:last-child {
+	margin-right: 0;
+}
+
+.review-star.is-filled {
+	color: #f5b301 !important;
+}
+
+.review-star.is-empty {
+	color: #d1d8e3 !important;
 }
 
 .review-content {
@@ -757,6 +776,10 @@ body.modal-open {
 	font-size: 13px;
 	font-weight: 800;
 	color: #2a3c57;
+}
+
+.main-footer {
+	margin-top: 24px;
 }
 
 @media (max-width: 760px) {

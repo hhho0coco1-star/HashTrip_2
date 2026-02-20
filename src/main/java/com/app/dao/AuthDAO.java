@@ -24,4 +24,6 @@ public interface AuthDAO {
     String findAuthIdByEmail(String email);
 
     int updatePasswordByAuthIdAndEmail(String userId, String email, String encodedPassword);
+
+    int updateSocialAdditionalInfoByAuthId(String userId, String userPhoneNumber, String userRegistrationNo);
 }

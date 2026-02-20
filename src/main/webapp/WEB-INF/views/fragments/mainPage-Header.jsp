@@ -23,9 +23,12 @@
                     </c:when>
                     <c:otherwise>
                         <span class="user-info">
-                            <strong>${pageContext.request.userPrincipal.name}</strong>님 환영합니다!
+                            <strong><c:out value="${empty headerDisplayName ? pageContext.request.userPrincipal.name : headerDisplayName}" /></strong>님 환영합니다!
                         </span>
-                        <a href="<c:url value='/auth/logout' />" class="btn-logout">로그아웃</a>
+                        <form class="logout-form" action="<c:url value='/auth/logout' />" method="post">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                            <button type="submit" class="btn-logout">로그아웃</button>
+                        </form>
                     </c:otherwise>
                 </c:choose>
             </div>

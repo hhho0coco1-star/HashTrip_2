@@ -23,6 +23,7 @@ public class AreaBasedList2RepositoryImpl implements AreaBasedList2Repository {
 
 	private static final String API_URL = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2";
 	private static final String DETAIL_INTRO_API_URL = "https://apis.data.go.kr/B551011/KorService2/detailIntro2";
+	private static final String SEARCH_KEYWORD_API_URL = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2";
 	private static final String SERVICE_KEY = "721165d2fd5e42df4a23b761e4ae503eed80e61c9743082e420b2a7dfa55f34b";
 	private static final int CONNECT_TIMEOUT_MILLIS = 10000;
 	private static final int READ_TIMEOUT_MILLIS = 30000;
@@ -85,6 +86,37 @@ public class AreaBasedList2RepositoryImpl implements AreaBasedList2Repository {
 		}
 
 		return mergeOperatingHourTexts(item);
+	}
+
+	@Override
+	public List<TourResponseDTO.PlaceDto> requestApi_searchKeyword2(String keyword, int pageNo, int numOfRows)
+			throws Exception {
+		if (keyword == null || keyword.isBlank()) {
+			return Collections.emptyList();
+		}
+
+		StringBuilder urlBuilder = new StringBuilder(SEARCH_KEYWORD_API_URL);
+		urlBuilder.append("?").append(encode("serviceKey")).append("=").append(SERVICE_KEY);
+		urlBuilder.append("&").append(encode("numOfRows")).append("=").append(encode(Integer.toString(Math.max(1, numOfRows))));
+		urlBuilder.append("&").append(encode("pageNo")).append("=").append(encode(Integer.toString(Math.max(1, pageNo))));
+		urlBuilder.append("&").append(encode("MobileOS")).append("=").append(encode("WEB"));
+		urlBuilder.append("&").append(encode("MobileApp")).append("=").append(encode("HashTrip"));
+		urlBuilder.append("&").append(encode("_type")).append("=").append(encode("json"));
+		urlBuilder.append("&").append(encode("keyword")).append("=").append(encode(keyword.trim()));
+
+		String responseBody = requestWithRetry(urlBuilder.toString(), false);
+		if (responseBody == null || responseBody.isBlank()) {
+			return Collections.emptyList();
+		}
+
+		TourResponseDTO responseData = objectMapper.readValue(responseBody, TourResponseDTO.class);
+		if (responseData.getResponse() != null
+				&& responseData.getResponse().getBody() != null
+				&& responseData.getResponse().getBody().getItems() != null
+				&& responseData.getResponse().getBody().getItems().getItem() != null) {
+			return responseData.getResponse().getBody().getItems().getItem();
+		}
+		return Collections.emptyList();
 	}
 
 	private String requestWithRetry(String url, boolean throwOnFailure) throws Exception {

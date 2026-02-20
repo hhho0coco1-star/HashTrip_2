@@ -118,6 +118,17 @@ public class AuthDAOImpl implements AuthDAO {
         return sqlSessionTemplate.update(NAMESPACE + "updatePasswordByAuthIdAndEmail", params);
     }
 
+    @Override
+    public int updateSocialAdditionalInfoByAuthId(String userId, String userPhoneNumber, String userRegistrationNo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("userPhoneNumber", userPhoneNumber);
+        params.put("userRegistrationNo", userRegistrationNo);
+        params.put("defaultSnsType", DEFAULT_SNS_TYPE);
+        params.put("activeStatus", ACTIVE_STATUS);
+        return sqlSessionTemplate.update(NAMESPACE + "updateSocialAdditionalInfoByAuthId", params);
+    }
+
     private Long selectNextSequenceOrNull(String... statementIds) {
         DataAccessException last = null;
         for (String statementId : statementIds) {

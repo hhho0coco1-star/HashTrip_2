@@ -45,6 +45,9 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String DROP_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID = "place_mapper.dropSeqPlaceTagMapNo";
 	private static final String CREATE_SEQ_PLACE_TAG_MAP_NO_STATEMENT_ID = "place_mapper.createSeqPlaceTagMapNo";
 	private static final String SELECT_PLACE_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceByPlaceNo";
+	private static final String SELECT_PLACE_BY_CONTENT_ID_STATEMENT_ID = "place_mapper.selectPlaceByContentId";
+	private static final String SELECT_PLACE_BY_NAME_ADDRESS_STATEMENT_ID = "place_mapper.selectPlaceByNameAddress";
+	private static final String SELECT_PLACE_BY_NAME_NEAR_LAT_LNG_STATEMENT_ID = "place_mapper.selectPlaceByNameNearLatLng";
 	private static final String SELECT_PLACE_TAG_NAMES_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceTagNamesByPlaceNo";
 	private static final String SELECT_PLACE_PHOTO_URLS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlacePhotoUrlsByPlaceNo";
 	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
@@ -109,6 +112,28 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public PlaceDTO selectPlaceByPlaceNo(Long placeNo) throws Exception {
 		return sqlSessionTemplate.selectOne(SELECT_PLACE_BY_PLACE_NO_STATEMENT_ID, placeNo);
+	}
+
+	@Override
+	public PlaceDTO selectPlaceByContentId(String placeContentId) throws Exception {
+		return sqlSessionTemplate.selectOne(SELECT_PLACE_BY_CONTENT_ID_STATEMENT_ID, placeContentId);
+	}
+
+	@Override
+	public PlaceDTO selectPlaceByNameAddress(String placeName, String placeAddress) throws Exception {
+		Map<String, Object> params = new HashMap<>();
+		params.put("placeName", placeName);
+		params.put("placeAddress", placeAddress);
+		return sqlSessionTemplate.selectOne(SELECT_PLACE_BY_NAME_ADDRESS_STATEMENT_ID, params);
+	}
+
+	@Override
+	public PlaceDTO selectPlaceByNameNearLatLng(String placeName, Double placeLatitude, Double placeLongitude) throws Exception {
+		Map<String, Object> params = new HashMap<>();
+		params.put("placeName", placeName);
+		params.put("placeLatitude", placeLatitude);
+		params.put("placeLongitude", placeLongitude);
+		return sqlSessionTemplate.selectOne(SELECT_PLACE_BY_NAME_NEAR_LAT_LNG_STATEMENT_ID, params);
 	}
 
 	@Override
