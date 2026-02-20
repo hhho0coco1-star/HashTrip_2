@@ -5,7 +5,7 @@
 
 <mapper namespace="auth">
 
-    <resultMap id="userResultMap" type="com.app.dto.UserDTO">
+    <resultMap id="userResultMap" type="UsersDTO">
         <id property="userNo" column="USER_NO" />
         <result property="userType" column="USER_TYPE" />
         <result property="userStatus" column="USER_STATUS" />
@@ -78,7 +78,7 @@
         FROM USER_ADDRESS
     </select>
 
-    <insert id="insertUser" parameterType="com.app.dto.UserDTO">
+    <insert id="insertUser" parameterType="UsersDTO">
         INSERT INTO USERS
         (
             USER_NO,
@@ -130,7 +130,7 @@
         )
     </insert>
 
-    <insert id="insertUserAddress" parameterType="com.app.dto.UserDTO">
+    <insert id="insertUserAddress" parameterType="UsersDTO">
         INSERT INTO USER_ADDRESS
         (
             USER_ADDRESS_NO,

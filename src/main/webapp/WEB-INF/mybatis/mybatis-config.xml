@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>						
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"						
-					"http://mybatis.org/dtd/mybatis-3-config.dtd">	
+					"http://mybatis.org/dtd/mybatis-3-config.dtd">
 
 <configuration>
-	
+
 	<settings>
-		<setting name="mapUnderscoreToCamelCase" value="true"/>
-		<setting name="jdbcTypeForNull" value="NULL"/>
+		<setting name="mapUnderscoreToCamelCase" value="true" />
+		<setting name="jdbcTypeForNull" value="NULL" />
 	</settings>
 
 	<typeAliases>
-		<typeAlias type="com.app.dto.PlaceDTO" alias="placeDTO"/>
+		<typeAlias type="com.app.dto.UsersDTO" alias="UsersDTO" />
+		<typeAlias type="com.app.dto.UserTagMapDTO" alias="UserTagMapDTO" />
+		<typeAlias type="com.app.dto.TagMasterDTO" alias="TagMasterDTO" />
+
+		<typeAlias type="com.app.dto.PlaceDTO" alias="PlaceDTO" />
+		<typeAlias type="com.app.dto.PlaceHoursDTO" alias="PlaceHoursDTO" />
+		<typeAlias type="com.app.dto.PlaceReviewDTO" alias="PlaceReviewDTO" />
+		<typeAlias type="com.app.dto.PlaceTagMapDTO" alias="PlaceTagMapDTO" />
+		<typeAlias type="com.app.dto.WishListDTO" alias="WishListDTO" />
+		<typeAlias type="com.app.dto.CategoryDTO" alias="CategoryDTO" />
+
+		<typeAlias type="com.app.dto.TravelPlanDTO" alias="TravelPlanDTO" />
+		<typeAlias type="com.app.dto.PlanDetailDTO" alias="PlanDetailDTO" />
+		<typeAlias type="com.app.dto.CommunityDTO" alias="CommunityDTO" />
 	</typeAliases>
-	
+
+
 </configuration>

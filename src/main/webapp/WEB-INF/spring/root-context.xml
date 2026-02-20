@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xmlns:util="http://www.springframework.org/schema/util"
-		 xmlns:task="http://www.springframework.org/schema/task"
-		 xmlns:tx="http://www.springframework.org/schema/tx"
-		 xmlns:context="http://www.springframework.org/schema/context"
-		 xsi:schemaLocation="http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
-		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
-		       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
-		        http://www.springframework.org/schema/context
-		       http://www.springframework.org/schema/context/spring-context.xsd">
-             
-<!-- 	IOC 컨테이너에 빈(컴포넌트) 등록 -->
-<!-- 	roomDAO 빈 등록 -->
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:util="http://www.springframework.org/schema/util"
+xmlns:task="http://www.springframework.org/schema/task"
+xmlns:tx="http://www.springframework.org/schema/tx"
+xmlns:context="http://www.springframework.org/schema/context"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd">
 
 <!-- 	RoomDAO roomDAO = new RoomDAOImpl(); -->
 <!-- 	<bean id="roomDAO" class="com.app.dao.room.impl.RoomDAOImpl"></bean> -->
@@ -58,11 +55,8 @@
 
 	<tx:annotation-driven transaction-manager="transactionManager" />
 	
-	
-	
 	<context:component-scan	base-package="com.app.service"/>
 	<context:component-scan	base-package="com.app.dao"/>
-	<context:component-scan	base-package="com.app.config"/>
-	<context:property-placeholder location="classpath:oauth2.properties" ignore-resource-not-found="true"/>
+	
 
 </beans>

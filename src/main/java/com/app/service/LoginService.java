@@ -1,9 +1,9 @@
 package com.app.service;
 
-import com.app.dto.UserDTO;
+import com.app.dto.UsersDTO;
 
 public interface LoginService {
-    UserDTO register(String userId,
+    UsersDTO register(String userId,
                      String email,
                      String rawPassword,
                      String userName,
@@ -20,9 +20,5 @@ public interface LoginService {
 
     String resetPassword(String userId, String email);
 
-    UserDTO findByAuthId(String userId);
-
-    boolean isSocialUserMissingAdditionalInfo(String userId);
-
-    void updateSocialAdditionalInfo(String userId, String userPhoneNumber, String userRegistrationNo);
+    UsersDTO findByAuthId(String userId);
 }
