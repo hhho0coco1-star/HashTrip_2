@@ -266,6 +266,7 @@ CREATE TABLE Community (
     user_no NUMBER(19),
     review_content VARCHAR2(2000),
     review_rating NUMBER(1),
+    created_at DATE DEFAULT SYSDATE NOT NULL,
     CONSTRAINT fk_comm_plan FOREIGN KEY (plan_no) REFERENCES Travel_Plans(plan_no),
     CONSTRAINT fk_comm_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );

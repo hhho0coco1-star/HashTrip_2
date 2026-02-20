@@ -9,26 +9,12 @@
     <title>#HiFive — 추천 여행 루트</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Gmarket+Sans:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/routes.css">
-    
-    <%=request.getAttribute("userName") %>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 </head>
 
 <body>
 
-<nav class="navbar" id="navbar">
-    <div class="logo" onclick="location.href='${pageContext.request.contextPath}/'">#HiFive</div>
-    <ul class="nav-links">
-        <li><a class="nav-btn" href="${pageContext.request.contextPath}/">홈</a></li>
-        <li><a class="nav-btn" href="${pageContext.request.contextPath}/quiz">유형 테스트</a></li>
-        <li><a class="nav-btn active" href="${pageContext.request.contextPath}/routes">추천 루트</a></li>
-        <li><a class="nav-btn" href="${pageContext.request.contextPath}/plan">여행 일정</a></li>
-        <li><a class="nav-btn" href="${pageContext.request.contextPath}/mypage">마이페이지</a></li>
-    </ul>
-    <div class="header-right">
-        <button class="btn-login" onclick="location.href='${pageContext.request.contextPath}/auth/login'">로그인</button>
-        <button class="btn-signup" onclick="location.href='${pageContext.request.contextPath}/quiz'">테스트 시작</button>
-    </div>
-</nav>
+<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 
 <div class="page-container">
     <div class="routes-wrap">
@@ -140,6 +126,8 @@
 
 <div class="toast" id="toast"></div>
 
+<jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
+
 <script>
     const csrfHeader = '${_csrf.headerName}';
     const csrfToken = '${_csrf.token}';
@@ -249,10 +237,6 @@
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2200);
     }
-
-    window.addEventListener('scroll', () => {
-        document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
-    });
 </script>
 
 </body>

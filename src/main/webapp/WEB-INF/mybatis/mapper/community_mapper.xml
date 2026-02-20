@@ -12,7 +12,7 @@
 			c.review_content,
 			c.review_rating AS rating,
 			NVL(u.user_nickname, u.user_name) AS created_by,
-			CAST(NULL AS TIMESTAMP) AS created_at
+			c.created_at AS created_at
 		FROM Community c
 		LEFT JOIN Users u
 			ON u.user_no = c.user_no
@@ -26,9 +26,9 @@
 			SELECT SEQ_COMMUNITY_REVIEW_NO.NEXTVAL FROM dual
 		</selectKey>
 		INSERT INTO Community (
-			review_no, plan_no, user_no, review_content, review_rating
+			review_no, plan_no, user_no, review_content, review_rating, created_at
 		) VALUES (
-			#{reviewNo}, #{planNo}, #{userNo}, #{reviewContent}, #{rating,jdbcType=NUMERIC}
+			#{reviewNo}, #{planNo}, #{userNo}, #{reviewContent}, #{rating,jdbcType=NUMERIC}, SYSDATE
 		)
 	</insert>
 
