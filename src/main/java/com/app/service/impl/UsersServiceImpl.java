@@ -98,6 +98,11 @@ public class UsersServiceImpl implements UsersService {
 	}
 
 	@Override
+	public List<UserTagMapDTO> getUserTagsByUserNo(Long userNo) {
+		return usersDAO.getUserTagsByUserNo(userNo);
+	}
+
+	@Override
 	public List<TagMasterDTO> getTagMasterList() {
 		return usersDAO.getTagMasterList();
 	}

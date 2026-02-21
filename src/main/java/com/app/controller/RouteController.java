@@ -1,15 +1,18 @@
 package com.app.controller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,12 +24,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.CommunityDTO;
 import com.app.dto.RouteDTO;
+import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlanDetailService;
 import com.app.service.TravelPlanService;
 import com.app.service.UsersService;
 import com.app.service.impl.CommunityService;
 import com.app.service.impl.RouteService;
+import com.app.service.impl.SocialUserProvisionService;
 
 @Controller
 @RequestMapping("/routes")
@@ -47,14 +52,25 @@ public class RouteController {
     @Autowired
     private PlanDetailService planDetailService;
 
+    @Autowired
+    private SocialUserProvisionService socialUserProvisionService;
+
     @GetMapping
-    public String routesPage(Model model, HttpServletRequest request, Authentication authentication) {
+    public String routesPage(Model model, Authentication authentication) {
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
         if (currentUser != null) {
-            request.setAttribute("userName", resolveDisplayName(currentUser));
+            model.addAttribute("personalUserName", resolveDisplayName(currentUser));
         }
 
-        model.addAttribute("routes", routeService.getAllRoutes());
+        List<UserTagMapDTO> userTags = resolveCurrentUserTags(authentication);
+        List<RouteDTO> routes = routeService.getAllRoutes();
+        routes = excludeCurrentUserRoutes(routes, currentUser);
+        Integer similarityPct = applySimilarityScores(routes, authentication, userTags);
+
+        model.addAttribute("routes", routes);
+        model.addAttribute("similarityPct", similarityPct);
+        model.addAttribute("myTagCount", userTags.size());
+        model.addAttribute("myTopTags", extractTopTagNames(userTags, 5));
         model.addAttribute("categories", routeService.getAllTagCategories());
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         return "routeList";
@@ -82,8 +98,14 @@ public class RouteController {
 
     @GetMapping("/filter")
     @ResponseBody
-    public List<RouteDTO> filterRoutes(@RequestParam(required = false) String category) {
-        return routeService.getRoutesByCategory(category);
+    public List<RouteDTO> filterRoutes(
+            @RequestParam(required = false) String category,
+            Authentication authentication) {
+        UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        List<RouteDTO> routes = routeService.getRoutesByCategory(category);
+        routes = excludeCurrentUserRoutes(routes, currentUser);
+        applySimilarityScores(routes, authentication);
+        return routes;
     }
 
     @PostMapping("/save")
@@ -257,6 +279,20 @@ public class RouteController {
             return null;
         }
 
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+            Object principal = token.getPrincipal();
+            if (principal instanceof OAuth2User) {
+                OAuth2User oAuth2User = (OAuth2User) principal;
+                String socialAuthId = socialUserProvisionService.resolveSocialAuthId(
+                        token.getAuthorizedClientRegistrationId(),
+                        oAuth2User.getAttributes());
+                if (socialAuthId != null && !socialAuthId.trim().isEmpty()) {
+                    return socialAuthId.trim();
+                }
+            }
+        }
+
         String authId = authentication.getName();
         if (authId == null || authId.trim().isEmpty()) {
             return null;
@@ -275,5 +311,96 @@ public class RouteController {
             return usersDTO.getUserName().trim();
         }
         return null;
+    }
+
+    private Integer applySimilarityScores(List<RouteDTO> routes, Authentication authentication) {
+        return applySimilarityScores(routes, authentication, null);
+    }
+
+    private Integer applySimilarityScores(
+            List<RouteDTO> routes,
+            Authentication authentication,
+            List<UserTagMapDTO> preloadedUserTags) {
+        if (routes == null || routes.isEmpty()) {
+            return null;
+        }
+
+        String authId = resolveAuthenticatedAuthId(authentication);
+        if (authId == null) {
+            return null;
+        }
+
+        UsersDTO currentUser = usersService.getUserByAuthId(authId);
+        Long currentUserNo = currentUser == null ? null : currentUser.getUserNo();
+        List<UserTagMapDTO> userTags = preloadedUserTags == null
+                ? usersService.getUserTagsByAuthId(authId)
+                : preloadedUserTags;
+        if (userTags == null) {
+            userTags = Collections.emptyList();
+        }
+        Integer personalizedSimilarity = routeService.applySimilarityScores(routes, userTags, currentUserNo);
+        if (personalizedSimilarity != null) {
+            return personalizedSimilarity;
+        }
+
+        int bestScore = 0;
+        for (RouteDTO route : routes) {
+            if (route == null || route.getMatchScore() == null) {
+                continue;
+            }
+            if (route.getMatchScore() > bestScore) {
+                bestScore = route.getMatchScore();
+            }
+        }
+        return bestScore == 0 ? null : bestScore;
+    }
+
+    private List<RouteDTO> excludeCurrentUserRoutes(List<RouteDTO> routes, UsersDTO currentUser) {
+        if (routes == null || routes.isEmpty() || currentUser == null || currentUser.getUserNo() == null) {
+            return routes;
+        }
+
+        Long currentUserNo = currentUser.getUserNo();
+        routes.removeIf(route -> route != null
+                && route.getUserNo() != null
+                && currentUserNo.equals(route.getUserNo()));
+        return routes;
+    }
+
+    private List<UserTagMapDTO> resolveCurrentUserTags(Authentication authentication) {
+        String authId = resolveAuthenticatedAuthId(authentication);
+        if (authId == null) {
+            return Collections.emptyList();
+        }
+
+        List<UserTagMapDTO> userTags = usersService.getUserTagsByAuthId(authId);
+        return userTags == null ? Collections.emptyList() : userTags;
+    }
+
+    private List<String> extractTopTagNames(List<UserTagMapDTO> userTags, int limit) {
+        if (userTags == null || userTags.isEmpty() || limit <= 0) {
+            return Collections.emptyList();
+        }
+
+        Set<String> uniqueTagNames = new LinkedHashSet<>();
+        for (UserTagMapDTO userTag : userTags) {
+            if (userTag == null) {
+                continue;
+            }
+
+            String tagName = userTag.getTagName();
+            if (tagName == null || tagName.trim().isEmpty()) {
+                tagName = userTag.getTagCode();
+            }
+            if (tagName == null || tagName.trim().isEmpty()) {
+                continue;
+            }
+
+            uniqueTagNames.add(tagName.trim());
+            if (uniqueTagNames.size() >= limit) {
+                break;
+            }
+        }
+        return new ArrayList<>(uniqueTagNames);
     }
 }

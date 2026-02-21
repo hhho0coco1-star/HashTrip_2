@@ -13,6 +13,8 @@ public interface UsersDAO {
 
 	List<UserTagMapDTO> getUserTagsByAuthId(String authId);
 
+	List<UserTagMapDTO> getUserTagsByUserNo(Long userNo);
+
 	List<TagMasterDTO> getTagMasterList();
 
 	int countTagMasterByTagCode(String tagCode);

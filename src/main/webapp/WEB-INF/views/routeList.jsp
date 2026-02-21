@@ -19,18 +19,33 @@
 <div class="page-container">
     <div class="routes-wrap">
 
-        <%-- ✅ 개인화 헤더 (기존 유지) --%>
+        <%-- ✅ 내 태그 요약 헤더 --%>
         <div class="personal-hero" id="personal-hero">
-            <div class="personal-badge">PERSONALIZED RECOMMENDATION</div>
+            <div class="personal-badge">MY TRAVEL TAGS</div>
             <div class="personal-row">
                 <div class="personal-title">
-                    <span class="personal-name"><c:out value="${not empty userName ? userName : '여행'}"/></span>님과<br/>
-                    <span class="personal-strong">유사도 <c:out value="${not empty similarityPct ? similarityPct : 98}"/>% 장소들</span>
+                    <span class="personal-name"><c:out value="${not empty personalUserName ? personalUserName : (not empty headerDisplayName ? headerDisplayName : (not empty userName ? userName : '여행자'))}"/></span>님의<br/>
+                    <span class="personal-strong">태그 요약</span>
                 </div>
                 <div class="personal-right">
-                    <div class="personal-desc">비슷한 성향의 유저들이 최근 7일간 가장 많이 방문한 핫플레이스입니다.</div>
+                    <div class="personal-desc">
+                        <c:choose>
+                            <c:when test="${not empty myTopTags}">
+                                내가 선택한 태그를 기준으로 추천 루트를 정렬하고 있어요.
+                            </c:when>
+                            <c:otherwise>
+                                아직 등록된 태그가 없어요. 마이페이지에서 태그를 추가하면 추천 정확도가 높아집니다.
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     <div class="personal-meta">
-                        <div class="meta-pill">👥 <b><c:out value="${not empty activeUsers ? activeUsers : '1,234'}"/></b>명 탐색 중</div>
+                        <div class="meta-pill">🏷️ <b><c:out value="${not empty myTagCount ? myTagCount : 0}"/></b>개 보유</div>
+                        <c:forEach var="tagName" items="${myTopTags}">
+                            <div class="meta-pill">#<c:out value="${tagName}"/></div>
+                        </c:forEach>
+                        <c:if test="${empty myTopTags}">
+                            <div class="meta-pill">등록된 태그 없음</div>
+                        </c:if>
                     </div>
                 </div>
             </div>

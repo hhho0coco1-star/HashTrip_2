@@ -2,10 +2,15 @@ package com.app.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,8 +19,10 @@ import com.app.dto.RouteDTO;
 import com.app.dto.TagCategoryDTO;
 import com.app.dto.TravelPlanDTO;
 import com.app.dto.TravelerTypeDTO;
+import com.app.dto.UserTagMapDTO;
 import com.app.service.PlanDetailService;
 import com.app.service.TravelPlanService;
+import com.app.service.UsersService;
 
 @Service
 public class RouteService {
@@ -25,6 +32,9 @@ public class RouteService {
 
     @Autowired
     private TravelPlanService travelPlanService;
+
+    @Autowired
+    private UsersService usersService;
 
     public RouteDTO getRouteById(Long routeId) {
         TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
@@ -83,6 +93,38 @@ public class RouteService {
         return types;
     }
 
+    public Integer applySimilarityScores(
+            List<RouteDTO> routes,
+            List<UserTagMapDTO> userTags,
+            Long currentUserNo) {
+        if (routes == null || routes.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Integer> currentUserTagWeights = buildUserTagWeights(
+                userTags == null ? Collections.emptyList() : userTags);
+        boolean hasCurrentUserTags = !currentUserTagWeights.isEmpty();
+
+        Map<Long, Map<String, Integer>> authorTagWeightCache = new HashMap<>();
+        int bestScore = 0;
+        for (RouteDTO route : routes) {
+            int similarityScore = hasCurrentUserTags
+                    ? calculateSimilarityScore(route, currentUserTagWeights, authorTagWeightCache, currentUserNo)
+                    : calculateFallbackScore(route, currentUserNo);
+            route.setMatchScore(similarityScore);
+            if (similarityScore > bestScore) {
+                bestScore = similarityScore;
+            }
+        }
+
+        routes.sort(
+                Comparator.comparing(RouteDTO::getMatchScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(RouteDTO::getSavedCount, Comparator.reverseOrder())
+                        .thenComparing(RouteDTO::getId, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        return bestScore == 0 ? null : bestScore;
+    }
+
     private void enrichRoute(RouteDTO route) {
         String normalizedTypeId = normalizeTypeId(route.getTypeId());
         route.setTypeId(normalizedTypeId);
@@ -110,6 +152,7 @@ public class RouteService {
         RouteDTO route = new RouteDTO();
 
         route.setId(travelPlan.getPlanNo());
+        route.setUserNo(travelPlan.getUserNo());
         route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
         route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
         route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
@@ -119,6 +162,135 @@ public class RouteService {
         route.setUserName(defaultIfBlank(travelPlan.getUserName(), "Traveler"));
 
         return route;
+    }
+
+    private int calculateSimilarityScore(
+            RouteDTO route,
+            Map<String, Integer> currentUserTagWeights,
+            Map<Long, Map<String, Integer>> authorTagWeightCache,
+            Long currentUserNo) {
+        if (route == null) {
+            return 40;
+        }
+
+        Long authorUserNo = route.getUserNo();
+        if (authorUserNo == null) {
+            return clampScore(defaultIfNull(route.getMatchScore(), 65));
+        }
+        if (currentUserNo != null && currentUserNo.equals(authorUserNo)) {
+            return 100;
+        }
+
+        Map<String, Integer> authorTagWeights = authorTagWeightCache.get(authorUserNo);
+        if (authorTagWeights == null) {
+            List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
+            authorTagWeights = buildUserTagWeights(authorTags == null ? Collections.emptyList() : authorTags);
+            authorTagWeightCache.put(authorUserNo, authorTagWeights);
+        }
+
+        if (authorTagWeights.isEmpty()) {
+            return clampScore(defaultIfNull(route.getMatchScore(), 65));
+        }
+
+        return calculateTagSimilarityScore(currentUserTagWeights, authorTagWeights, route.getSavedCount());
+    }
+
+    private int calculateFallbackScore(RouteDTO route, Long currentUserNo) {
+        if (route == null) {
+            return 40;
+        }
+
+        Long authorUserNo = route.getUserNo();
+        if (currentUserNo != null && currentUserNo.equals(authorUserNo)) {
+            return 100;
+        }
+        return clampScore(defaultIfNull(route.getMatchScore(), 65));
+    }
+
+    private int calculateTagSimilarityScore(
+            Map<String, Integer> currentUserTagWeights,
+            Map<String, Integer> authorTagWeights,
+            int savedCount) {
+        Set<String> allTags = new LinkedHashSet<>();
+        allTags.addAll(currentUserTagWeights.keySet());
+        allTags.addAll(authorTagWeights.keySet());
+
+        int intersectionWeight = 0;
+        int unionWeight = 0;
+        int authorTotalWeight = 0;
+        for (String tag : allTags) {
+            int mine = positiveWeight(currentUserTagWeights.get(tag));
+            int author = positiveWeight(authorTagWeights.get(tag));
+            intersectionWeight += Math.min(mine, author);
+            unionWeight += Math.max(mine, author);
+            authorTotalWeight += author;
+        }
+
+        if (unionWeight == 0 || authorTotalWeight == 0) {
+            return 40;
+        }
+
+        double jaccardSimilarity = (double) intersectionWeight / unionWeight;
+        double authorCoverage = (double) intersectionWeight / authorTotalWeight;
+        int popularityBonus = Math.min(6, Math.max(0, savedCount / 7));
+
+        int score = 44
+                + (int) Math.round(jaccardSimilarity * 38D)
+                + (int) Math.round(authorCoverage * 10D)
+                + popularityBonus;
+
+        if (intersectionWeight == 0) {
+            score = Math.max(40, score - 10);
+        }
+
+        return clampScore(score);
+    }
+
+    private Map<String, Integer> buildUserTagWeights(List<UserTagMapDTO> userTags) {
+        Map<String, Integer> tagWeights = new HashMap<>();
+        for (UserTagMapDTO userTag : userTags) {
+            if (userTag == null) {
+                continue;
+            }
+
+            String normalizedTagName = normalizeTagToken(userTag.getTagName());
+            if (normalizedTagName == null) {
+                normalizedTagName = normalizeTagToken(userTag.getTagCode());
+            }
+            if (normalizedTagName == null) {
+                continue;
+            }
+
+            Integer currentWeight = tagWeights.get(normalizedTagName);
+            tagWeights.put(normalizedTagName, currentWeight == null ? 1 : currentWeight + 1);
+        }
+        return tagWeights;
+    }
+
+    private int positiveWeight(Integer weight) {
+        return weight == null || weight < 0 ? 0 : weight;
+    }
+
+    private String normalizeTagToken(String tagValue) {
+        if (tagValue == null) {
+            return null;
+        }
+
+        String normalized = tagValue.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        if (normalized.startsWith("#")) {
+            normalized = normalized.substring(1).trim();
+        }
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private int clampScore(int score) {
+        if (score < 40) {
+            return 40;
+        }
+        return Math.min(score, 98);
     }
 
     private String buildDescription(TravelPlanDTO travelPlan) {

@@ -19,6 +19,7 @@ public class UsersDAOImpl implements UsersDAO {
 	private static final String GET_USER_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserByAuthId";
 	private static final String GET_USER_NICKNAME_STATEMENT_ID = "users_mapper.getUserNickname";
 	private static final String GET_USER_TAGS_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserTagsByAuthId";
+	private static final String GET_USER_TAGS_BY_USER_NO_STATEMENT_ID = "users_mapper.findUserTagsByUserNo";
 	private static final String GET_TAG_MASTER_LIST_STATEMENT_ID = "users_mapper.getTagMasterList";
 	private static final String COUNT_TAG_MASTER_BY_TAG_CODE_STATEMENT_ID = "users_mapper.countTagMasterByTagCode";
 	private static final String INSERT_USER_TAG_BY_AUTH_ID_STATEMENT_ID = "users_mapper.insertUserTagByAuthId";
@@ -44,6 +45,11 @@ public class UsersDAOImpl implements UsersDAO {
 	@Override
 	public List<UserTagMapDTO> getUserTagsByAuthId(String authId) {
 		return sqlSessionTemplate.selectList(GET_USER_TAGS_BY_AUTH_ID_STATEMENT_ID, authId);
+	}
+
+	@Override
+	public List<UserTagMapDTO> getUserTagsByUserNo(Long userNo) {
+		return sqlSessionTemplate.selectList(GET_USER_TAGS_BY_USER_NO_STATEMENT_ID, userNo);
 	}
 
 	@Override

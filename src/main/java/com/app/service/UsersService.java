@@ -17,6 +17,8 @@ public interface UsersService {
 
 	List<UserTagMapDTO> getUserTagsByAuthId(String authId);
 
+	List<UserTagMapDTO> getUserTagsByUserNo(Long userNo);
+
 	List<TagMasterDTO> getTagMasterList();
 
 	boolean addUserTagByAuthId(String authId, String tagCode);
