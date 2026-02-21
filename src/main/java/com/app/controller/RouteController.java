@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.CommunityDTO;
 import com.app.dto.RouteDTO;
+import com.app.dto.RouteSaveResultDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlanDetailService;
@@ -118,11 +119,17 @@ public class RouteController {
         }
 
         try {
-            Long copiedPlanNo = travelPlanService.copyTravelPlanWithDetails(routeId, currentUser.getUserNo(), null);
+            RouteSaveResultDTO saveResult = travelPlanService.saveRouteForUser(routeId, currentUser.getUserNo(), null);
             response.put("success", true);
-            response.put("message", "내 일정으로 저장했습니다.");
-            response.put("planNo", copiedPlanNo);
-            response.put("redirectUrl", "/plan/" + copiedPlanNo + "/edit");
+            response.put("savedUserCount", saveResult.getSavedUserCount());
+            response.put("saveRegistered", saveResult.isSaveRegistered());
+            response.put("message", saveResult.isSaveRegistered()
+                    ? "내 일정으로 저장했습니다."
+                    : "이미 저장한 루트입니다.");
+            if (saveResult.getCopiedPlanNo() != null) {
+                response.put("planNo", saveResult.getCopiedPlanNo());
+                response.put("redirectUrl", "/plan/" + saveResult.getCopiedPlanNo() + "/edit");
+            }
             return response;
         } catch (Exception e) {
             response.put("success", false);

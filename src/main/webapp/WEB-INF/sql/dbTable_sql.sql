@@ -13,6 +13,7 @@ BEGIN
             'COMMUNITY',
             'TRAVEL_LOGS',
             'PLAN_DETAILS',
+            'ROUTE_SAVE_HISTORY',
             'WISHLIST',
             'CATEGORY',
             'TRAVEL_PLANS',
@@ -52,6 +53,7 @@ BEGIN
             'SEQ_STYLE_USER_NO',
             'SEQ_PLAN_NO',
             'SEQ_PLAN_DETAIL_NO',
+            'SEQ_ROUTE_SAVE_NO',
             'SEQ_LOG_NO',
             'SEQ_COMMENT_NO',
             'SEQ_COMMUNITY_REVIEW_NO',
@@ -247,6 +249,19 @@ CREATE TABLE Plan_Details (
     CONSTRAINT fk_pdet_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
+CREATE TABLE Route_Save_History (
+    save_no NUMBER(19) PRIMARY KEY,
+    source_plan_no NUMBER(19) NOT NULL,
+    saved_user_no NUMBER(19) NOT NULL,
+    saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_route_save_once UNIQUE (source_plan_no, saved_user_no),
+    CONSTRAINT fk_route_save_plan FOREIGN KEY (source_plan_no) REFERENCES Travel_Plans(plan_no),
+    CONSTRAINT fk_route_save_user FOREIGN KEY (saved_user_no) REFERENCES Users(user_no)
+);
+
+CREATE INDEX IDX_ROUTE_SAVE_PLAN_NO ON ROUTE_SAVE_HISTORY(source_plan_no);
+CREATE INDEX IDX_ROUTE_SAVE_USER_NO ON ROUTE_SAVE_HISTORY(saved_user_no);
+
 -- 11. 여행 로그 및 사진 (Review 포함)
 CREATE TABLE Travel_Logs (
     log_no NUMBER(19) PRIMARY KEY,
@@ -340,6 +355,7 @@ CREATE SEQUENCE SEQ_STYLE_USER_NO START WITH 1 INCREMENT BY 1;
 -- 여행 일정 마스터 및 상세 시퀀스
 CREATE SEQUENCE SEQ_PLAN_NO START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SEQ_PLAN_DETAIL_NO START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_ROUTE_SAVE_NO START WITH 1 INCREMENT BY 1;
 
 -- 여행 로그 및 리뷰 시퀀스
 CREATE SEQUENCE SEQ_LOG_NO START WITH 1 INCREMENT BY 1;

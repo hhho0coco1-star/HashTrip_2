@@ -21,32 +21,57 @@
 
         <%-- ✅ 내 태그 요약 헤더 --%>
         <div class="personal-hero" id="personal-hero">
-            <div class="personal-badge">MY TRAVEL TAGS</div>
+            <div class="personal-badge">
+                <span class="personal-badge-icon">🛡️</span>
+                Personalized Curation
+            </div>
             <div class="personal-row">
-                <div class="personal-title">
-                    <span class="personal-name"><c:out value="${not empty personalUserName ? personalUserName : (not empty headerDisplayName ? headerDisplayName : (not empty userName ? userName : '여행자'))}"/></span>님의<br/>
-                    <span class="personal-strong">태그 요약</span>
-                </div>
-                <div class="personal-right">
+                <div class="personal-main">
+                    <div class="personal-title">
+                        <span class="personal-name"><c:out value="${not empty personalUserName ? personalUserName : (not empty headerDisplayName ? headerDisplayName : (not empty userName ? userName : '여행자'))}"/></span>님의<br/>
+                        <span class="personal-strong">태그 큐레이션</span>
+                    </div>
                     <div class="personal-desc">
                         <c:choose>
                             <c:when test="${not empty myTopTags}">
-                                내가 선택한 태그를 기준으로 추천 루트를 정렬하고 있어요.
+                                취향을 분석하여 최적의 여행 루트를 설계하고 있어요
                             </c:when>
                             <c:otherwise>
                                 아직 등록된 태그가 없어요. 마이페이지에서 태그를 추가하면 추천 정확도가 높아집니다.
                             </c:otherwise>
                         </c:choose>
+                        <span class="dot-loader" aria-hidden="true"><i></i><i></i><i></i></span>
                     </div>
-                    <div class="personal-meta">
-                        <div class="meta-pill">🏷️ <b><c:out value="${not empty myTagCount ? myTagCount : 0}"/></b>개 보유</div>
-                        <c:forEach var="tagName" items="${myTopTags}">
-                            <div class="meta-pill">#<c:out value="${tagName}"/></div>
-                        </c:forEach>
-                        <c:if test="${empty myTopTags}">
-                            <div class="meta-pill">등록된 태그 없음</div>
-                        </c:if>
+                </div>
+
+                <div class="personal-stat-card">
+                    <div class="personal-stat-icon">🏷️</div>
+                    <div class="personal-stat-body">
+                        <div class="personal-stat-label">Total Tags</div>
+                        <div class="personal-stat-value">
+                            <b><c:out value="${not empty myTagCount ? myTagCount : 0}"/></b><span>개</span>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="personal-meta-block">
+                <div class="personal-meta-title">Selected Moods</div>
+                <div class="personal-meta">
+                    <c:choose>
+                        <c:when test="${not empty myTopTags}">
+                            <c:forEach var="tagName" items="${myTopTags}">
+                                <span class="meta-pill meta-tag">✨ #<c:out value="${tagName}"/></span>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="meta-pill meta-empty">등록된 태그 없음</span>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <a class="meta-pill meta-link" href="${pageContext.request.contextPath}/mypage">
+                        전체보기 <span class="meta-arrow">›</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -55,7 +80,10 @@
             <div class="section-badge">RECOMMENDED ROUTES</div>
             <div class="routes-header-row">
                 <h2 class="section-title">🗺️ 추천 여행 루트</h2>
-                <button class="btn-cta-outline btn-share" id="btn-share-route">+ 내 루트 공유</button>
+                <button type="button"
+                        class="btn-cta-outline btn-share"
+                        id="btn-create-plan"
+                        onclick="location.href='${pageContext.request.contextPath}/plan/new'">+ 내 일정 작성</button>
             </div>
             <p class="section-subtitle">취향이 맞는 여행자들의 루트를 발견해보세요</p>
         </div>
@@ -127,7 +155,7 @@
 
                             <div class="route-foot">
                                 <div class="route-stats">
-                                    <div class="route-stat">🔖 ${route.savedCount}</div>
+                                    <div class="route-stat route-save-count" data-route-id="${route.id}">🔖 ${route.savedCount}명 저장</div>
                                 </div>
                                 <button class="btn-save-route" onclick="event.stopPropagation(); saveRoute(${route.id}, this)">저장</button>
                             </div>
@@ -191,7 +219,7 @@
                 </div>
                 <div class="route-foot">
                     <div class="route-stats">
-                        <div class="route-stat">💾 \${route.savedCount}</div>
+                        <div class="route-stat route-save-count" data-route-id="\${route.id}">🔖 \${route.savedCount}명 저장</div>
                     </div>
                     <button class="btn-save-route" onclick="event.stopPropagation(); saveRoute(\${route.id}, this)">저장</button>
                 </div>
@@ -235,6 +263,9 @@
 
             if (response.ok && data && data.success) {
                 showToast(data.message || '저장되었습니다.');
+                if (data.savedUserCount != null) {
+                    updateSavedUserCount(routeId, data.savedUserCount);
+                }
                 btn.textContent = '저장됨';
                 btn.disabled = true;
                 return;
@@ -251,6 +282,13 @@
         t.textContent = msg;
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function updateSavedUserCount(routeId, savedUserCount) {
+        const labels = document.querySelectorAll('.route-save-count[data-route-id="' + routeId + '"]');
+        labels.forEach(label => {
+            label.textContent = '🔖 ' + savedUserCount + '명 저장';
+        });
     }
 </script>
 

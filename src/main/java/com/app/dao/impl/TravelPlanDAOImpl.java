@@ -18,6 +18,9 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
 	private static final String GET_TRAVEL_PLANS_BY_USER_NO_STATEMENT_ID = "travel_plan_mapper.getTravelPlansByUserNo";
 	private static final String UPDATE_TRAVEL_PLAN_STATEMENT_ID = "travel_plan_mapper.updateTravelPlan";
     private static final String DELETE_TRAVEL_PLAN_BY_OWNER_STATEMENT_ID = "travel_plan_mapper.deleteTravelPlanByOwner";
+    private static final String REGISTER_ROUTE_SAVE_STATEMENT_ID = "travel_plan_mapper.registerRouteSave";
+    private static final String COUNT_SAVED_USERS_BY_SOURCE_PLAN_STATEMENT_ID = "travel_plan_mapper.countSavedUsersBySourcePlan";
+    private static final String DELETE_ROUTE_SAVE_HISTORY_BY_SOURCE_PLAN_STATEMENT_ID = "travel_plan_mapper.deleteRouteSaveHistoryBySourcePlan";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -52,6 +55,24 @@ public class TravelPlanDAOImpl implements TravelPlanDAO {
         return sqlSessionTemplate.delete(
                 DELETE_TRAVEL_PLAN_BY_OWNER_STATEMENT_ID,
                 Map.of("planNo", planNo, "userNo", userNo));
+    }
+
+    @Override
+    public int registerRouteSave(Long sourcePlanNo, Long savedUserNo) {
+        return sqlSessionTemplate.insert(
+                REGISTER_ROUTE_SAVE_STATEMENT_ID,
+                Map.of("sourcePlanNo", sourcePlanNo, "savedUserNo", savedUserNo));
+    }
+
+    @Override
+    public int countSavedUsersBySourcePlan(Long sourcePlanNo) {
+        Integer count = sqlSessionTemplate.selectOne(COUNT_SAVED_USERS_BY_SOURCE_PLAN_STATEMENT_ID, sourcePlanNo);
+        return count == null ? 0 : count;
+    }
+
+    @Override
+    public int deleteRouteSaveHistoryBySourcePlan(Long sourcePlanNo) {
+        return sqlSessionTemplate.delete(DELETE_ROUTE_SAVE_HISTORY_BY_SOURCE_PLAN_STATEMENT_ID, sourcePlanNo);
     }
     
 }
