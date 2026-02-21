@@ -758,4 +758,10 @@ public class PlaceServiceImpl implements PlaceService {
 		}
 		return "latest";
 	}
+
+	// mainPage 추천 여행지 검색
+	@Override
+	public List<PlaceDTO> searchPlaces(String keyword) {
+		return placeDAO.searchPlaces(keyword);
+	}
 }
