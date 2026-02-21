@@ -58,7 +58,7 @@ public class RouteController {
         model.addAttribute("categories", routeService.getAllTagCategories());
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         return "routeList";
-    }
+    } 
 
     @GetMapping("/{routeId}")
     public String routeDetail(@PathVariable Long routeId, Model model, Authentication authentication) {
