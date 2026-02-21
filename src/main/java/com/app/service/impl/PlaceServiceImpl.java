@@ -318,12 +318,18 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize) throws Exception {
+		return getMyPlaceReviews(createdBy, page, pageSize, "latest");
+	}
+
+	@Override
+	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize, String sortType) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		int safePage = Math.max(1, page);
 		int safePageSize = Math.max(1, pageSize);
 		int startRow = ((safePage - 1) * safePageSize) + 1;
 		int endRow = safePage * safePageSize;
-		return placeDAO.selectPlaceReviewsByCreatedByPaged(safeCreatedBy, startRow, endRow);
+		String safeSortType = normalizeReviewSort(sortType);
+		return placeDAO.selectPlaceReviewsByCreatedByPaged(safeCreatedBy, startRow, endRow, safeSortType);
 	}
 
 	@Override
@@ -740,5 +746,16 @@ public class PlaceServiceImpl implements PlaceService {
 			return 5;
 		}
 		return rating;
+	}
+
+	private String normalizeReviewSort(String sortType) {
+		if (!StringUtils.hasText(sortType)) {
+			return "latest";
+		}
+		String normalized = sortType.trim().toLowerCase();
+		if ("oldest".equals(normalized) || "rating".equals(normalized)) {
+			return normalized;
+		}
+		return "latest";
 	}
 }

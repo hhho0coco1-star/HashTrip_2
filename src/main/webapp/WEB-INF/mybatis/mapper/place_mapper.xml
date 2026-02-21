@@ -377,6 +377,54 @@
 		ORDER BY r.rn
 	</select>
 
+	<select id="selectPlaceReviewsByCreatedByPagedSorted" parameterType="map" resultType="PlaceReviewDTO">
+		SELECT
+			r.COMMENT_NO,
+			r.LOG_NO,
+			r.PLACE_NO,
+			r.PLACE_NAME,
+			r.COMMENT_CONTENT,
+			r.RATING,
+			r.CREATED_BY_AUTH_ID,
+			r.CREATED_BY,
+			r.CREATED_AT
+		FROM (
+			SELECT
+				pr.COMMENT_NO,
+				pr.LOG_NO,
+				pr.PLACE_NO,
+				p.PLACE_NAME,
+				pr.COMMENT_CONTENT,
+				pr.RATING,
+				pr.CREATED_BY AS CREATED_BY_AUTH_ID,
+				NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
+				pr.CREATED_AT,
+				ROW_NUMBER() OVER (
+					<choose>
+						<when test="sortType == 'oldest'">
+							ORDER BY pr.CREATED_AT ASC, pr.COMMENT_NO ASC
+						</when>
+						<when test="sortType == 'rating'">
+							ORDER BY NVL(pr.RATING, 0) DESC, pr.CREATED_AT DESC, pr.COMMENT_NO DESC
+						</when>
+						<otherwise>
+							ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC
+						</otherwise>
+					</choose>
+				) AS rn
+			FROM PLACE_REVIEW pr
+			LEFT JOIN PLACE p
+				ON p.PLACE_NO = pr.PLACE_NO
+			LEFT JOIN USER_AUTHENTICATION ua
+				ON ua.USER_AUTH_ID = pr.CREATED_BY
+			LEFT JOIN USERS u
+				ON u.USER_NO = ua.USER_NO
+			WHERE pr.CREATED_BY = #{createdBy}
+		) r
+		WHERE r.rn BETWEEN #{startRow} AND #{endRow}
+		ORDER BY r.rn
+	</select>
+
 	<select id="selectWishlistCategoriesByUserNo" parameterType="long" resultType="CategoryDTO">
 		SELECT
 			CATEGORY_NO,

@@ -44,7 +44,7 @@
 			</section>
 
 			<section class="dashboard-card">
-				<details class="tag-manage-details" open>
+				<details class="tag-manage-details">
 					<summary>성향 태그 관리</summary>
 					<div class="tag-manage-body">
 						<div id="tag-managers"></div>
@@ -53,61 +53,209 @@
 			</section>
 
 			<section class="dashboard-card">
-				<h3>내 리뷰</h3>
+				<div class="review-section-head">
+					<h3>내 여행지 리뷰 (${placeReviewCount})</h3>
+					<form class="review-sort-form" method="get" action="${pageContext.request.contextPath}/mypage">
+						<input type="hidden" name="placePage" value="1">
+						<input type="hidden" name="communityPage" value="${communityCurrentPage}">
+						<input type="hidden" name="communitySort" value="${communitySort}">
+						<input type="hidden" name="placeExpanded" value="${placeExpanded ? 'Y' : 'N'}">
+						<input type="hidden" name="communityExpanded" value="${communityExpanded ? 'Y' : 'N'}">
+						<select name="placeSort" onchange="this.form.submit()">
+							<option value="latest" ${placeSort == 'latest' ? 'selected' : ''}>최신순</option>
+							<option value="oldest" ${placeSort == 'oldest' ? 'selected' : ''}>오래된순</option>
+							<option value="rating" ${placeSort == 'rating' ? 'selected' : ''}>별점순</option>
+						</select>
+					</form>
+				</div>
 				<c:choose>
-					<c:when test="${empty reviewList}">
-						<p class="empty-text">작성한 리뷰가 없습니다.</p>
+					<c:when test="${empty placeReviewList}">
+						<p class="empty-text">작성한 여행지 리뷰가 없습니다.</p>
 					</c:when>
 					<c:otherwise>
 						<div class="review-list">
-							<c:forEach var="review" items="${reviewList}">
-								<article class="review-item">
-									<div class="review-top">
-										<a class="review-place-link" href="${pageContext.request.contextPath}/place/detail?place_no=${review.placeNo}">
+							<c:forEach var="review" items="${placeReviewList}" varStatus="status">
+								<c:if test="${placeExpanded or status.count <= reviewPreviewSize}">
+									<article class="review-item">
+										<div class="review-top">
 											<c:choose>
-												<c:when test="${not empty review.placeName}">
-													<c:out value="${review.placeName}" />
+												<c:when test="${not empty review.placeNo}">
+													<a class="review-place-link" href="${pageContext.request.contextPath}/place/detail?place_no=${review.placeNo}">
+														<c:choose>
+															<c:when test="${not empty review.placeName}">
+																<c:out value="${review.placeName}" />
+															</c:when>
+															<c:otherwise>
+																장소 #${review.placeNo}
+															</c:otherwise>
+														</c:choose>
+													</a>
 												</c:when>
 												<c:otherwise>
-													장소 #${review.placeNo}
+													<span class="review-place-link">
+														<c:out value="${empty review.placeName ? '장소 정보 없음' : review.placeName}" />
+													</span>
 												</c:otherwise>
 											</c:choose>
-										</a>
-										<span class="review-rating">
-											<c:forEach var="i" begin="1" end="5">
-												<c:choose>
-													<c:when test="${i <= review.rating}">★</c:when>
-													<c:otherwise>☆</c:otherwise>
-												</c:choose>
-											</c:forEach>
-										</span>
-									</div>
-									<p class="review-content"><c:out value="${review.commentContent}" /></p>
-									<p class="review-date">
-										<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
-									</p>
-								</article>
+											<span class="review-rating">
+												<c:forEach var="i" begin="1" end="5">
+													<c:choose>
+														<c:when test="${i <= review.rating}">★</c:when>
+														<c:otherwise>☆</c:otherwise>
+													</c:choose>
+												</c:forEach>
+											</span>
+										</div>
+										<p class="review-content"><c:out value="${review.commentContent}" /></p>
+										<p class="review-date">
+											<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+										</p>
+									</article>
+								</c:if>
 							</c:forEach>
 						</div>
-						<c:if test="${totalPages > 1}">
+
+						<c:if test="${!placeExpanded and (fn:length(placeReviewList) > reviewPreviewSize or placeTotalPages > 1)}">
+							<a class="review-more-toggle"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">
+								펼쳐서 더보기
+							</a>
+						</c:if>
+
+						<c:if test="${placeExpanded and placeTotalPages > 1}">
 							<nav class="pagination">
-								<c:if test="${currentPage > 1}">
-									<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${currentPage - 1}">이전</a>
+								<c:if test="${placeCurrentPage > 1}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage - 1}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">이전</a>
 								</c:if>
-								<c:forEach var="pageNo" begin="1" end="${totalPages}">
+								<c:forEach var="pageNo" begin="1" end="${placeTotalPages}">
 									<c:choose>
-										<c:when test="${pageNo == currentPage}">
+										<c:when test="${pageNo == placeCurrentPage}">
 											<span class="page-link is-active">${pageNo}</span>
 										</c:when>
 										<c:otherwise>
-											<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${pageNo}">${pageNo}</a>
+											<a class="page-link"
+												href="${pageContext.request.contextPath}/mypage?placePage=${pageNo}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">${pageNo}</a>
 										</c:otherwise>
 									</c:choose>
 								</c:forEach>
-								<c:if test="${currentPage < totalPages}">
-									<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${currentPage + 1}">다음</a>
+								<c:if test="${placeCurrentPage < placeTotalPages}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage + 1}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">다음</a>
 								</c:if>
 							</nav>
+						</c:if>
+
+						<c:if test="${placeExpanded}">
+							<a class="review-more-toggle is-collapse"
+								href="${pageContext.request.contextPath}/mypage?placePage=1&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=N&communityExpanded=${communityExpanded ? 'Y' : 'N'}">
+								접기
+							</a>
+						</c:if>
+					</c:otherwise>
+				</c:choose>
+			</section>
+
+			<section class="dashboard-card">
+				<div class="review-section-head">
+					<h3>내 일정 리뷰 (${communityReviewCount})</h3>
+					<form class="review-sort-form" method="get" action="${pageContext.request.contextPath}/mypage">
+						<input type="hidden" name="placePage" value="${placeCurrentPage}">
+						<input type="hidden" name="communityPage" value="1">
+						<input type="hidden" name="placeSort" value="${placeSort}">
+						<input type="hidden" name="placeExpanded" value="${placeExpanded ? 'Y' : 'N'}">
+						<input type="hidden" name="communityExpanded" value="${communityExpanded ? 'Y' : 'N'}">
+						<select name="communitySort" onchange="this.form.submit()">
+							<option value="latest" ${communitySort == 'latest' ? 'selected' : ''}>최신순</option>
+							<option value="oldest" ${communitySort == 'oldest' ? 'selected' : ''}>오래된순</option>
+							<option value="rating" ${communitySort == 'rating' ? 'selected' : ''}>별점순</option>
+						</select>
+					</form>
+				</div>
+
+				<c:choose>
+					<c:when test="${empty communityReviewList}">
+						<p class="empty-text">작성한 일정 리뷰가 없습니다.</p>
+					</c:when>
+					<c:otherwise>
+						<div class="review-list">
+							<c:forEach var="review" items="${communityReviewList}" varStatus="status">
+								<c:if test="${communityExpanded or status.count <= reviewPreviewSize}">
+									<article class="review-item">
+										<div class="review-top">
+											<c:choose>
+												<c:when test="${not empty review.planNo}">
+													<a class="review-place-link" href="${pageContext.request.contextPath}/routes/${review.planNo}">
+														<c:choose>
+															<c:when test="${not empty review.planTitle}">
+																<c:out value="${review.planTitle}" />
+															</c:when>
+															<c:otherwise>
+																일정 #${review.planNo}
+															</c:otherwise>
+														</c:choose>
+													</a>
+												</c:when>
+												<c:otherwise>
+													<span class="review-place-link">
+														<c:out value="${empty review.planTitle ? '일정 정보 없음' : review.planTitle}" />
+													</span>
+												</c:otherwise>
+											</c:choose>
+											<span class="review-rating">
+												<c:forEach var="i" begin="1" end="5">
+													<c:choose>
+														<c:when test="${i <= review.rating}">★</c:when>
+														<c:otherwise>☆</c:otherwise>
+													</c:choose>
+												</c:forEach>
+											</span>
+										</div>
+										<p class="review-content"><c:out value="${review.reviewContent}" /></p>
+										<p class="review-date">
+											<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+										</p>
+									</article>
+								</c:if>
+							</c:forEach>
+						</div>
+
+						<c:if test="${!communityExpanded and (fn:length(communityReviewList) > reviewPreviewSize or communityTotalPages > 1)}">
+							<a class="review-more-toggle"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">
+								펼쳐서 더보기
+							</a>
+						</c:if>
+
+						<c:if test="${communityExpanded and communityTotalPages > 1}">
+							<nav class="pagination">
+								<c:if test="${communityCurrentPage > 1}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage - 1}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">이전</a>
+								</c:if>
+								<c:forEach var="pageNo" begin="1" end="${communityTotalPages}">
+									<c:choose>
+										<c:when test="${pageNo == communityCurrentPage}">
+											<span class="page-link is-active">${pageNo}</span>
+										</c:when>
+										<c:otherwise>
+											<a class="page-link"
+												href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${pageNo}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">${pageNo}</a>
+										</c:otherwise>
+									</c:choose>
+								</c:forEach>
+								<c:if test="${communityCurrentPage < communityTotalPages}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage + 1}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">다음</a>
+								</c:if>
+							</nav>
+						</c:if>
+
+						<c:if test="${communityExpanded}">
+							<a class="review-more-toggle is-collapse"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=1&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=N">
+								접기
+							</a>
 						</c:if>
 					</c:otherwise>
 				</c:choose>

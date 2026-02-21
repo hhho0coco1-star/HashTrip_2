@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.CommunityDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
@@ -25,11 +26,13 @@ import com.app.dto.WishListDTO;
 import com.app.service.PlaceService;
 import com.app.service.UsersService;
 import com.app.service.WishListService;
+import com.app.service.impl.CommunityService;
 
 @Controller
 public class MyPageController {
 
 	private static final int REVIEW_PAGE_SIZE = 10;
+	private static final int REVIEW_PREVIEW_SIZE = 4;
 
 	@Autowired
 	private UsersService usersService;
@@ -40,9 +43,17 @@ public class MyPageController {
 	@Autowired
 	private WishListService wishListService;
 
+	@Autowired
+	private CommunityService communityService;
+
 	@GetMapping({ "/mypage", "/mypage/", "/myPage", "/my-page", "/hashTrip/mypage" })
 	public String mypage(
-			@RequestParam(name = "page", defaultValue = "1") int page,
+			@RequestParam(name = "placePage", defaultValue = "1") int placePage,
+			@RequestParam(name = "communityPage", defaultValue = "1") int communityPage,
+			@RequestParam(name = "placeSort", defaultValue = "latest") String placeSort,
+			@RequestParam(name = "communitySort", defaultValue = "latest") String communitySort,
+			@RequestParam(name = "placeExpanded", defaultValue = "N") String placeExpanded,
+			@RequestParam(name = "communityExpanded", defaultValue = "N") String communityExpanded,
 			Authentication authentication,
 			Model model) throws Exception {
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
@@ -54,12 +65,24 @@ public class MyPageController {
 		List<UserTagMapDTO> userTagList = usersService.getUserTagsByAuthId(currentAuthId);
 		List<TagMasterDTO> tagMasterList = usersService.getTagMasterList();
 
-		int reviewCount = placeService.getMyPlaceReviewCount(currentAuthId);
-		int totalPages = Math.max(1, (int) Math.ceil(reviewCount / (double) REVIEW_PAGE_SIZE));
-		int currentPage = Math.max(1, Math.min(page, totalPages));
-		List<PlaceReviewDTO> reviewList = reviewCount == 0
+		String resolvedPlaceSort = normalizeReviewSort(placeSort);
+		String resolvedCommunitySort = normalizeReviewSort(communitySort);
+		boolean placeExpandedFlag = isExpanded(placeExpanded);
+		boolean communityExpandedFlag = isExpanded(communityExpanded);
+
+		int placeReviewCount = placeService.getMyPlaceReviewCount(currentAuthId);
+		int placeTotalPages = Math.max(1, (int) Math.ceil(placeReviewCount / (double) REVIEW_PAGE_SIZE));
+		int placeCurrentPage = Math.max(1, Math.min(placePage, placeTotalPages));
+		List<PlaceReviewDTO> placeReviewList = placeReviewCount == 0
 				? Collections.emptyList()
-				: placeService.getMyPlaceReviews(currentAuthId, currentPage, REVIEW_PAGE_SIZE);
+				: placeService.getMyPlaceReviews(currentAuthId, placeCurrentPage, REVIEW_PAGE_SIZE, resolvedPlaceSort);
+
+		int communityReviewCount = communityService.getMyCommunityReviewCount(currentAuthId);
+		int communityTotalPages = Math.max(1, (int) Math.ceil(communityReviewCount / (double) REVIEW_PAGE_SIZE));
+		int communityCurrentPage = Math.max(1, Math.min(communityPage, communityTotalPages));
+		List<CommunityDTO> communityReviewList = communityReviewCount == 0
+				? Collections.emptyList()
+				: communityService.getMyCommunityReviews(currentAuthId, communityCurrentPage, REVIEW_PAGE_SIZE, resolvedCommunitySort);
 
 		int wishCount = wishListService.getWishPlaceCountByAuthId(currentAuthId);
 		List<WishListDTO> wishEntryList = wishCount == 0
@@ -75,13 +98,25 @@ public class MyPageController {
 		model.addAttribute("userTagList", userTagList);
 		model.addAttribute("tagMasterList", tagMasterList);
 		model.addAttribute("currentAuthId", currentAuthId);
-		model.addAttribute("reviewList", reviewList);
-		model.addAttribute("reviewCount", reviewCount);
+		model.addAttribute("placeReviewList", placeReviewList);
+		model.addAttribute("placeReviewCount", placeReviewCount);
+		model.addAttribute("placeCurrentPage", placeCurrentPage);
+		model.addAttribute("placeTotalPages", placeTotalPages);
+		model.addAttribute("placeSort", resolvedPlaceSort);
+		model.addAttribute("placeExpanded", placeExpandedFlag);
+
+		model.addAttribute("communityReviewList", communityReviewList);
+		model.addAttribute("communityReviewCount", communityReviewCount);
+		model.addAttribute("communityCurrentPage", communityCurrentPage);
+		model.addAttribute("communityTotalPages", communityTotalPages);
+		model.addAttribute("communitySort", resolvedCommunitySort);
+		model.addAttribute("communityExpanded", communityExpandedFlag);
+
+		model.addAttribute("reviewCount", placeReviewCount + communityReviewCount);
 		model.addAttribute("wishCount", wishCount);
 		model.addAttribute("wishEntryList", wishEntryList);
-		model.addAttribute("currentPage", currentPage);
-		model.addAttribute("totalPages", totalPages);
-		model.addAttribute("pageSize", REVIEW_PAGE_SIZE);
+		model.addAttribute("reviewPageSize", REVIEW_PAGE_SIZE);
+		model.addAttribute("reviewPreviewSize", REVIEW_PREVIEW_SIZE);
 		model.addAttribute("kakaoMapAppKey", kakaoMapAppKey);
 		return "mypage";
 	}
@@ -219,5 +254,20 @@ public class MyPageController {
 			return null;
 		}
 		return authId.trim();
+	}
+
+	private String normalizeReviewSort(String sortType) {
+		if (sortType == null) {
+			return "latest";
+		}
+		String normalized = sortType.trim().toLowerCase();
+		if ("oldest".equals(normalized) || "rating".equals(normalized)) {
+			return normalized;
+		}
+		return "latest";
+	}
+
+	private boolean isExpanded(String expanded) {
+		return "Y".equalsIgnoreCase(expanded);
 	}
 }

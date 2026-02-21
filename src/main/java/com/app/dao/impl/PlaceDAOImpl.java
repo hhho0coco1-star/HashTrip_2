@@ -53,6 +53,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_REVIEWS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceReviewsByPlaceNo";
 	private static final String COUNT_PLACE_REVIEWS_BY_CREATED_BY_STATEMENT_ID = "place_mapper.countPlaceReviewsByCreatedBy";
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPaged";
+	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_SORTED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPagedSorted";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
 	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
 	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
@@ -160,6 +161,14 @@ public class PlaceDAOImpl implements PlaceDAO {
 	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow) throws Exception {
 		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID,
 				buildReviewPageParams(createdBy, startRow, endRow));
+	}
+
+	@Override
+	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow, String sortType)
+			throws Exception {
+		Map<String, Object> params = buildReviewPageParams(createdBy, startRow, endRow);
+		params.put("sortType", sortType);
+		return sqlSessionTemplate.selectList(SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_SORTED_STATEMENT_ID, params);
 	}
 
 	@Override
