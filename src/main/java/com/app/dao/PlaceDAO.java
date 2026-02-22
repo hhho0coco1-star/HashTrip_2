@@ -60,4 +60,5 @@ public interface PlaceDAO {
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
 	
 	public List<PlaceDTO> searchPlaces(String keyword);
+	
 }

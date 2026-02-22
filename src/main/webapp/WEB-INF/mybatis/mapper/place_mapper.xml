@@ -692,5 +692,18 @@
 			WHERE ROWNUM &lt;= 10
 		</if>
 	</select>
+	
+	<select id="searchPlacesWithLike" resultType="com.app.dto.PlaceDTO" parameterType="map">
+    SELECT 
+        p.place_no AS placeNo,
+        p.place_name AS placeName,
+        p.place_address AS placeAddress,
+        p.place_thumbnail_url AS placeThumbnailUrl,
+        CASE WHEN up.user_id IS NOT NULL THEN 'Y' ELSE 'N' END AS savedYn
+    FROM places p
+    LEFT JOIN users_place up ON p.place_no = up.place_no 
+         AND up.user_id = #{userId}
+    WHERE p.place_name LIKE CONCAT('%', #{keyword}, '%')
+	</select>
 
 </mapper>

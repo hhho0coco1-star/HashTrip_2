@@ -260,4 +260,5 @@ public class PlaceDAOImpl implements PlaceDAO {
 	public List<PlaceDTO> searchPlaces(String keyword) {
 		return sqlSessionTemplate.selectList("place_mapper.searchPlaces", keyword);
 	}
+
 }

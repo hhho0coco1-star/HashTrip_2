@@ -764,4 +764,5 @@ public class PlaceServiceImpl implements PlaceService {
 	public List<PlaceDTO> searchPlaces(String keyword) {
 		return placeDAO.searchPlaces(keyword);
 	}
+
 }

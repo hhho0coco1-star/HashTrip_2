@@ -4,6 +4,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+	<!-- 추천 여행지 좋아요 기능 보안으로 인한 추가 -->
+	<meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    
 <meta charset="UTF-8">
 <title>#Trip</title>
 
@@ -623,6 +628,45 @@ to {
 	color: #aaa;
 	margin: 0;
 }
+
+/* ============ heart css ============ */
+.card-image { position: relative; }
+
+.like-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ff4d4d;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.like-btn:hover {
+    transform: scale(1.1);
+    background: #fff;
+}
+
+/* 좋아요 눌렸을 때 상태 (JS에서 클래스 추가 예정) */
+.like-btn.active {
+    background: #ff4d4d;
+    color: #fff;
+}
+.like-btn.active .heart-icon {
+    content: '♥'; /* 꽉 찬 하트로 변경 */
+    color: #ffffff; /* 빨간 배경에 흰색 하트 */
+}
+/* ============ heart css ============ */
+
 </style>
 
 </head>
@@ -684,7 +728,15 @@ to {
 				<div class="recommend-cards" id="sliderTrack">
 					<c:forEach var="place" items="${places}">
 						<div class="travel-card">
-							<div class="card-image" style="background-image: url('${place.placeThumbnailUrl}');"></div>
+						
+							<!-- ========= heart 기능 ========= -->
+							<div class="card-image" style="background-image: url('${place.placeThumbnailUrl}');">
+								<button type="button" class="like-btn" data-place-id="${place.placeNo }">
+									<span class="heart-icon">♡</span>
+								</button>
+							</div>
+							<!-- ========= heart 기능 ========= -->
+							
 							<div class="card-info">
 								<h3>${place.placeName}</h3>
 								<p>${place.placeAddress}</p>
@@ -779,18 +831,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
+             // ... performSearch 함수 내부 ...
                 for (var i = 0; i < data.length; i++) {
                     var place = data[i];
                     
-                    // 이름, 주소, 이미지 경로를 안전하게 가져오기
-                    var name = place.placeName || place.PLACE_NAME || "이름 없음";
-                    var address = place.placeAddress || place.PLACE_ADDRESS || "주소 없음";
-                    var thumb = place.placeThumbnailUrl || place.PLACE_THUMBNAIL_URL || "";
+                    var pNo = place.placeNo || place.PLACE_NO || 0;
+                    var name = place.placeName || "이름 없음";
+                    var address = place.placeAddress || "주소 없음";
+                    var thumb = place.placeThumbnailUrl || "";
+                    
+                    // [추가] 서버에서 넘어온 좋아요 여부 확인 (필드명은 서버 DTO에 맞춰주세요)
+                    // 예: place.isLiked가 true이거나 place.savedYn이 'Y'인 경우
+                    var isLiked = (place.isLiked === true || place.savedYn === 'Y');
+                    var activeClass = isLiked ? " active" : ""; // 클래스 추가 여부
+                    var heartIcon = isLiked ? "♥" : "♡";        // 아이콘 모양 결정
 
-                    // [핵심] 백틱(`) 대신 따옴표와 + 기호를 사용해서 JSP와의 충돌을 원천 차단합니다.
                     var cardHtml = 
                         '<div class="travel-card">' +
-                            '<div class="card-image" style="background-image: url(\'' + thumb + '\');"></div>' +
+                            '<div class="card-image" style="background-image: url(\'' + thumb + '\');">' +
+                                // 클래스 부분에 activeClass를, 아이콘 부분에 heartIcon을 넣습니다.
+                                '<button type="button" class="like-btn' + activeClass + '" data-place-id="' + pNo + '">' +
+                                    '<span class="heart-icon">' + heartIcon + '</span>' +
+                                '</button>' +
+                            '</div>' +
                             '<div class="card-info">' +
                                 '<h3>' + name + '</h3>' +
                                 '<p>' + address + '</p>' +
@@ -858,7 +921,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 초기 로딩 시 슬라이더 상태 확인
     updateSlider();
-});
+    
+    // ================= heart 좋아요 기능 =================
+
+	document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.like-btn');
+    if (btn) {
+        e.preventDefault();
+        
+        // [추가] CSRF 토큰과 헤더 이름을 메타 태그에서 가져옵니다.
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        const placeNo = btn.getAttribute('data-place-id');
+        const isLike = !btn.classList.contains('active');
+        const sendData = { 
+        		placeNo: placeNo, 
+        		status: isLike ? 'Y' : 'N' 
+        				};
+
+        $.ajax({
+            type: "POST",
+            url: "${pageContext.request.contextPath}/customer/savePlace",
+            contentType: "application/json",
+            data: JSON.stringify(sendData),
+            // [핵심] 헤더에 보안 토큰을 실어서 보냅니다.
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+            },
+            success: (res) => {
+                console.log("서버 응답 확인:", res);
+
+                // [수정] res.body의 값이 "SUCCESS"인지 확인
+                if (res.body === "SUCCESS") {
+                    btn.classList.toggle('active'); 
+                    btn.querySelector('.heart-icon').textContent = isLike ? '♥' : '♡';
+                    alert(isLike ? "나의 여행지로 저장되었습니다!" : "저장이 취소되었습니다.");
+                } 
+                // [수정] res.body의 값이 "LOGIN_REQUIRED"인지 확인
+                else if (res.body === "LOGIN_REQUIRED") {
+                    alert("로그인이 필요한 서비스입니다.");
+                    location.href = "${pageContext.request.contextPath}/auth/login";
+                } 
+                else {
+                    alert("알 수 없는 응답이 발생했습니다.");
+                }
+            },
+            error: (err) => {
+                if(err.status === 403) {
+                    alert("보안 토큰이 만료되었거나 권한이 없습니다. 페이지를 새로고침 해주세요.");
+                } else {
+                    console.error("에러:", err);
+                }
+            }
+        });
+    }
+	});
+	});
+    // ================= heart 좋아요 기능 =================
+    	
 </script>
 
 </body>

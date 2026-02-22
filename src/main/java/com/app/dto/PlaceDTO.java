@@ -14,4 +14,7 @@ public class PlaceDTO {
 	private Double placeRating;
 	private String placeNumber;
 	private String placeThumbnailUrl;
+	
+	// [추가] 좋아요 여부를 저장할 필드
+    private String savedYn = "N"; // 기본값은 'N'
 }
