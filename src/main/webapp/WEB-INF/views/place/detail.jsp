@@ -39,11 +39,19 @@
 				<c:if test="${empty heroImageUrl}">
 					<c:set var="photoHeroClass" value="photo-hero photo-hero-fallback" />
 				</c:if>
+				<c:set var="photoHeroClassWithTrigger" value="${photoHeroClass}" />
+				<c:if test="${not empty heroImageUrl}">
+					<c:set var="photoHeroClassWithTrigger" value="${photoHeroClass} place-photo-trigger" />
+				</c:if>
 
 				<main class="layout">
 					<section class="photo-section">
-						<div class="${photoHeroClass}"
+						<div class="${photoHeroClassWithTrigger}"
 							 <c:if test="${not empty heroImageUrl}">
+								role="button"
+								tabindex="0"
+								data-photo-url="${fn:escapeXml(heroImageUrl)}"
+								aria-label="Open photo viewer"
 								style="background-image:
 									radial-gradient(circle at 10% 18%, rgba(255, 255, 255, 0.25), transparent 40%),
 									radial-gradient(circle at 88% 84%, rgba(255, 255, 255, 0.2), transparent 30%),
@@ -54,19 +62,36 @@
 							<h2><c:out value="${place.placeName}" /></h2>
 						</div>
 
+						<div id="place-photo-source-list" hidden>
+							<c:if test="${not empty heroImageUrl}">
+								<span class="place-photo-source-item" data-photo-url="${fn:escapeXml(heroImageUrl)}"></span>
+							</c:if>
+							<c:forEach var="photoUrl" items="${photoUrlList}">
+								<span class="place-photo-source-item" data-photo-url="${fn:escapeXml(photoUrl)}"></span>
+							</c:forEach>
+						</div>
+
 						<div class="thumb-row">
 							<c:choose>
 								<c:when test="${not empty photoUrlList}">
 									<c:forEach var="photoUrl" items="${photoUrlList}" varStatus="status">
 										<c:if test="${status.count <= 8}">
-											<div class="thumb-card thumb-card-image">
+											<div class="thumb-card thumb-card-image place-photo-trigger"
+												 role="button"
+												 tabindex="0"
+												 data-photo-url="${fn:escapeXml(photoUrl)}"
+												 aria-label="Open photo viewer">
 												<img src="${photoUrl}" alt="여행지 사진 ${status.count}">
 											</div>
 										</c:if>
 									</c:forEach>
 								</c:when>
 								<c:when test="${not empty place.placeThumbnailUrl}">
-									<div class="thumb-card thumb-card-image">
+									<div class="thumb-card thumb-card-image place-photo-trigger"
+										 role="button"
+										 tabindex="0"
+										 data-photo-url="${fn:escapeXml(place.placeThumbnailUrl)}"
+										 aria-label="Open photo viewer">
 										<img src="${place.placeThumbnailUrl}" alt="대표 썸네일">
 									</div>
 								</c:when>
@@ -455,6 +480,19 @@
 		</div>
 	</c:if>
 
+	<div class="review-photo-modal" id="place-photo-modal" aria-hidden="true">
+		<div class="review-photo-modal-dim" data-modal-close="true"></div>
+		<div class="review-photo-modal-panel" role="dialog" aria-modal="true" aria-label="Place photos">
+			<button type="button" class="review-photo-modal-close" id="place-photo-modal-close" aria-label="Close">&times;</button>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-prev" id="place-photo-modal-prev" aria-label="Previous">&#8249;</button>
+			<figure class="review-photo-modal-figure">
+				<img id="place-photo-modal-image" alt="Place photo">
+				<figcaption class="review-photo-modal-counter" id="place-photo-modal-counter"></figcaption>
+			</figure>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-next" id="place-photo-modal-next" aria-label="Next">&#8250;</button>
+		</div>
+	</div>
+
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 
 	<script>
@@ -595,13 +633,164 @@
 			const modalOpenButton = document.getElementById("wishlist-open-btn");
 			const modalCloseButton = document.getElementById("wishlist-close-btn");
 			const openWishlistOnLoad = ${openWishlist or not empty wishlistActionMessage or not empty wishlistActionError};
+			const placePhotoModal = document.getElementById("place-photo-modal");
+			const placePhotoModalImage = document.getElementById("place-photo-modal-image");
+			const placePhotoModalCounter = document.getElementById("place-photo-modal-counter");
+			const placePhotoModalClose = document.getElementById("place-photo-modal-close");
+			const placePhotoModalPrev = document.getElementById("place-photo-modal-prev");
+			const placePhotoModalNext = document.getElementById("place-photo-modal-next");
+			const placePhotoTriggers = Array.from(document.querySelectorAll(".place-photo-trigger"));
+			const placePhotoSourceItems = Array.from(document.querySelectorAll(".place-photo-source-item"));
+			const placePhotoList = [];
+			const seenPlacePhotoUrl = {};
+			let currentPlacePhotoIndex = 0;
+
+			function pushPlacePhoto(urlValue) {
+				const normalized = (urlValue || "").trim();
+				if (!normalized || seenPlacePhotoUrl[normalized]) {
+					return;
+				}
+				seenPlacePhotoUrl[normalized] = true;
+				placePhotoList.push(normalized);
+			}
+
+			placePhotoSourceItems.forEach(function(sourceItem) {
+				pushPlacePhoto(sourceItem.dataset.photoUrl);
+			});
+
+			placePhotoTriggers.forEach(function(trigger) {
+				const directUrl = trigger.dataset ? trigger.dataset.photoUrl : "";
+				if (directUrl) {
+					pushPlacePhoto(directUrl);
+					return;
+				}
+				const imageElement = trigger.querySelector("img");
+				if (imageElement && imageElement.getAttribute("src")) {
+					pushPlacePhoto(imageElement.getAttribute("src"));
+				}
+			});
+
+			function syncBodyModalOpenState() {
+				const wishlistOpen = modalOverlay && modalOverlay.classList.contains("is-open");
+				const photoOpen = placePhotoModal && placePhotoModal.classList.contains("is-open");
+				if (wishlistOpen || photoOpen) {
+					document.body.classList.add("modal-open");
+				} else {
+					document.body.classList.remove("modal-open");
+				}
+			}
+
+			function renderPlacePhotoModal() {
+				if (!placePhotoModalImage || !placePhotoModalCounter || placePhotoList.length === 0) {
+					return;
+				}
+				if (currentPlacePhotoIndex < 0) {
+					currentPlacePhotoIndex = placePhotoList.length - 1;
+				}
+				if (currentPlacePhotoIndex >= placePhotoList.length) {
+					currentPlacePhotoIndex = 0;
+				}
+				placePhotoModalImage.src = placePhotoList[currentPlacePhotoIndex];
+				placePhotoModalCounter.textContent = (currentPlacePhotoIndex + 1) + " / " + placePhotoList.length;
+			}
+
+			function openPlacePhotoModal(index) {
+				if (!placePhotoModal || placePhotoList.length === 0) {
+					return;
+				}
+				currentPlacePhotoIndex = Number.isFinite(index) ? index : 0;
+				renderPlacePhotoModal();
+				placePhotoModal.classList.add("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function closePlacePhotoModal() {
+				if (!placePhotoModal) {
+					return;
+				}
+				placePhotoModal.classList.remove("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function movePlacePhoto(step) {
+				if (placePhotoList.length === 0) {
+					return;
+				}
+				currentPlacePhotoIndex += step;
+				renderPlacePhotoModal();
+			}
+
+			function resolvePlacePhotoIndex(trigger) {
+				if (!trigger || placePhotoList.length === 0) {
+					return 0;
+				}
+				const directUrl = trigger.dataset ? trigger.dataset.photoUrl : "";
+				if (directUrl) {
+					const directIndex = placePhotoList.indexOf(directUrl);
+					return directIndex >= 0 ? directIndex : 0;
+				}
+				const imageElement = trigger.querySelector("img");
+				const imageUrl = imageElement ? imageElement.getAttribute("src") : "";
+				const imageIndex = placePhotoList.indexOf(imageUrl || "");
+				return imageIndex >= 0 ? imageIndex : 0;
+			}
+
+			placePhotoTriggers.forEach(function(trigger) {
+				function openForTrigger() {
+					openPlacePhotoModal(resolvePlacePhotoIndex(trigger));
+				}
+				trigger.addEventListener("click", openForTrigger);
+				trigger.addEventListener("keydown", function(event) {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						openForTrigger();
+					}
+				});
+			});
+
+			if (placePhotoModal) {
+				placePhotoModal.addEventListener("click", function(event) {
+					if (event.target && event.target.dataset && event.target.dataset.modalClose === "true") {
+						closePlacePhotoModal();
+					}
+				});
+			}
+
+			if (placePhotoModalClose) {
+				placePhotoModalClose.addEventListener("click", closePlacePhotoModal);
+			}
+
+			if (placePhotoModalPrev) {
+				placePhotoModalPrev.addEventListener("click", function() {
+					movePlacePhoto(-1);
+				});
+			}
+
+			if (placePhotoModalNext) {
+				placePhotoModalNext.addEventListener("click", function() {
+					movePlacePhoto(1);
+				});
+			}
+
+			document.addEventListener("keydown", function(event) {
+				if (!placePhotoModal || !placePhotoModal.classList.contains("is-open")) {
+					return;
+				}
+				if (event.key === "Escape") {
+					closePlacePhotoModal();
+				} else if (event.key === "ArrowLeft") {
+					movePlacePhoto(-1);
+				} else if (event.key === "ArrowRight") {
+					movePlacePhoto(1);
+				}
+			});
 
 			function openWishlistModal() {
 				if (!modalOverlay) {
 					return;
 				}
 				modalOverlay.classList.add("is-open");
-				document.body.classList.add("modal-open");
+				syncBodyModalOpenState();
 			}
 
 			function closeWishlistModal() {
@@ -609,7 +798,7 @@
 					return;
 				}
 				modalOverlay.classList.remove("is-open");
-				document.body.classList.remove("modal-open");
+				syncBodyModalOpenState();
 			}
 
 			if (modalOpenButton) {

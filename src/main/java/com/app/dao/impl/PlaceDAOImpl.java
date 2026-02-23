@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.app.dao.PlaceDAO;
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -27,6 +28,8 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String INSERT_PLACE_TAG_MAP_STATEMENT_ID = "place_mapper.insertPlaceTagMap";
 	private static final String INSERT_PLACE_HOURS_STATEMENT_ID = "place_mapper.insertPlaceHours";
 	private static final String INSERT_PLACE_REVIEW_STATEMENT_ID = "place_mapper.insertPlaceReview";
+	private static final String INSERT_REVIEW_PHOTO_STATEMENT_ID = "place_mapper.insertReviewPhoto";
+	private static final String SELECT_PHOTO_DATA_BY_PHOTO_NO_STATEMENT_ID = "place_mapper.selectPhotoDataByPhotoNo";
 	private static final String UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.updatePlaceReviewByOwner";
 	private static final String DELETE_PLACE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewPhotosByOwner";
 	private static final String DELETE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewByOwner";
@@ -184,6 +187,23 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception {
 		return sqlSessionTemplate.insert(INSERT_PLACE_REVIEW_STATEMENT_ID, placeReviewDTO);
+	}
+
+	@Override
+	public int insertReviewPhotos(Long commentNo, List<PhotoDataDTO> photoDataList) throws Exception {
+		if (commentNo == null || photoDataList == null || photoDataList.isEmpty()) {
+			return 0;
+		}
+
+		return executeBatchInsert(photoDataList, (batchSession, photoData) -> {
+			photoData.setCommentNo(commentNo);
+			batchSession.insert(INSERT_REVIEW_PHOTO_STATEMENT_ID, photoData);
+		});
+	}
+
+	@Override
+	public PhotoDataDTO selectPhotoDataByPhotoNo(Long photoNo) throws Exception {
+		return sqlSessionTemplate.selectOne(SELECT_PHOTO_DATA_BY_PHOTO_NO_STATEMENT_ID, photoNo);
 	}
 
 	@Override

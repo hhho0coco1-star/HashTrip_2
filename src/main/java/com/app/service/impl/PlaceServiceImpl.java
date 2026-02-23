@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import com.app.dao.AreaBasedList2Repository;
 import com.app.dao.PlaceDAO;
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -339,9 +340,16 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		return createPlaceReview(placeNo, commentContent, rating, createdBy, Collections.emptyList());
+	}
+
+	@Override
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy,
+			List<PhotoDataDTO> photoDataList) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		String safeContent = normalizeReviewContent(commentContent);
 		int safeRating = normalizeRating(rating);
+		List<PhotoDataDTO> safePhotoDataList = normalizePhotoData(photoDataList);
 
 		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
 		placeReviewDTO.setCommentNo(placeDAO.getNextPlaceReviewCommentNo());
@@ -354,6 +362,10 @@ public class PlaceServiceImpl implements PlaceService {
 		int inserted = placeDAO.insertPlaceReview(placeReviewDTO);
 		if (inserted <= 0) {
 			throw new IllegalStateException("Failed to insert place review.");
+		}
+
+		if (!safePhotoDataList.isEmpty()) {
+			placeDAO.insertReviewPhotos(placeReviewDTO.getCommentNo(), safePhotoDataList);
 		}
 		placeDAO.updatePlaceRatingByPlaceNo(placeNo);
 		return placeReviewDTO;
@@ -387,6 +399,14 @@ public class PlaceServiceImpl implements PlaceService {
 			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
 		}
 		return deleted;
+	}
+
+	@Override
+	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception {
+		if (photoNo == null || photoNo <= 0) {
+			return null;
+		}
+		return placeDAO.selectPhotoDataByPhotoNo(photoNo);
 	}
 
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {
@@ -746,6 +766,29 @@ public class PlaceServiceImpl implements PlaceService {
 			return 5;
 		}
 		return rating;
+	}
+
+	private List<PhotoDataDTO> normalizePhotoData(List<PhotoDataDTO> photoDataList) {
+		if (photoDataList == null || photoDataList.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		List<PhotoDataDTO> normalized = new ArrayList<>();
+		for (PhotoDataDTO photoData : photoDataList) {
+			if (photoData == null) {
+				continue;
+			}
+			if (photoData.getPhotoBinary() == null || photoData.getPhotoBinary().length == 0) {
+				continue;
+			}
+
+			PhotoDataDTO normalizedData = new PhotoDataDTO();
+			normalizedData.setPhotoBinary(photoData.getPhotoBinary());
+			normalizedData.setPhotoMimeType(truncate(normalizeText(photoData.getPhotoMimeType()), 100));
+			normalizedData.setPhotoFileName(truncate(normalizeText(photoData.getPhotoFileName()), 255));
+			normalized.add(normalizedData);
+		}
+		return normalized;
 	}
 
 	private String normalizeReviewSort(String sortType) {

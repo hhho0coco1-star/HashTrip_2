@@ -1,6 +1,7 @@
 package com.app.dto;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -15,4 +16,5 @@ public class PlaceReviewDTO {
 	private String createdByAuthId;
 	private String createdBy;
 	private Date createdAt;
+	private List<String> photoUrlList;
 }

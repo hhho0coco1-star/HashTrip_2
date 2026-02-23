@@ -1,19 +1,31 @@
 package com.app.controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CategoryDTO;
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.WishListDTO;
 import com.app.service.PlaceService;
@@ -21,6 +33,9 @@ import com.app.service.WishListService;
 
 @Controller
 public class PlaceDetailPageController {
+
+	private static final int MAX_REVIEW_IMAGE_COUNT = 10;
+	private static final int MAX_REVIEW_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 	@Autowired
 	private PlaceService placeService;
@@ -77,6 +92,7 @@ public class PlaceDetailPageController {
 			@PathVariable Long placeNo,
 			@RequestParam String commentContent,
 			@RequestParam(name = "rating", required = false, defaultValue = "5") Integer rating,
+			@RequestParam(name = "reviewImages", required = false) MultipartFile[] reviewImages,
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) throws Exception {
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
@@ -86,10 +102,13 @@ public class PlaceDetailPageController {
 		}
 
 		try {
-			placeService.createPlaceReview(placeNo, commentContent, rating, currentAuthId);
+			List<PhotoDataDTO> photoDataList = buildReviewPhotoData(reviewImages);
+			placeService.createPlaceReview(placeNo, commentContent, rating, currentAuthId, photoDataList);
 			redirectAttributes.addFlashAttribute("reviewActionMessage", "리뷰가 등록되었습니다.");
 		} catch (IllegalArgumentException e) {
 			redirectAttributes.addFlashAttribute("reviewActionError", e.getMessage());
+		} catch (IOException e) {
+			redirectAttributes.addFlashAttribute("reviewActionError", "이미지 업로드에 실패했습니다.");
 		}
 		return buildDetailRedirect(placeNo);
 	}
@@ -238,6 +257,29 @@ public class PlaceDetailPageController {
 		return buildDetailRedirect(placeNo);
 	}
 
+	@GetMapping("/place/review-photo/{photoNo}")
+	@ResponseBody
+	public ResponseEntity<byte[]> getReviewPhoto(@PathVariable Long photoNo) throws Exception {
+		PhotoDataDTO photoData = placeService.getReviewPhotoByPhotoNo(photoNo);
+		if (photoData == null || photoData.getPhotoBinary() == null || photoData.getPhotoBinary().length == 0) {
+			return ResponseEntity.notFound().build();
+		}
+
+		MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+		if (StringUtils.hasText(photoData.getPhotoMimeType())) {
+			try {
+				mediaType = MediaType.parseMediaType(photoData.getPhotoMimeType());
+			} catch (Exception ignored) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+		}
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(mediaType);
+		headers.setCacheControl(CacheControl.noCache().getHeaderValue());
+		return ResponseEntity.ok().headers(headers).body(photoData.getPhotoBinary());
+	}
+
 	private String resolveAuthenticatedAuthId(Authentication authentication) {
 		if (authentication == null
 				|| !authentication.isAuthenticated()
@@ -249,6 +291,52 @@ public class PlaceDetailPageController {
 			return null;
 		}
 		return authId.trim();
+	}
+
+	private List<PhotoDataDTO> buildReviewPhotoData(MultipartFile[] reviewImages) throws IOException {
+		if (reviewImages == null || reviewImages.length == 0) {
+			return Collections.emptyList();
+		}
+
+		List<PhotoDataDTO> photoDataList = new ArrayList<>();
+		for (MultipartFile reviewImage : reviewImages) {
+			if (reviewImage == null || reviewImage.isEmpty()) {
+				continue;
+			}
+
+			if (photoDataList.size() >= MAX_REVIEW_IMAGE_COUNT) {
+				throw new IllegalArgumentException("You can upload up to " + MAX_REVIEW_IMAGE_COUNT + " images.");
+			}
+
+			String contentType = reviewImage.getContentType();
+			if (!StringUtils.hasText(contentType) || !contentType.startsWith("image/")) {
+				throw new IllegalArgumentException("Only image files can be uploaded.");
+			}
+
+			if (reviewImage.getSize() > MAX_REVIEW_IMAGE_SIZE_BYTES) {
+				throw new IllegalArgumentException("Each image must be 5MB or less.");
+			}
+
+			PhotoDataDTO photoData = new PhotoDataDTO();
+			photoData.setPhotoMimeType(contentType);
+			photoData.setPhotoFileName(resolveSafeFileName(reviewImage.getOriginalFilename()));
+			photoData.setPhotoBinary(reviewImage.getBytes());
+			photoDataList.add(photoData);
+		}
+
+		return photoDataList;
+	}
+
+	private String resolveSafeFileName(String originalFilename) {
+		if (!StringUtils.hasText(originalFilename)) {
+			return null;
+		}
+
+		String normalized = originalFilename.trim().replace("\\", "_").replace("/", "_");
+		if (normalized.length() > 255) {
+			return normalized.substring(0, 255);
+		}
+		return normalized.toLowerCase(Locale.ROOT);
 	}
 
 	private String buildDetailRedirect(Long placeNo) {

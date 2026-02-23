@@ -2,6 +2,7 @@ package com.app.dao;
 
 import java.util.List;
 
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -48,6 +49,10 @@ public interface PlaceDAO {
 	public Long getNextPlaceReviewCommentNo() throws Exception;
 
 	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception;
+
+	public int insertReviewPhotos(Long commentNo, List<PhotoDataDTO> photoDataList) throws Exception;
+
+	public PhotoDataDTO selectPhotoDataByPhotoNo(Long photoNo) throws Exception;
 
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception;
 

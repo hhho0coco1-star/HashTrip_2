@@ -2,6 +2,7 @@ package com.app.service;
 
 import java.util.List;
 
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -39,7 +40,12 @@ public interface PlaceService {
 
 	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception;
 
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy,
+			List<PhotoDataDTO> photoDataList) throws Exception;
+
 	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception;
 
 	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
+
+	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception;
 }

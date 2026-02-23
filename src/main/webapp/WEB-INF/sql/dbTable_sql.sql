@@ -288,6 +288,9 @@ CREATE TABLE photo_data (
     photo_no NUMBER(19) PRIMARY KEY,
     comment_no NUMBER(19),
     log_photo_url VARCHAR2(1000),
+    photo_binary BLOB,
+    photo_mime_type VARCHAR2(100),
+    photo_file_name VARCHAR2(255),
     CONSTRAINT fk_photo_comment FOREIGN KEY (comment_no) REFERENCES Place_Review(comment_no)
 );
 
