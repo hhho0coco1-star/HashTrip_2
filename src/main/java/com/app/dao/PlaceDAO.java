@@ -58,4 +58,7 @@ public interface PlaceDAO {
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
 
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
+	
+	public List<PlaceDTO> searchPlaces(String keyword);
+	
 }

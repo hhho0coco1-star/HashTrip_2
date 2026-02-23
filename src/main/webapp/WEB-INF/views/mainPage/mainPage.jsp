@@ -1,8 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
 <html>
 <head>
+
+	<!-- 추천 여행지 좋아요 기능 보안으로 인한 추가 -->
+	<meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    
 <meta charset="UTF-8">
 <title>#Trip</title>
 
@@ -284,9 +290,13 @@ keyframes floating { 0%, 100% {
 
 
 
+
+
 %
 {
 transform
+
+
 
 
 
@@ -296,10 +306,18 @@ transform
 
 
 
+
+
 translate
 
 
+
+
+
+
 (
+
+
 
 
 
@@ -311,7 +329,13 @@ translate
 
 
 
+
+
 )
+
+
+
+
 
 
 ;
@@ -328,17 +352,15 @@ to {
 }
 
 }
-
 .sub-text {
-    /* 기존에 가지고 계신 스타일 코드들... (font-size, color 등) */
-    
-    transition: opacity 0.5s ease-in-out; /* 이 줄만 추가해 주세요! */
-    opacity: 1;
+	/* 기존에 가지고 계신 스타일 코드들... (font-size, color 등) */
+	transition: opacity 0.5s ease-in-out; /* 이 줄만 추가해 주세요! */
+	opacity: 1;
 }
 
 /* 페이드 아웃 상태를 위한 클래스 */
 .fade-out {
-    opacity: 0;
+	opacity: 0;
 }
 
 /* ================== 4. 여행지 추천 영역 ================== */
@@ -379,42 +401,62 @@ to {
 	margin-right: 10px;
 }
 
-/* 여행지 카드 레이아웃 */
-.recommend-cards {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 30px;
-	padding: 20px 0;
+/* ================== 4. 여행지 추천 영역 (슬라이더 통합) ================== */
+.recommend-section {
+	padding-top: 30px !important;
+	padding-bottom: 80px;
+	background-color: #ffffff;
 }
 
-.travel-card {
-	background: #fff;
-	border-radius: 20px;
-	overflow: hidden;
-	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-	transition: transform 0.3s ease;
+.recommend-container {
+	max-width: 1200px;
+	width: 100%;
+	margin: 0 auto;
+	padding: 0 20px;
+	box-sizing: border-box;
 }
 
-.travel-card:hover {
-	transform: translateY(-10px);
-}
-
-.card-image {
-	height: 200px;
-	background-size: cover;
-	background-position: center;
+/* 슬라이더 외부 감싸기 */
+.recommend-wrapper {
 	position: relative;
+	width: 100%;
+	overflow: hidden; /* 영역 밖 카드 숨김 */
+	padding: 10px 5px;
 }
 
-.tag {
-	position: absolute;
-	top: 15px;
-	left: 15px;
-	background: #007bff;
-	color: #fff;
-	padding: 4px 12px;
-	border-radius: 20px;
-	font-size: 12px;
+/* 1. 창문 역할: 넘치는 카드를 가립니다 */
+.recommend-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden; /* [필수] 이게 없으면 카드가 옆으로 무한히 보입니다 */
+    padding: 20px 0;
+}
+
+/* 2. 기차 트랙: 카드들이 한 줄로 서게 합니다 */
+.recommend-cards {
+    display: flex;
+    flex-wrap: nowrap; /* [필수] 카드가 아래로 안 떨어지게 */
+    width: max-content; /* [필수] 내용물만큼 옆으로 길어지게 */
+    transition: transform 0.5s ease-out;
+    gap: 20px;
+}
+
+/* 3. 카드 자체: 뒤지게 커지지 않도록 너비를 딱 고정합니다 */
+.travel-card {
+    /* 1200px 컨테이너에서 3개를 보여주려면 한 카드당 386px 정도가 적당합니다 */
+	flex: 0 0 calc(33.333% - 14px);
+    width: 386px; 
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* 4. 아까 성공한 이미지 높이 유지 */
+.card-image {
+    height: 220px;
+    background-size: cover;
+    background-position: center;
 }
 
 .card-info {
@@ -429,15 +471,38 @@ to {
 .card-info p {
 	color: #777;
 	font-size: 14px;
-	margin-bottom: 20px;
+	margin-bottom: 0;
 }
 
-.card-footer {
-	display: flex;
-	justify-content: space-between;
-	font-size: 13px;
-	font-weight: bold;
-	color: #333;
+
+/* 슬라이더 컨트롤 버튼 */
+.slider-btn {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background: white;
+	border: 1px solid #eee;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	cursor: pointer;
+	z-index: 10;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s;
+}
+
+.slider-btn:hover {
+	background: #007bff;
+	color: white;
+	border-color: #007bff;
+}
+
+.prev-btn {
+	left: -10px;
+}
+
+.next-btn {
+	right: -10px;
 }
 
 /* 추천 섹션 전체의 상단 여백 줄이기 */
@@ -472,83 +537,136 @@ to {
 	line-height: 1.2;
 }
 
+.recommend-cards {
+	display: flex;
+	transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+	gap: 20px;
+	flex-wrap: nowrap; /* 카드가 아래로 떨어지지 않게 고정 */
+	width: max-content; /* [이게 없으면 절대 안 움직여!] */
+}
+
+/* 카드 너비 고정 */
+.travel-card {
+	flex: 0 0 370px; /* 한 화면에 3개 유지 */
+	box-sizing: border-box;
+}
+
 /* ================== 5. footer ================== */
 .main-footer {
-    background-color: #ffffff;
-    color: #333;
-    border-top: 1px solid #eee;
-    padding: 25px 0 15px 0; 
-    scroll-snap-align: end; 
+	background-color: #ffffff;
+	color: #333;
+	border-top: 1px solid #eee;
+	padding: 25px 0 15px 0;
+	scroll-snap-align: end;
 }
 
 .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
 }
 
 .footer-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* 상단 정렬 */
-    flex-wrap: wrap;
-    margin-bottom: 15px; /* 카피라이트와의 간격 최소화 */
-    gap: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start; /* 상단 정렬 */
+	flex-wrap: wrap;
+	margin-bottom: 15px; /* 카피라이트와의 간격 최소화 */
+	gap: 20px;
 }
 
 .footer-brand {
-    flex: 1.5;
-    min-width: 200px;
+	flex: 1.5;
+	min-width: 200px;
 }
 
 .footer-logo {
-    font-size: 20px; /* 로고 크기도 조금 더 작게 */
-    font-weight: 800;
-    color: #007bff;
-    margin-bottom: 5px; /* 간격 축소 */
+	font-size: 20px; /* 로고 크기도 조금 더 작게 */
+	font-weight: 800;
+	color: #007bff;
+	margin-bottom: 5px; /* 간격 축소 */
 }
 
 .brand-desc {
-    font-size: 13px;
-    font-weight: 600;
-    margin: 0; /* 마진 제거 */
-    color: #444;
+	font-size: 13px;
+	font-weight: 600;
+	margin: 0; /* 마진 제거 */
+	color: #444;
 }
 
 .brand-sub {
-    font-size: 12px;
-    color: #888;
+	font-size: 12px;
+	color: #888;
 }
 
 /* 메뉴 영역 간격 압축 */
 .footer-links h3 {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 8px; /* 제목 아래 간격 축소 */
-    color: #222;
+	font-size: 13px;
+	font-weight: 700;
+	margin-bottom: 8px; /* 제목 아래 간격 축소 */
+	color: #222;
 }
 
 .footer-links ul li {
-    margin-bottom: 4px; /* 리스트 사이 간격 최소화 */
+	margin-bottom: 4px; /* 리스트 사이 간격 최소화 */
 }
 
 .footer-links ul li a {
-    color: #666;
-    font-size: 12px; /* 폰트 크기 살짝 축소 */
+	color: #666;
+	font-size: 12px; /* 폰트 크기 살짝 축소 */
 }
 
 /* 하단 카피라이트 영역 압축 */
 .footer-bottom {
-    border-top: 1px solid #f4f4f4;
-    padding-top: 10px; /* 위쪽 라인과의 간격 축소 */
-    text-align: center;
+	border-top: 1px solid #f4f4f4;
+	padding-top: 10px; /* 위쪽 라인과의 간격 축소 */
+	text-align: center;
 }
 
 .footer-bottom p {
-    font-size: 11px;
-    color: #aaa;
-    margin: 0;
+	font-size: 11px;
+	color: #aaa;
+	margin: 0;
 }
+
+/* ============ heart css ============ */
+.card-image { position: relative; }
+
+.like-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ff4d4d;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.like-btn:hover {
+    transform: scale(1.1);
+    background: #fff;
+}
+
+/* 좋아요 눌렸을 때 상태 (JS에서 클래스 추가 예정) */
+.like-btn.active {
+    background: #ff4d4d;
+    color: #fff;
+}
+.like-btn.active .heart-icon {
+    content: '♥'; /* 꽉 찬 하트로 변경 */
+    color: #ffffff; /* 빨간 배경에 흰색 하트 */
+}
+/* ============ heart css ============ */
+
 </style>
 
 </head>
@@ -569,7 +687,8 @@ to {
 				</p>
 				<div class="analysis-action">
 					<a href="/hashTrip/analysis" class="btn-analysis">여행유형 테스트 시작하기</a>
-					<p id="changing-text" class="sub-text">"당신의 마음이 머물고 싶어 하는 그곳으로 안내해 드릴게요."</p>
+					<p id="changing-text" class="sub-text">* 당신의 마음이 머물고 싶어 하는 그곳으로
+						안내해 드릴게요.</p>
 				</div>
 			</div>
 
@@ -598,25 +717,32 @@ to {
 			<div class="search-bar-wrapper">
 				<div class="search-input-box">
 					<i class="search-icon">🔍</i> <input type="text"
-						id="destinationSearch"
-						placeholder="어디로 떠나고 싶으신가요? (예: 제주, 부산, 강릉)">
+						id="destinationSearch" placeholder="어디로 떠나고 싶으신가요?">
 				</div>
 			</div>
 
-			<div class="recommend-cards" id="recommendCards">
-				<div class="travel-card">
-					<div class="card-image"
-						style="background-image: url('https://images.unsplash.com/photo-1571566882372-1598d88abd90?q=80&w=500')">
-						<span class="tag">인기</span>
-					</div>
-					<div class="card-info">
-						<h3>제주도 성산일출봉</h3>
-						<p>푸른 바다와 함께 즐기는 일출 명소</p>
-						<div class="card-footer">
-							<span class="location">📍 제주</span> <span class="rating">⭐
-								4.8</span>
+			<div class="recommend-wrapper">
+				<button class="slider-btn prev-btn" id="prevBtn">❮</button>
+				<button class="slider-btn next-btn" id="nextBtn">❯</button>
+
+				<div class="recommend-cards" id="sliderTrack">
+					<c:forEach var="place" items="${places}">
+						<div class="travel-card">
+						
+							<!-- ========= heart 기능 ========= -->
+							<div class="card-image" style="background-image: url('${place.placeThumbnailUrl}');">
+								<button type="button" class="like-btn" data-place-id="${place.placeNo }">
+									<span class="heart-icon">♡</span>
+								</button>
+							</div>
+							<!-- ========= heart 기능 ========= -->
+							
+							<div class="card-info">
+								<h3>${place.placeName}</h3>
+								<p>${place.placeAddress}</p>
+							</div>
 						</div>
-					</div>
+					</c:forEach>
 				</div>
 			</div>
 		</div>
@@ -653,63 +779,208 @@ to {
 			</div>
 
 			<div class="footer-bottom">
-				<p>&copy; 2025 WAYGO. All rights reserved.</p>
+				<p>&copy; 2026 #Trip. All rights reserved.</p>
 			</div>
 		</div>
 	</footer>
 	<!-- footer -->
 
-	<script type="text/javascript">
-		document
-				.getElementById('destinationSearch')
-				.addEventListener(
-						'keyup',
-						function() {
-							let searchValue = this.value.toLowerCase();
-							let cards = document
-									.getElementsByClassName('travel-card');
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const track = document.querySelector('#sliderTrack');
+    const searchInput = document.querySelector('#destinationSearch');
+    const textElement = document.querySelector('#changing-text');
+    
+    let slideIndex = 0;
+    const moveDistance = 390; // 카드 370px + 간격 20px
 
-							for (let i = 0; i < cards.length; i++) {
-								let title = cards[i].querySelector('h3').innerText
-										.toLowerCase();
-								let location = cards[i]
-										.querySelector('.location').innerText
-										.toLowerCase();
+    // [1] 슬라이더 이동 및 버튼 상태 업데이트 함수
+    function updateSlider() {
+        if (!track) return;
+        const visibleCards = track.querySelectorAll('.travel-card');
+        const maxIndex = Math.max(0, visibleCards.length - 3);
 
-								if (title.includes(searchValue)
-										|| location.includes(searchValue)) {
-									cards[i].style.display = "";
-								} else {
-									cards[i].style.display = "none";
-								}
-							}
-						});
-		
-		const textElement = document.getElementById('changing-text');
-		const messages = [
-			"지금 가장 핫한 MZ 여행 트렌드, 당신의 유형은 무엇인가요?",
-		    "* 당신도 몰랐던 당신의 숨겨진 여행 DNA를 찾아보세요.",
-		    "* 지금 이 순간, 당신에게 가장 필요한 여행의 온도는?",
-		    "* 지금 이 계절, 당신의 마음이 머물고 싶은 온도는?",
-		    "* 설레는 여행의 시작, 당신의 취향에서부터 출발합니다.",
-		    "* 2026년 첫 여행, 실패 없는 선택을 위한 가이드라인",
-		    "* 당신이 길치여도 괜찮아요. 취향이 길을 안내할 테니까요."
-		];
+        if (slideIndex > maxIndex) slideIndex = maxIndex;
+        if (slideIndex < 0) slideIndex = 0;
 
-		let currentIndex = 0;
+        track.style.transform = "translateX(-" + (slideIndex * moveDistance) + "px)";
+        
+        // 버튼 활성화/비활성화 제어
+        const prevBtn = document.querySelector('#prevBtn');
+        const nextBtn = document.querySelector('#nextBtn');
+        if(prevBtn) prevBtn.style.opacity = (slideIndex === 0) ? "0.3" : "1";
+        if(nextBtn) nextBtn.style.opacity = (slideIndex >= maxIndex || visibleCards.length <= 3) ? "0.3" : "1";
+    }
 
-		function rotateText() {
-		    textElement.classList.add('fade-out');
+    // [2] Ajax 검색 함수 (엔터 칠 때 실행)
+  function performSearch() {
+        const keyword = searchInput.value.trim();
+        $.ajax({
+            url: "${pageContext.request.contextPath}/hashTrip/searchApi", 
+            type: "GET",
+            data: { "keyword": keyword },
+            dataType: "json",
+            success: function(data) {
+                console.log("데이터 확인:", data);
+                var track = document.getElementById('sliderTrack');
+                track.innerHTML = ""; 
 
-		    setTimeout(() => {
-		        currentIndex = (currentIndex + 1) % messages.length;
-		        textElement.textContent = messages[currentIndex];
-		        textElement.classList.remove('fade-out');
-		    }, 500); 
-		}
+                if (!data || data.length === 0) {
+                    alert("검색 결과가 없습니다.");
+                    return;
+                }
 
-		setInterval(rotateText, 5000);
-	</script>
+             // ... performSearch 함수 내부 ...
+                for (var i = 0; i < data.length; i++) {
+                    var place = data[i];
+                    
+                    var pNo = place.placeNo || place.PLACE_NO || 0;
+                    var name = place.placeName || "이름 없음";
+                    var address = place.placeAddress || "주소 없음";
+                    var thumb = place.placeThumbnailUrl || "";
+                    
+                    // [추가] 서버에서 넘어온 좋아요 여부 확인 (필드명은 서버 DTO에 맞춰주세요)
+                    // 예: place.isLiked가 true이거나 place.savedYn이 'Y'인 경우
+                    var isLiked = (place.isLiked === true || place.savedYn === 'Y');
+                    var activeClass = isLiked ? " active" : ""; // 클래스 추가 여부
+                    var heartIcon = isLiked ? "♥" : "♡";        // 아이콘 모양 결정
+
+                    var cardHtml = 
+                        '<div class="travel-card">' +
+                            '<div class="card-image" style="background-image: url(\'' + thumb + '\');">' +
+                                // 클래스 부분에 activeClass를, 아이콘 부분에 heartIcon을 넣습니다.
+                                '<button type="button" class="like-btn' + activeClass + '" data-place-id="' + pNo + '">' +
+                                    '<span class="heart-icon">' + heartIcon + '</span>' +
+                                '</button>' +
+                            '</div>' +
+                            '<div class="card-info">' +
+                                '<h3>' + name + '</h3>' +
+                                '<p>' + address + '</p>' +
+                            '</div>' +
+                        '</div>';
+                        
+                    track.insertAdjacentHTML('beforeend', cardHtml);
+                }
+
+                slideIndex = 0;
+                updateSlider();
+            },
+            error: function(xhr) {
+                alert("에러 발생: " + xhr.status);
+            }
+        });
+    }
+
+    // [3] 엔터키 이벤트 리스너
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
+    }
+
+    // [4] 슬라이더 화살표 버튼 클릭 이벤트
+    document.querySelector('#nextBtn').addEventListener('click', function() {
+        const visibleCards = track.querySelectorAll('.travel-card');
+        if (slideIndex < (visibleCards.length - 3)) {
+            slideIndex++;
+            updateSlider();
+        }
+    });
+
+    document.querySelector('#prevBtn').addEventListener('click', function() {
+        if (slideIndex > 0) {
+            slideIndex--;
+            updateSlider();
+        }
+    });
+
+    // [5] 텍스트 로테이션 (니가 준 7개 문구 전체)
+    const messages = [
+        "* 지금 가장 핫한 MZ 여행 트렌드, 당신의 유형은 무엇인가요?",
+        "* 당신도 몰랐던 당신의 숨겨진 여행 DNA를 찾아보세요.",
+        "* 지금 이 순간, 당신에게 가장 필요한 여행의 온도는?",
+        "* 지금 이 계절, 당신의 마음이 머물고 싶은 온도는?",
+        "* 설레는 여행의 시작, 당신의 취향에서부터 출발합니다.",
+        "* 2026년 첫 여행, 실패 없는 선택을 위한 가이드라인",
+        "* 당신이 길치여도 괜찮아요. 취향이 길을 안내할 테니까요."
+    ];
+    let msgIdx = 0;
+    setInterval(() => {
+        if(!textElement) return;
+        textElement.classList.add('fade-out');
+        setTimeout(() => {
+            msgIdx = (msgIdx + 1) % messages.length;
+            textElement.textContent = messages[msgIdx];
+            textElement.classList.remove('fade-out');
+        }, 500);
+    }, 4000);
+
+    // 초기 로딩 시 슬라이더 상태 확인
+    updateSlider();
+    
+    // ================= heart 좋아요 기능 =================
+
+	document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.like-btn');
+    if (btn) {
+        e.preventDefault();
+        
+        // [추가] CSRF 토큰과 헤더 이름을 메타 태그에서 가져옵니다.
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        const placeNo = btn.getAttribute('data-place-id');
+        const isLike = !btn.classList.contains('active');
+        const sendData = { 
+        		placeNo: placeNo, 
+        		status: isLike ? 'Y' : 'N' 
+        				};
+
+        $.ajax({
+            type: "POST",
+            url: "${pageContext.request.contextPath}/customer/savePlace",
+            contentType: "application/json",
+            data: JSON.stringify(sendData),
+            // [핵심] 헤더에 보안 토큰을 실어서 보냅니다.
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+            },
+            success: (res) => {
+                console.log("서버 응답 확인:", res);
+
+                // [수정] res.body의 값이 "SUCCESS"인지 확인
+                if (res.body === "SUCCESS") {
+                    btn.classList.toggle('active'); 
+                    btn.querySelector('.heart-icon').textContent = isLike ? '♥' : '♡';
+                    alert(isLike ? "나의 여행지로 저장되었습니다!" : "저장이 취소되었습니다.");
+                } 
+                // [수정] res.body의 값이 "LOGIN_REQUIRED"인지 확인
+                else if (res.body === "LOGIN_REQUIRED") {
+                    alert("로그인이 필요한 서비스입니다.");
+                    location.href = "${pageContext.request.contextPath}/auth/login";
+                } 
+                else {
+                    alert("알 수 없는 응답이 발생했습니다.");
+                }
+            },
+            error: (err) => {
+                if(err.status === 403) {
+                    alert("보안 토큰이 만료되었거나 권한이 없습니다. 페이지를 새로고침 해주세요.");
+                } else {
+                    console.error("에러:", err);
+                }
+            }
+        });
+    }
+	});
+	});
+    // ================= heart 좋아요 기능 =================
+    	
+</script>
 
 </body>
 </html>
