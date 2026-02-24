@@ -15,6 +15,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteDTO;
 import com.app.dto.TagCategoryDTO;
 import com.app.dto.TravelPlanDTO;
@@ -135,6 +136,18 @@ public class RouteService {
             steps = List.of("\uB4F1\uB85D\uB41C \uCF54\uC2A4 \uC815\uBCF4 \uC5C6\uC74C");
         }
         route.setSteps(steps);
+
+        List<PlanDetailDTO> details = planDetailService.findPlanDetails(route.getId());
+        if (details != null && !details.isEmpty()) {
+            List<Map<String, String>> stepDetails = new ArrayList<>();
+            for (PlanDetailDTO d : details) {
+                Map<String, String> m = new LinkedHashMap<>();
+                m.put("placeName", defaultIfBlank(d.getPlaceName(), ""));
+                m.put("placeThumbnailUrl", defaultIfBlank(d.getPlaceThumbnailUrl(), ""));
+                stepDetails.add(m);
+            }
+            route.setStepDetails(stepDetails);
+        }
 
         route.setTags(buildTagMap(planDetailService.findTagNames(route.getId())));
 

@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.CommunityDTO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.TravelPlanDTO;
@@ -39,6 +40,7 @@ import com.app.service.PlanDetailService;
 import com.app.service.PlaceService;
 import com.app.service.TravelPlanService;
 import com.app.service.UsersService;
+import com.app.service.impl.CommunityService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -61,6 +63,7 @@ public class PlannerController {
     private static final String MSG_DETAIL_REQUIRED = "장소를 최소 1개 이상 추가해 주세요.";
     private static final String MSG_JSON_INVALID = "일정 데이터 형식이 올바르지 않습니다.";
     private static final String MSG_PLACE_RESOLVE = "장소 정보 조회에 실패했습니다.";
+    private static final String MSG_REVIEW_CONTENT = "리뷰 내용을 입력해 주세요.";
 
     @Autowired
     private TravelPlanService travelPlanService;
@@ -70,6 +73,8 @@ public class PlannerController {
     private UsersService usersService;
     @Autowired
     private PlaceService placeService;
+    @Autowired
+    private CommunityService communityService;
 
     @GetMapping
     public String list(Authentication auth, RedirectAttributes ra, Model model) {
@@ -127,10 +132,13 @@ public class PlannerController {
         Map<Integer, List<PlannerDetailView>> byDay = viewList.stream()
                 .collect(Collectors.groupingBy(PlannerDetailView::getDayNumber, LinkedHashMap::new, Collectors.toList()));
 
+        CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(planNo, user.getUserNo());
         model.addAttribute("plan", plan);
         model.addAttribute("planDetailsJson", writeJson(viewList));
         model.addAttribute("detailsByDay", byDay);
         model.addAttribute("tagMasterList", usersService.getTagMasterList());
+        model.addAttribute("hasCompleteReview", existingReview != null);
+        model.addAttribute("existingReview", existingReview);
         return "planner/planner-edit";
     }
 
@@ -212,6 +220,51 @@ public class PlannerController {
             ra.addFlashAttribute("plannerError", MSG_UPDATE_FAIL);
             return "redirect:/planner/" + planNo + "/edit";
         }
+    }
+
+    /**
+     * 여행 완료 처리 + 리뷰·별점·공개 여부 저장.
+     * 공개 시 추천 루트(공개 일정)에 노출됩니다.
+     */
+    @PostMapping("/{planNo}/complete-review")
+    public String completeReview(
+            @PathVariable Long planNo,
+            @RequestParam String reviewContent,
+            @RequestParam(required = false, defaultValue = "5") Integer rating,
+            @RequestParam(required = false, defaultValue = "N") String planIsPublic,
+            @RequestParam(required = false) String planTitle,
+            Authentication auth, RedirectAttributes ra) {
+        UsersDTO user = resolveUser(auth);
+        if (user == null || user.getUserNo() == null) {
+            ra.addFlashAttribute("plannerError", MSG_LOGIN);
+            return "redirect:/auth/login";
+        }
+        if (!StringUtils.hasText(reviewContent) || reviewContent.trim().isEmpty()) {
+            ra.addFlashAttribute("plannerError", MSG_REVIEW_CONTENT);
+            return "redirect:/planner/" + planNo + "/edit";
+        }
+        TravelPlanDTO existing = travelPlanService.findTravelPlan(planNo);
+        if (existing == null || !user.getUserNo().equals(existing.getUserNo())) {
+            ra.addFlashAttribute("plannerError", MSG_FORBIDDEN);
+            return "redirect:/planner";
+        }
+        int r = Math.min(5, Math.max(1, rating == null ? 5 : rating));
+        String isPublic = "Y".equalsIgnoreCase(planIsPublic != null ? planIsPublic.trim() : "N") ? "Y" : "N";
+        existing.setPlanStatus("COMPLETED");
+        existing.setPlanIsPublic(isPublic);
+        if (StringUtils.hasText(planTitle)) {
+            existing.setPlanTitle(planTitle.trim());
+        }
+        travelPlanService.updateTravelPlan(existing);
+        CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(planNo, user.getUserNo());
+        if (existingReview != null && existingReview.getReviewNo() != null) {
+            communityService.updateCommunityReview(existingReview.getReviewNo(), user.getUserNo(), reviewContent.trim(), r);
+            ra.addFlashAttribute("plannerMessage", "리뷰가 수정되었습니다." + ("Y".equals(isPublic) ? " 공개되어 추천 루트에 노출됩니다." : ""));
+        } else {
+            communityService.addCommunityReview(planNo, user.getUserNo(), reviewContent.trim(), r);
+            ra.addFlashAttribute("plannerMessage", "여행을 완료했고 리뷰가 등록되었습니다." + ("Y".equals(isPublic) ? " 공개되어 추천 루트에 노출됩니다." : ""));
+        }
+        return "redirect:/planner/" + planNo + "/edit";
     }
 
     @PostMapping("/{planNo}/delete")

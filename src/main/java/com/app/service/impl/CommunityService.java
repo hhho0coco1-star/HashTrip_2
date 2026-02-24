@@ -19,6 +19,10 @@ public class CommunityService {
         return communityDAO.getCommunityReviewsByPlanNo(planNo);
     }
 
+    public CommunityDTO getCommunityReviewByPlanNoAndUserNo(Long planNo, Long userNo) {
+        return communityDAO.getCommunityReviewByPlanNoAndUserNo(planNo, userNo);
+    }
+
     public CommunityDTO addCommunityReview(Long planNo, Long userNo, String reviewContent, Integer rating) {
         if (reviewContent == null || reviewContent.trim().isEmpty()) {
             throw new IllegalArgumentException("리뷰 내용을 입력해 주세요.");
@@ -37,6 +41,18 @@ public class CommunityService {
             return reviews.get(0);
         }
         return dto;
+    }
+
+    public void updateCommunityReview(Long reviewNo, Long userNo, String reviewContent, Integer rating) {
+        if (reviewContent == null || reviewContent.trim().isEmpty()) {
+            throw new IllegalArgumentException("리뷰 내용을 입력해 주세요.");
+        }
+        CommunityDTO dto = new CommunityDTO();
+        dto.setReviewNo(reviewNo);
+        dto.setUserNo(userNo);
+        dto.setReviewContent(reviewContent.trim());
+        dto.setRating(normalizeRating(rating));
+        communityDAO.updateCommunityReview(dto);
     }
 
     public int getMyCommunityReviewCount(String authId) {

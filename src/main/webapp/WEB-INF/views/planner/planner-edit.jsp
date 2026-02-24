@@ -50,6 +50,7 @@
                 <div class="planner-edit-actions">
                     <a href="${pageContext.request.contextPath}/planner" class="planner-btn planner-btn-ghost">목록</a>
                     <button type="submit" id="btnSave" class="planner-btn planner-btn-save">저장</button>
+                    <button type="button" id="btnCompleteReview" class="planner-btn planner-btn-complete"><c:choose><c:when test="${hasCompleteReview}">리뷰 수정</c:when><c:otherwise>여행 완료! 리뷰 작성하기</c:otherwise></c:choose></button>
                 </div>
             </form>
         </div>
@@ -84,6 +85,51 @@
                     <p class="planner-replace-hint">근처 여행지를 선택하세요 (반경 <input type="number" id="replaceRadius" value="10" min="1" max="50" /> km)</p>
                     <div id="replacePlaceList" class="planner-replace-list"></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="completeReviewModal" class="planner-modal hidden">
+            <div class="planner-modal-content planner-complete-review-modal">
+                <div class="planner-modal-header">
+                    <h2 id="completeReviewModalTitle"><c:choose><c:when test="${hasCompleteReview}">리뷰 수정</c:when><c:otherwise>여행 완료 · 리뷰 작성</c:otherwise></c:choose></h2>
+                    <button type="button" id="closeCompleteReviewModal" class="planner-modal-close">&times;</button>
+                </div>
+                <form id="completeReviewForm" action="${pageContext.request.contextPath}/planner/${plan.planNo}/complete-review" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    <div class="planner-modal-body">
+                        <p class="planner-complete-intro">다녀오신 루트를 확인하고 리뷰와 별점을 남겨 주세요. 공개하시면 추천 루트에 등록됩니다.</p>
+                        <div class="planner-complete-field">
+                            <label for="completeReviewPlanTitle">제목</label>
+                            <input type="text" id="completeReviewPlanTitle" name="planTitle" value="<c:out value='${plan.planTitle}'/>" placeholder="여행 제목" class="planner-complete-title-input" />
+                        </div>
+                        <div class="planner-complete-route">
+                            <h3 class="planner-complete-route-title">여행 루트</h3>
+                            <div id="completeReviewRouteSummary" class="planner-complete-route-steps"></div>
+                        </div>
+                        <div class="planner-complete-field">
+                            <label for="reviewContent">리뷰</label>
+                            <textarea id="reviewContent" name="reviewContent" rows="4" placeholder="여행 후기를 적어 주세요." required><c:out value="${existingReview.reviewContent}"/></textarea>
+                        </div>
+                        <div class="planner-complete-field">
+                            <label>별점</label>
+                            <div class="planner-complete-stars" id="completeReviewStars">
+                                <input type="radio" name="rating" id="star5" value="5" ${(existingReview == null || existingReview.rating == 5) ? 'checked' : ''} /><label for="star5">★</label>
+                                <input type="radio" name="rating" id="star4" value="4" ${existingReview != null && existingReview.rating == 4 ? 'checked' : ''} /><label for="star4">★</label>
+                                <input type="radio" name="rating" id="star3" value="3" ${existingReview != null && existingReview.rating == 3 ? 'checked' : ''} /><label for="star3">★</label>
+                                <input type="radio" name="rating" id="star2" value="2" ${existingReview != null && existingReview.rating == 2 ? 'checked' : ''} /><label for="star2">★</label>
+                                <input type="radio" name="rating" id="star1" value="1" ${existingReview != null && existingReview.rating == 1 ? 'checked' : ''} /><label for="star1">★</label>
+                            </div>
+                        </div>
+                        <div class="planner-complete-field planner-complete-public">
+                            <input type="hidden" name="planIsPublic" id="planIsPublicValue" value="${plan.planIsPublic == 'Y' ? 'Y' : 'N'}" />
+                            <label><input type="checkbox" id="planIsPublicComplete" value="Y" ${plan.planIsPublic == 'Y' ? 'checked' : ''} /> 공개 (추천 루트에 등록)</label>
+                        </div>
+                    </div>
+                    <div class="planner-modal-footer">
+                        <button type="button" id="cancelCompleteReview" class="planner-btn planner-btn-ghost">취소</button>
+                        <button type="submit" id="completeReviewSubmitBtn" class="planner-btn planner-btn-primary"><c:choose><c:when test="${hasCompleteReview}">리뷰 수정</c:when><c:otherwise>완료하고 리뷰 등록</c:otherwise></c:choose></button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>

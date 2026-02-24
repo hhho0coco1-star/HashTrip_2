@@ -20,6 +20,8 @@ public interface TravelPlanService {
 
     Long updateTravelPlanWithDetails(TravelPlanDTO travelPlan, List<PlanDetailDTO> planDetails, Long ownerUserNo);
 
+    int updateTravelPlan(TravelPlanDTO travelPlan);
+
     Long copyTravelPlanWithDetails(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle);
 
     RouteSaveResultDTO saveRouteForUser(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle);

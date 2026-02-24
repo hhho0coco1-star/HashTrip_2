@@ -69,6 +69,14 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     }
 
     @Override
+    public int updateTravelPlan(TravelPlanDTO travelPlan) {
+        if (travelPlan == null || travelPlan.getPlanNo() == null) {
+            throw new IllegalArgumentException("일정 번호가 필요합니다.");
+        }
+        return travelPlanDAO.updateTravelPlan(travelPlan);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Long updateTravelPlanWithDetails(TravelPlanDTO travelPlan, List<PlanDetailDTO> planDetails, Long ownerUserNo) {
         if (travelPlan == null || travelPlan.getPlanNo() == null) {

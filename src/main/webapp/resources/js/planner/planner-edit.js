@@ -215,6 +215,34 @@
         replacePlaceId = null;
     }
 
+    function openCompleteReviewModal() {
+        const modal = id("completeReviewModal");
+        const summaryEl = id("completeReviewRouteSummary");
+        if (!modal || !summaryEl) return;
+        if (places.length === 0) {
+            alert("장소를 최소 1개 이상 추가한 뒤 여행 완료를 할 수 있어요.");
+            return;
+        }
+        var steps = places.map(function (p, i) {
+            return (i + 1) + ". " + escapeHtml(p.placeName || "장소");
+        }).join(" → ");
+        summaryEl.innerHTML = "<p class=\"planner-complete-route-text\">" + steps + "</p>";
+        var titleInput = id("completeReviewPlanTitle");
+        var headerTitle = id("planTitle");
+        if (titleInput && headerTitle) titleInput.value = headerTitle.value || "";
+        var pubCheck = id("planIsPublicComplete");
+        var pubVal = id("planIsPublicValue");
+        if (pubCheck && pubVal) {
+            pubCheck.onchange = function () { pubVal.value = pubCheck.checked ? "Y" : "N"; };
+        }
+        modal.classList.remove("hidden");
+    }
+
+    function closeCompleteReviewModal() {
+        const modal = id("completeReviewModal");
+        if (modal) modal.classList.add("hidden");
+    }
+
     function buildPayload() {
         const startStr = getPlanStartDate();
         return places.map(function (p) {
@@ -388,6 +416,9 @@
         if (id("planStartDate")) id("planStartDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
         if (id("planEndDate")) id("planEndDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
         if (id("btnAddPlace")) id("btnAddPlace").addEventListener("click", openMapModal);
+        if (id("btnCompleteReview")) id("btnCompleteReview").addEventListener("click", openCompleteReviewModal);
+        if (id("closeCompleteReviewModal")) id("closeCompleteReviewModal").addEventListener("click", closeCompleteReviewModal);
+        if (id("cancelCompleteReview")) id("cancelCompleteReview").addEventListener("click", closeCompleteReviewModal);
         if (id("closeMapModal")) id("closeMapModal").addEventListener("click", closeMapModal);
         if (id("closeReplaceModal")) id("closeReplaceModal").addEventListener("click", closeReplaceModal);
         if (id("searchBtn")) id("searchBtn").addEventListener("click", searchPlace);

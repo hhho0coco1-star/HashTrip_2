@@ -297,6 +297,86 @@
     padding-left: 4px;
 }
 
+.planner-route-steps-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.planner-route-step-thumb {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    flex-shrink: 0;
+}
+
+.planner-route-step-thumb img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f1f5f9;
+}
+
+.planner-route-step-name {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 4px;
+    text-align: center;
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.planner-route-step-noimg {
+    min-height: 56px;
+    justify-content: flex-end;
+}
+
+.planner-route-step-more {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    align-self: center;
+}
+
+.planner-route-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.planner-route-page-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #475569;
+}
+
+.planner-route-page-btn:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.planner-route-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.planner-route-page-info {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
 .planner-route-match {
     font-size: 0.8rem;
     font-weight: 600;
@@ -363,6 +443,120 @@
 .planner-btn-save:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.planner-btn-complete {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+}
+
+.planner-btn-complete:hover {
+    background: #6d28d9;
+}
+
+/* 여행 완료 리뷰 모달 */
+.planner-complete-review-modal .planner-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.planner-complete-intro {
+    margin: 0 0 16px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.planner-complete-route {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.planner-complete-route-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #334155;
+}
+
+.planner-complete-route-steps {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.planner-complete-route-text {
+    margin: 0;
+    word-break: break-word;
+}
+
+.planner-complete-field {
+    margin-bottom: 16px;
+}
+
+.planner-complete-field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.planner-complete-title-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.planner-complete-field textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.planner-complete-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+    align-items: center;
+}
+
+.planner-complete-stars input {
+    display: none;
+}
+
+.planner-complete-stars label {
+    font-size: 1.6rem;
+    color: #e2e8f0;
+    cursor: pointer;
+    margin: 0;
+}
+
+.planner-complete-stars input:checked + label,
+.planner-complete-stars input:checked ~ label {
+    color: #f59e0b;
+}
+
+.planner-complete-stars label:hover,
+.planner-complete-stars label:hover ~ label {
+    color: #f59e0b;
+}
+
+.planner-complete-public label {
+    display: inline;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.planner-complete-public input[type="checkbox"] {
+    margin-right: 8px;
 }
 
 .planner-place-list {

@@ -8,7 +8,11 @@ public interface CommunityDAO {
 
     List<CommunityDTO> getCommunityReviewsByPlanNo(Long planNo);
 
+    CommunityDTO getCommunityReviewByPlanNoAndUserNo(Long planNo, Long userNo);
+
     int insertCommunityReview(CommunityDTO review);
+
+    int updateCommunityReview(CommunityDTO review);
 
     int countCommunityReviewsByAuthId(String authId);
 

@@ -13,6 +13,8 @@ public class RouteDTO {
     private String title;
     private String description;
     private List<String> steps;
+    /** 여행지별 이름·썸네일 (placeName, placeThumbnailUrl) */
+    private List<Map<String, String>> stepDetails;
     private Map<String, String> tags;
     private int likeCount;
     private int savedCount;
@@ -110,6 +112,14 @@ public class RouteDTO {
 
     public void setSteps(List<String> steps) {
         this.steps = steps;
+    }
+
+    public List<Map<String, String>> getStepDetails() {
+        return stepDetails;
+    }
+
+    public void setStepDetails(List<Map<String, String>> stepDetails) {
+        this.stepDetails = stepDetails;
     }
 
     public Map<String, String> getTags() {

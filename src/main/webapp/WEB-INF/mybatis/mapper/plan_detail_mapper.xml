@@ -29,6 +29,7 @@
 				p.place_address,
 				p.place_latitude,
 				p.place_longitude,
+				p.place_thumbnail_url AS placeThumbnailUrl,
 				CASE
 					WHEN p.place_name IS NOT NULL THEN p.place_name
 					WHEN pd.plan_meno IS NOT NULL AND INSTR(pd.plan_meno, CHR(10)) > 0 THEN SUBSTR(pd.plan_meno, 1, INSTR(pd.plan_meno, CHR(10)) - 1)
@@ -54,6 +55,7 @@
 				p.place_address,
 				p.place_latitude,
 				p.place_longitude,
+				p.place_thumbnail_url AS placeThumbnailUrl,
 				CASE
 					WHEN p.place_name IS NOT NULL THEN p.place_name
 					WHEN pd.plan_meno IS NOT NULL AND INSTR(pd.plan_meno, CHR(10)) > 0 THEN SUBSTR(pd.plan_meno, 1, INSTR(pd.plan_meno, CHR(10)) - 1)
