@@ -1,6 +1,7 @@
 package com.app.service.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -197,6 +198,37 @@ public class UsersServiceImpl implements UsersService {
 
 	private boolean hasExistingAddress(UsersDTO users) {
 		return users != null && users.getUserAddressNo() != null;
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class) // 삭제와 삽입을 하나의 트랜잭션으로 묶음
+	public void saveUserAnalysisResults(String authId, List<Map<String, Object>> resultData) throws Exception {
+	    // 1. 기존에 작성된 보안 로직을 그대로 활용하여 authId 검증
+	    String safeAuthId = normalizeAuthId(authId);
+	    
+	    // 2. 해당 사용자의 UserNo 조회 (이미 DAO에 있는 기능을 활용하거나 새로 연결)
+	    // 기존 코드의 흐름에 따라 usersDAO를 호출합니다.
+	    UsersDTO user = usersDAO.getUserByAuthId(safeAuthId);
+	    if (user == null) {
+	        throw new IllegalArgumentException("해당 회원을 찾을 수 없습니다.");
+	    }
+	    Long userNo = user.getUserNo();
+
+	    // 3. 기존 성향 태그 삭제 (중복 방지 및 초기화)
+	    // 만약 DAO에 deleteUserTagsByUserNo가 없다면 호출명을 맞춰주세요.
+	    usersDAO.deleteUserTagsByUserNo(userNo);
+
+	    // 4. 새로운 성향 분석 결과 삽입
+	    if (resultData != null && !resultData.isEmpty()) {
+	        // DB 전송을 위한 파라미터 맵 생성
+	        Map<String, Object> params = new java.util.HashMap<>();
+	        params.put("userNo", userNo);
+	        params.put("list", resultData);
+	        System.out.println(userNo);
+	        
+	        // DAO의 일괄 삽입 메서드 호출
+	        usersDAO.insertUserAnalysisTags(params);
+	    }
 	}
 
 }
