@@ -29,22 +29,21 @@
                 <input type="hidden" id="planEndDate" name="planEndDate" value="" />
 
                 <div id="wizardSteps" class="planner-wizard">
-                    <%-- Step 1: 어떻게 만들까요? --%>
+                    <%-- 첫 화면: 두 갈래 선택 (크게 나누기) --%>
                     <div id="step1Panel" class="planner-wizard-panel planner-wizard-active">
-                        <section class="planner-section planner-step planner-question-card">
-                            <h2 class="planner-step-title">어떻게 만들까요?</h2>
-                            <div class="planner-option-group planner-option-cards">
-                                <label class="planner-option-card">
-                                    <input type="radio" name="createMode" value="route" checked />
-                                    <span class="planner-option-card-inner">루트 추천 받기</span>
-                                </label>
-                                <label class="planner-option-card">
-                                    <input type="radio" name="createMode" value="direct" />
-                                    <span class="planner-option-card-inner">직접 장소 추가</span>
-                                </label>
-                            </div>
-                            <div class="planner-wizard-nav">
-                                <button type="button" id="btnStep1Next" class="planner-btn planner-btn-primary">다음</button>
+                        <section class="planner-section planner-choice-landing">
+                            <p class="planner-choice-intro">어떤 방식으로 여행 일정을 만들까요?</p>
+                            <div class="planner-choice-cards">
+                                <button type="button" id="choiceRoute" class="planner-choice-card planner-choice-card-route">
+                                    <span class="planner-choice-card-icon">🗺️</span>
+                                    <span class="planner-choice-card-title">추천 루트에서 고르기</span>
+                                    <span class="planner-choice-card-desc">태그에 맞는 루트를 추천받아 일정으로 저장해요</span>
+                                </button>
+                                <button type="button" id="choiceDirect" class="planner-choice-card planner-choice-card-direct">
+                                    <span class="planner-choice-card-icon">📍</span>
+                                    <span class="planner-choice-card-title">내가 장소 직접 넣기</span>
+                                    <span class="planner-choice-card-desc">검색해서 장소를 추가하고 일정을 만들어요</span>
+                                </button>
                             </div>
                         </section>
                     </div>
@@ -97,10 +96,12 @@
                     <div id="directPanel" class="planner-wizard-panel hidden">
                         <section class="planner-section planner-step planner-question-card">
                             <h2 class="planner-step-title">장소 추가</h2>
+                            <p class="planner-hint">장소를 검색해서 추가한 뒤 완료하면 일정이 저장되고 수정 페이지로 이동해요.</p>
                             <button type="button" id="btnAddPlace" class="planner-btn planner-btn-primary">장소 검색해서 추가</button>
                             <div id="placeList" class="planner-place-list"></div>
-                            <div class="planner-wizard-nav">
+                            <div class="planner-wizard-nav planner-direct-actions">
                                 <button type="button" id="btnDirectPrev" class="planner-btn planner-btn-ghost">이전</button>
+                                <button type="submit" id="btnSaveNewDirect" class="planner-btn planner-btn-save" disabled>일정 저장</button>
                             </div>
                         </section>
                     </div>
@@ -108,7 +109,6 @@
 
                 <section class="planner-section planner-actions">
                     <a href="${pageContext.request.contextPath}/planner" class="planner-btn planner-btn-ghost">목록</a>
-                    <button type="submit" id="btnSaveNew" class="planner-btn planner-btn-save hidden" disabled>일정 저장</button>
                 </section>
             </form>
         </div>

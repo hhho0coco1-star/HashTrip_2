@@ -28,27 +28,22 @@
         }
     }
 
+    function isDirectPath() {
+        return directPanel && directPanel.classList.contains("planner-wizard-active");
+    }
+
     function init() {
         const form = id("plannerNewForm");
-        const modeRoute = document.querySelector('input[name="createMode"][value="route"]');
-        const modeDirect = document.querySelector('input[name="createMode"][value="direct"]');
         const btnSearchRoutes = id("btnSearchRoutes");
         const btnAddPlace = id("btnAddPlace");
-        const btnSave = id("btnSaveNew");
 
         step1Panel = id("step1Panel");
         step2Panel = id("step2Panel");
         step3Panel = id("step3Panel");
         directPanel = id("directPanel");
 
-        if (id("btnStep1Next")) id("btnStep1Next").addEventListener("click", function () {
-            if (modeDirect && modeDirect.checked) {
-                showPanel(directPanel);
-                updateSaveState();
-            } else {
-                showPanel(step2Panel);
-            }
-        });
+        if (id("choiceRoute")) id("choiceRoute").addEventListener("click", function () { showPanel(step2Panel); });
+        if (id("choiceDirect")) id("choiceDirect").addEventListener("click", function () { showPanel(directPanel); updateSaveState(); });
         if (id("btnStep2Prev")) id("btnStep2Prev").addEventListener("click", function () { showPanel(step1Panel); });
         if (id("btnStep2Next")) id("btnStep2Next").addEventListener("click", function () { showPanel(step3Panel); });
         if (id("btnStep3Prev")) id("btnStep3Prev").addEventListener("click", function () { showPanel(step2Panel); });
@@ -66,7 +61,7 @@
         if (form) {
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
-                if (modeDirect && modeDirect.checked && places.length === 0) {
+                if (isDirectPath() && places.length === 0) {
                     alert("장소를 최소 1개 이상 추가해 주세요.");
                     return;
                 }
@@ -88,18 +83,10 @@
     }
 
     function updateSaveState() {
-        var btnSave = id("btnSaveNew");
-        var modeDirect = document.querySelector('input[name="createMode"][value="direct"]');
-        var directPanelEl = id("directPanel");
+        var btnSave = id("btnSaveNewDirect");
         if (!btnSave) return;
-        var isDirect = modeDirect && modeDirect.checked;
-        var canSave = isDirect && places.length > 0;
+        var canSave = places.length > 0;
         btnSave.disabled = !canSave;
-        if (directPanelEl && directPanelEl.classList.contains("planner-wizard-active")) {
-            btnSave.classList.toggle("hidden", !canSave);
-        } else {
-            btnSave.classList.add("hidden");
-        }
     }
 
     function getDefaultStartDate() {
@@ -434,17 +421,6 @@
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
-    }
-
-    function updateSaveState() {
-        const btnSave = id("btnSaveNew");
-        const startInput = id("planStartDate");
-        const endInput = id("planEndDate");
-        const modeDirect = document.querySelector('input[name="createMode"][value="direct"]');
-        if (!btnSave) return;
-        const hasDates = startInput && endInput && startInput.value && endInput.value;
-        const isDirect = modeDirect && modeDirect.checked;
-        btnSave.disabled = !(isDirect && hasDates && places.length > 0);
     }
 
     document.addEventListener("DOMContentLoaded", function () {
