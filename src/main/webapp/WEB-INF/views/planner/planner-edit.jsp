@@ -6,15 +6,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일정 수정</title>
+    <title>일정 수정 — #HiFive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Gmarket+Sans:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/routes.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/planner/planner.css">
 </head>
-<body class="planner-edit-body">
+<body>
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 
-    <main class="planner-edit-shell">
-        <div class="planner-edit-wrap">
+    <div class="page-container">
+        <div class="routes-wrap planner-edit-wrap">
             <c:if test="${not empty plannerMessage}">
                 <div class="planner-alert planner-alert-ok"><c:out value="${plannerMessage}"/></div>
             </c:if>
@@ -26,11 +28,14 @@
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                 <input type="hidden" id="planDetailsJson" name="planDetailsJson" value="" />
 
-                <header class="planner-edit-header">
-                    <input type="text" class="planner-title-input" id="planTitle" name="planTitle"
-                           placeholder="여행 제목" value="<c:out value='${plan.planTitle}'/>" />
-                    <a class="planner-back-link" href="${pageContext.request.contextPath}/planner">목록</a>
-                </header>
+                <div class="routes-header planner-edit-header-wrap">
+                    <div class="section-badge">EDIT PLAN</div>
+                    <div class="routes-header-row planner-edit-header">
+                        <input type="text" class="planner-title-input" id="planTitle" name="planTitle"
+                               placeholder="여행 제목" value="<c:out value='${plan.planTitle}'/>" />
+                        <a class="btn-cta-outline" href="${pageContext.request.contextPath}/planner">목록</a>
+                    </div>
+                </div>
 
                 <section class="planner-period">
                     <label>시작일</label>
@@ -48,7 +53,7 @@
                 </section>
 
                 <div class="planner-edit-actions">
-                    <a href="${pageContext.request.contextPath}/planner" class="planner-btn planner-btn-ghost">목록</a>
+                    <a href="${pageContext.request.contextPath}/planner" class="btn-cta-outline">목록</a>
                     <button type="submit" id="btnSave" class="planner-btn planner-btn-save">저장</button>
                     <button type="button" id="btnCompleteReview" class="planner-btn planner-btn-complete"><c:choose><c:when test="${hasCompleteReview}">리뷰 수정</c:when><c:otherwise>여행 완료! 리뷰 작성하기</c:otherwise></c:choose></button>
                 </div>
@@ -132,7 +137,7 @@
                 </form>
             </div>
         </div>
-    </main>
+    </div>
 
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 

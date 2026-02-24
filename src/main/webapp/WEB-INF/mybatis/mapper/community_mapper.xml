@@ -117,4 +117,9 @@
 		)
 	</insert>
 
+    <delete id="deleteCommunityReviewsByPlanNo" parameterType="long">
+        DELETE FROM Community
+        WHERE plan_no = #{value}
+    </delete>
+
 </mapper>

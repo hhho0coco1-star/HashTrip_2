@@ -7,16 +7,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" content="${_csrf.token}"/>
     <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
-    <title>새 여행 만들기</title>
+    <title>새 여행 만들기 — #HiFive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Gmarket+Sans:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/routes.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/planner/planner.css">
 </head>
-<body class="planner-new-body">
+<body>
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 
-    <main class="planner-new-shell">
-        <div class="planner-new-wrap">
-            <h1 class="planner-new-title">새 여행 만들기</h1>
+    <div class="page-container">
+        <div class="routes-wrap planner-new-wrap">
+            <div class="routes-header">
+                <div class="section-badge">NEW PLAN</div>
+                <h2 class="section-title">✈️ 새 여행 만들기</h2>
+                <p class="section-subtitle">추천 루트를 선택하거나 직접 장소를 추가해 일정을 만들어 보세요</p>
+            </div>
 
             <c:if test="${not empty plannerError}">
                 <div class="planner-alert planner-alert-err"><c:out value="${plannerError}"/></div>
@@ -87,7 +93,7 @@
                                 <button type="button" id="btnStep3Prev" class="planner-btn planner-btn-ghost">이전</button>
                                 <button type="button" id="btnSearchRoutes" class="planner-btn planner-btn-primary">추천 루트 보기</button>
                             </div>
-                            <a href="${pageContext.request.contextPath}/routes" class="planner-link-inline" target="_blank">전체 루트 둘러보기</a>
+                            <a href="${pageContext.request.contextPath}/routes" class="planner-link-inline" target="_blank">🗺️ 전체 루트 둘러보기</a>
                             <div id="routeResultArea" class="planner-route-result hidden"></div>
                         </section>
                     </div>
@@ -108,7 +114,7 @@
                 </div>
 
                 <section class="planner-section planner-actions">
-                    <a href="${pageContext.request.contextPath}/planner" class="planner-btn planner-btn-ghost">목록</a>
+                    <a href="${pageContext.request.contextPath}/planner" class="btn-cta-outline">목록으로</a>
                 </section>
             </form>
         </div>
@@ -132,7 +138,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 

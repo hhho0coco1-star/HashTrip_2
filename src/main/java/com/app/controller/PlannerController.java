@@ -77,13 +77,24 @@ public class PlannerController {
     private CommunityService communityService;
 
     @GetMapping
-    public String list(Authentication auth, RedirectAttributes ra, Model model) {
+    public String list(Authentication auth, RedirectAttributes ra, Model model,
+            @RequestParam(required = false) String status) {
         UsersDTO user = resolveUser(auth);
         if (user == null || user.getUserNo() == null) {
             ra.addFlashAttribute("plannerError", MSG_LOGIN);
             return "redirect:/auth/login";
         }
-        model.addAttribute("myPlans", travelPlanService.findUserTravelPlans(user.getUserNo()));
+        List<TravelPlanDTO> plans = travelPlanService.findUserTravelPlans(user.getUserNo());
+        if (StringUtils.hasText(status)) {
+            plans = plans.stream()
+                    .filter(p -> status.equals(p.getPlanStatus()))
+                    .collect(Collectors.toList());
+        }
+        for (TravelPlanDTO plan : plans) {
+            plan.setPlanDetails(planDetailService.findPlanDetails(plan.getPlanNo()));
+        }
+        model.addAttribute("myPlans", plans);
+        model.addAttribute("activeStatus", status);
         return "planner/planner-list";
     }
 

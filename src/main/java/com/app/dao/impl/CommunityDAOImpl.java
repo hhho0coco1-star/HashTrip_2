@@ -20,6 +20,7 @@ public class CommunityDAOImpl implements CommunityDAO {
 	private static final String UPDATE_COMMUNITY_REVIEW_STATEMENT_ID = "community_mapper.updateCommunityReview";
 	private static final String COUNT_COMMUNITY_REVIEWS_BY_AUTH_ID_STATEMENT_ID = "community_mapper.countCommunityReviewsByAuthId";
 	private static final String GET_COMMUNITY_REVIEWS_BY_AUTH_ID_PAGED_STATEMENT_ID = "community_mapper.getCommunityReviewsByAuthIdPaged";
+    private static final String DELETE_COMMUNITY_REVIEWS_BY_PLAN_NO_STATEMENT_ID = "community_mapper.deleteCommunityReviewsByPlanNo";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -62,4 +63,9 @@ public class CommunityDAOImpl implements CommunityDAO {
 		params.put("sortType", sortType);
 		return sqlSessionTemplate.selectList(GET_COMMUNITY_REVIEWS_BY_AUTH_ID_PAGED_STATEMENT_ID, params);
 	}
+
+    @Override
+    public int deleteCommunityReviewsByPlanNo(Long planNo) {
+        return sqlSessionTemplate.delete(DELETE_COMMUNITY_REVIEWS_BY_PLAN_NO_STATEMENT_ID, planNo);
+    }
 }

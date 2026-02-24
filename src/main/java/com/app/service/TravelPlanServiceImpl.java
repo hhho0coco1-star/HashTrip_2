@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dao.PlanDetailDAO;
 import com.app.dao.TravelPlanDAO;
+import com.app.dao.CommunityDAO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteSaveResultDTO;
 import com.app.dto.TravelPlanDTO;
@@ -26,6 +27,9 @@ public class TravelPlanServiceImpl implements TravelPlanService {
 
     @Autowired
     private PlanDetailDAO planDetailDAO;
+
+    @Autowired
+    private CommunityDAO communityDAO;
 
     @Override
     public List<TravelPlanDTO> findPublicTravelPlans() {
@@ -218,7 +222,9 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             throw new IllegalArgumentException("본인 일정만 삭제할 수 있습니다.");
         }
 
+        // 일정 상세 및 관련 부가 데이터 삭제
         planDetailDAO.deletePlanDetailsByPlanNo(planNo);
+        communityDAO.deleteCommunityReviewsByPlanNo(planNo);
         travelPlanDAO.deleteRouteSaveHistoryBySourcePlan(planNo);
 
         int deleted = travelPlanDAO.deleteTravelPlanByOwner(planNo, ownerUserNo);

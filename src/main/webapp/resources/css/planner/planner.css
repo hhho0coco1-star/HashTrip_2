@@ -1,59 +1,54 @@
 @charset "UTF-8";
 
-.planner-new-body,
-.planner-edit-body {
-    margin: 0;
-    font-family: "Pretendard", "Noto Sans KR", sans-serif;
-    background: #f8fafc;
-    min-height: 100vh;
-    color: #1e293b;
+/* routes.css 변수 사용: --primary-blue, --accent-blue, --text-primary, --text-secondary, --border-color, --shadow-md, --radius */
+
+.planner-new-wrap {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-.planner-new-shell,
-.planner-edit-shell {
-    padding: 24px 16px 48px;
-}
-
-.planner-new-wrap,
 .planner-edit-wrap {
     max-width: 720px;
     margin: 0 auto;
 }
 
-.planner-new-title,
-.planner-edit-header .planner-title-input {
-    font-size: 1.35rem;
-    font-weight: 700;
-    margin-bottom: 20px;
+.planner-edit-header-wrap {
+    margin-bottom: 1.5rem;
 }
 
 .planner-edit-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-top: 0.5rem;
+}
+
+.planner-edit-header .planner-title-input {
+    margin-bottom: 0;
 }
 
 .planner-title-input {
     flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 1rem;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .planner-back-link {
-    color: #2563eb;
+    color: var(--primary-blue);
     text-decoration: none;
     font-weight: 600;
 }
 
 .planner-section {
     margin-bottom: 24px;
-    padding: 18px;
+    padding: 24px;
     background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
 }
 
 .planner-section h2 {
@@ -112,21 +107,24 @@
 
 /* 첫 화면: 두 갈래 선택 (크게 나누기) */
 .planner-choice-landing {
-    padding: 24px 0;
+    padding: 40px 0 44px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .planner-choice-intro {
     text-align: center;
-    font-size: 1.1rem;
-    color: #475569;
-    margin: 0 0 28px;
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    margin: 0 0 32px;
 }
 
 .planner-choice-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
-    max-width: 640px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
@@ -134,9 +132,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 24px;
-    border: 2px solid #e2e8f0;
-    border-radius: 16px;
+    padding: 40px 28px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
     background: #fff;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
@@ -144,34 +142,40 @@
 }
 
 .planner-choice-card:hover {
-    border-color: #2563eb;
-    background: #f8fafc;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+    border-color: rgba(91, 141, 238, .4);
+    background: rgba(91, 141, 238, .04);
+    box-shadow: var(--shadow-md);
 }
 
 .planner-choice-card-icon {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    font-size: 2.8rem;
+    margin-bottom: 14px;
 }
 
 .planner-choice-card-title {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #1e293b;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .planner-choice-card-desc {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #64748b;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-.planner-choice-card-route:hover { border-color: #2563eb; }
+@media (max-width: 640px) {
+    .planner-choice-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.planner-choice-card-route:hover { border-color: var(--primary-blue); }
 .planner-choice-card-direct:hover {
-    border-color: #16a34a;
-    background: #f0fdf4;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12);
+    border-color: var(--green);
+    background: rgba(34, 197, 94, .06);
+    box-shadow: var(--shadow-md);
 }
 
 .planner-direct-actions {
@@ -190,12 +194,12 @@
     display: inline-block;
     margin-top: 12px;
     font-size: 0.9rem;
-    color: #2563eb;
+    color: var(--primary-blue);
 }
 
 .planner-question-card {
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
-    border-color: #c7d2fe;
+    box-shadow: var(--shadow-md);
+    border-color: rgba(91, 141, 238, .2);
     padding: 24px;
 }
 
@@ -238,9 +242,9 @@
 
 .planner-option-card input:checked + .planner-option-card-inner,
 .planner-option-card:hover .planner-option-card-inner {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1d4ed8;
+    border-color: var(--primary-blue);
+    background: rgba(91, 141, 238, .1);
+    color: var(--accent-blue);
 }
 
 .planner-option-card.planner-option-disabled .planner-option-card-inner {
@@ -255,7 +259,7 @@
 }
 
 .planner-step {
-    border-left: 3px solid #2563eb;
+    border-left: 4px solid var(--primary-blue);
     padding-left: 14px;
 }
 
@@ -320,8 +324,8 @@
 }
 
 .planner-tag-chip:has(input:checked) {
-    background: #dbeafe;
-    border-color: #2563eb;
+    background: rgba(91, 141, 238, .15);
+    border-color: var(--primary-blue);
 }
 
 .planner-route-actions {
@@ -454,7 +458,7 @@
 
 .planner-btn-use-route {
     padding: 6px 12px;
-    background: #2563eb;
+    background: var(--primary-blue);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -479,19 +483,19 @@
 }
 
 .planner-btn-primary {
-    background: #2563eb;
+    background: var(--primary-blue);
     color: #fff;
     border: none;
 }
 
 .planner-btn-primary:hover {
-    background: #1d4ed8;
+    background: var(--accent-blue);
 }
 
 .planner-btn-outline {
     background: #fff;
-    color: #2563eb;
-    border-color: #2563eb;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
 }
 
 .planner-btn-ghost {
@@ -500,13 +504,13 @@
 }
 
 .planner-btn-save {
-    background: #16a34a;
+    background: var(--green);
     color: #fff;
     border: none;
 }
 
 .planner-btn-save:hover:not(:disabled) {
-    background: #15803d;
+    background: #16a34a;
 }
 
 .planner-btn-save:disabled {
@@ -515,13 +519,13 @@
 }
 
 .planner-btn-complete {
-    background: #7c3aed;
+    background: var(--purple);
     color: #fff;
     border: none;
 }
 
 .planner-btn-complete:hover {
-    background: #6d28d9;
+    background: #8b5cf6;
 }
 
 /* 여행 완료 리뷰 모달 */
@@ -661,6 +665,14 @@
     display: flex;
     gap: 12px;
     margin-top: 24px;
+    align-items: center;
+}
+
+.planner-actions .btn-cta-outline,
+.planner-edit-actions .btn-cta-outline,
+.planner-edit-header .btn-cta-outline {
+    padding: 12px 24px;
+    font-size: 1rem;
 }
 
 .planner-period {
@@ -668,17 +680,21 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    padding: 1rem 1.2rem;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
 }
 
 .planner-period label {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .planner-period input {
     padding: 8px 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
 }
 
@@ -692,13 +708,18 @@
 
 .planner-day-group {
     margin-bottom: 24px;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    box-shadow: var(--shadow-sm);
 }
 
 .planner-day-title {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     margin: 0 0 12px;
-    color: #334155;
+    color: var(--text-primary);
 }
 
 .planner-day-cards {
@@ -714,17 +735,17 @@
 }
 
 .planner-day-dropzone.planner-drag-over {
-    background: #eff6ff;
+    background: rgba(91, 141, 238, .08);
 }
 
 .planner-day-empty-hint {
     margin: 0;
     padding: 16px;
     font-size: 0.9rem;
-    color: #94a3b8;
+    color: var(--text-tertiary);
     text-align: center;
-    border: 2px dashed #e2e8f0;
-    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
     min-height: 48px;
     display: flex;
     align-items: center;
@@ -733,14 +754,14 @@
 
 .planner-card-day-hint {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-top: 6px;
 }
 
 .planner-card {
     padding: 14px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-gray-50);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     position: relative;
 }
@@ -756,7 +777,7 @@
 }
 
 .planner-place-name-link {
-    color: #2563eb;
+    color: var(--primary-blue);
     text-decoration: none;
     font-weight: 600;
 }
@@ -851,11 +872,12 @@
 
 .planner-modal-content {
     background: #fff;
-    border-radius: 16px;
+    border-radius: var(--radius);
     max-width: 560px;
     width: 100%;
     max-height: 90vh;
     overflow: auto;
+    box-shadow: var(--shadow-xl);
 }
 
 .planner-modal-header {
@@ -898,7 +920,7 @@
 
 .planner-search-box button {
     padding: 10px 16px;
-    background: #2563eb;
+    background: var(--primary-blue);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -928,8 +950,8 @@
 
 .planner-search-item:hover,
 .planner-search-item.selected {
-    background: #dbeafe;
-    border-color: #2563eb;
+    background: rgba(91, 141, 238, .1);
+    border-color: var(--primary-blue);
 }
 
 .planner-search-addr {

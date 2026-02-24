@@ -92,9 +92,18 @@
                     "</div>";
             }).join("");
             const dayDate = dateStrAddDays(startStr, dayNum - 1);
+            let dayTitle = dayNum + "일차";
+            if (dayDate) {
+                const d = new Date(dayDate);
+                if (!isNaN(d.getTime())) {
+                    const mm = d.getMonth() + 1;
+                    const dd = d.getDate();
+                    dayTitle += " (" + mm + "/" + dd + ")";
+                }
+            }
             const emptyHint = list.length === 0 ? "<p class=\"planner-day-empty-hint\">장소를 여기로 드래그하세요</p>" : "";
             return "<div class=\"planner-day-group planner-day-dropzone\" data-day=\"" + dayNum + "\" data-date=\"" + (dayDate || "") + "\">" +
-                "<h3 class=\"planner-day-title\">" + dayNum + "일차</h3>" +
+                "<h3 class=\"planner-day-title\">" + dayTitle + "</h3>" +
                 "<div class=\"planner-day-cards\">" + cards + emptyHint + "</div>" +
                 "</div>";
         }).join("");
