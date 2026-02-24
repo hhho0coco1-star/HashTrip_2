@@ -1,5 +1,10 @@
 package com.app.service;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -248,22 +253,42 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         copiedPlan.setPlanTitle(resolveCopiedPlanTitle(sourcePlan.getPlanTitle(), copiedPlanTitle));
         copiedPlan.setPlanIsPublic("N");
         copiedPlan.setPlanStatus("PLANNING");
-        copiedPlan.setPlanStartDate(sourcePlan.getPlanStartDate());
-        copiedPlan.setPlanEndDate(sourcePlan.getPlanEndDate());
+
+        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
+        LocalDate refStart = sourcePlan.getPlanStartDate() != null ? sourcePlan.getPlanStartDate().toLocalDate() : null;
+        long daySpan = 1L;
+        if (sourceDetails != null && !sourceDetails.isEmpty()) {
+            LocalDate minDate = null;
+            LocalDate maxDate = null;
+            for (PlanDetailDTO d : sourceDetails) {
+                if (d.getDetailStartDate() == null) continue;
+                LocalDate dDate = d.getDetailStartDate().toLocalDateTime().toLocalDate();
+                if (minDate == null || dDate.isBefore(minDate)) minDate = dDate;
+                if (maxDate == null || dDate.isAfter(maxDate)) maxDate = dDate;
+            }
+            if (refStart == null && minDate != null) refStart = minDate;
+            if (minDate != null && maxDate != null) {
+                daySpan = ChronoUnit.DAYS.between(minDate, maxDate) + 1;
+                if (daySpan < 1) daySpan = 1;
+            }
+        }
+        LocalDate copyStart = LocalDate.now();
+        LocalDate copyEnd = copyStart.plusDays(daySpan - 1);
+        copiedPlan.setPlanStartDate(Date.valueOf(copyStart));
+        copiedPlan.setPlanEndDate(Date.valueOf(copyEnd));
 
         int inserted = travelPlanDAO.insertTravelPlan(copiedPlan);
         if (inserted != 1 || copiedPlan.getPlanNo() == null) {
             throw new IllegalStateException("일정 복사에 실패했습니다.");
         }
 
-        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
         if (sourceDetails == null || sourceDetails.isEmpty()) {
             return copiedPlan.getPlanNo();
         }
 
         int visitOrder = 1;
         for (PlanDetailDTO sourceDetail : sourceDetails) {
-            PlanDetailDTO copiedDetail = copyPlanDetail(sourceDetail);
+            PlanDetailDTO copiedDetail = copyPlanDetailWithNewDates(sourceDetail, refStart != null ? refStart : copyStart, copyStart);
             copiedDetail.setPlanNo(copiedPlan.getPlanNo());
             copiedDetail.setUserNo(targetUserNo);
             copiedDetail.setPlanVisitOrder(visitOrder++);
@@ -293,6 +318,22 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         copiedDetail.setPlanMeno(sourceDetail.getPlanMeno());
         copiedDetail.setDetailStartDate(sourceDetail.getDetailStartDate());
         copiedDetail.setDetailEndDate(sourceDetail.getDetailEndDate());
+        return copiedDetail;
+    }
+
+    private PlanDetailDTO copyPlanDetailWithNewDates(PlanDetailDTO sourceDetail, LocalDate sourceRefStart, LocalDate copyRefStart) {
+        PlanDetailDTO copiedDetail = new PlanDetailDTO();
+        copiedDetail.setPlaceNo(sourceDetail.getPlaceNo());
+        copiedDetail.setPlanMeno(sourceDetail.getPlanMeno());
+        long dayOffset = 0;
+        if (sourceDetail.getDetailStartDate() != null) {
+            LocalDate dDate = sourceDetail.getDetailStartDate().toLocalDateTime().toLocalDate();
+            dayOffset = ChronoUnit.DAYS.between(sourceRefStart, dDate);
+            if (dayOffset < 0) dayOffset = 0;
+        }
+        LocalDate newDate = copyRefStart.plusDays(dayOffset);
+        copiedDetail.setDetailStartDate(Timestamp.valueOf(newDate.atTime(9, 0)));
+        copiedDetail.setDetailEndDate(Timestamp.valueOf(newDate.atTime(18, 0)));
         return copiedDetail;
     }
 }

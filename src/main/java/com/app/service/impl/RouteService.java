@@ -419,4 +419,48 @@ public class RouteService {
 
         return map;
     }
+
+    /**
+     * 선택한 장소 태그(이름)와 루트의 장소 태그 일치도로 점수 부여 후 적합도 순 정렬.
+     * (어디로 갈까요에서 선택한 태그를 임시로 사용해 검색할 때 사용)
+     */
+    public void applyPlaceTagScores(List<RouteDTO> routes, List<String> selectedTagNames) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+        if (selectedTagNames == null) {
+            selectedTagNames = Collections.emptyList();
+        }
+        Set<String> selectedNormalized = new LinkedHashSet<>();
+        for (String name : selectedTagNames) {
+            if (name != null && !name.trim().isEmpty()) {
+                selectedNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        for (RouteDTO route : routes) {
+            List<String> routeTagNames = planDetailService.findTagNames(route.getId());
+            Set<String> routeNormalized = new LinkedHashSet<>();
+            if (routeTagNames != null) {
+                for (String name : routeTagNames) {
+                    if (name != null && !name.trim().isEmpty()) {
+                        routeNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+                    }
+                }
+            }
+            int matchCount = 0;
+            for (String s : selectedNormalized) {
+                if (routeNormalized.contains(s)) {
+                    matchCount++;
+                }
+            }
+            int score = selectedNormalized.isEmpty()
+                    ? 50
+                    : Math.min(98, 40 + (matchCount * 60 / selectedNormalized.size()));
+            route.setMatchScore(score);
+        }
+        routes.sort(
+                Comparator.comparing(RouteDTO::getMatchScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(RouteDTO::getSavedCount, Comparator.reverseOrder())
+                        .thenComparing(RouteDTO::getId, Comparator.nullsLast(Comparator.reverseOrder())));
+    }
 }

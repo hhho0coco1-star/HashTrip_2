@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.app.dto.CommunityDTO;
 import com.app.dto.RouteDTO;
 import com.app.dto.RouteSaveResultDTO;
+import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlanDetailService;
@@ -109,6 +110,54 @@ public class RouteController {
         return routes;
     }
 
+    /**
+     * 어디로 갈까요에서 선택한 장소 태그로 추천 루트 검색.
+     * 선택한 태그를 임시로 사용해 루트의 장소 태그와 맞는 순(적합도 순)으로 정렬해 반환.
+     */
+    @GetMapping("/recommend")
+    @ResponseBody
+    public List<RouteDTO> recommendByPlaceTags(
+            @RequestParam(required = false) String placeTagCodes,
+            Authentication authentication) {
+        UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        List<RouteDTO> routes = routeService.getRoutesByCategory(null);
+        routes = excludeCurrentUserRoutes(routes, currentUser);
+
+        List<String> selectedTagNames = resolveTagNamesByCodes(placeTagCodes);
+        if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
+            routeService.applyPlaceTagScores(routes, selectedTagNames);
+        } else {
+            applySimilarityScores(routes, authentication);
+        }
+        return routes;
+    }
+
+    private List<String> resolveTagNamesByCodes(String placeTagCodes) {
+        if (placeTagCodes == null || placeTagCodes.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<TagMasterDTO> all = usersService.getTagMasterList();
+        if (all == null) {
+            return Collections.emptyList();
+        }
+        Set<String> codes = new LinkedHashSet<>();
+        for (String s : placeTagCodes.split("[,;]")) {
+            String c = s != null ? s.trim() : "";
+            if (!c.isEmpty()) {
+                codes.add(c);
+            }
+        }
+        List<String> names = new ArrayList<>();
+        for (TagMasterDTO t : all) {
+            if (t != null && t.getTagCode() != null && codes.contains(t.getTagCode().trim())) {
+                if (t.getTagName() != null && !t.getTagName().trim().isEmpty()) {
+                    names.add(t.getTagName().trim());
+                }
+            }
+        }
+        return names;
+    }
+
     @PostMapping("/save")
     @ResponseBody
     public Map<String, Object> saveRoute(@RequestParam Long routeId, Authentication authentication) {
@@ -128,7 +177,7 @@ public class RouteController {
                     : "이미 저장한 루트입니다.");
             if (saveResult.getCopiedPlanNo() != null) {
                 response.put("planNo", saveResult.getCopiedPlanNo());
-                response.put("redirectUrl", "/plan/" + saveResult.getCopiedPlanNo() + "/edit");
+                response.put("redirectUrl", "/planner/" + saveResult.getCopiedPlanNo() + "/edit");
             }
             return response;
         } catch (Exception e) {
@@ -182,7 +231,7 @@ public class RouteController {
             response.put("success", true);
             response.put("message", "새 일정으로 복사했습니다.");
             response.put("planNo", copiedPlanNo);
-            response.put("redirectUrl", "/plan/" + copiedPlanNo + "/edit");
+            response.put("redirectUrl", "/planner/" + copiedPlanNo + "/edit");
             return response;
         } catch (Exception e) {
             response.put("success", false);
