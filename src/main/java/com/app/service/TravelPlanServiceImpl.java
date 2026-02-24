@@ -131,16 +131,13 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         }
         requireTravelPlan(sourcePlanNo);
 
-        int insertedSaveHistory;
+        int insertedSaveHistory = 0;
         try {
             insertedSaveHistory = travelPlanDAO.registerRouteSave(sourcePlanNo, targetUserNo);
         } catch (DuplicateKeyException e) {
-            insertedSaveHistory = 0;
+            // 이미 저장 이력 있음 → 이력은 유지, 복사는 매번 수행
         }
-        Long copiedPlanNo = null;
-        if (insertedSaveHistory > 0) {
-            copiedPlanNo = copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
-        }
+        Long copiedPlanNo = copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
 
         RouteSaveResultDTO result = new RouteSaveResultDTO();
         result.setSaveRegistered(insertedSaveHistory > 0);
@@ -329,7 +326,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     private PlanDetailDTO copyPlanDetail(PlanDetailDTO sourceDetail) {
         PlanDetailDTO copiedDetail = new PlanDetailDTO();
         copiedDetail.setPlaceNo(sourceDetail.getPlaceNo());
-        copiedDetail.setPlanMeno(sourceDetail.getPlanMeno());
+        // 메모는 개인 정보이므로 복사하지 않는다.
         copiedDetail.setDetailStartDate(sourceDetail.getDetailStartDate());
         copiedDetail.setDetailEndDate(sourceDetail.getDetailEndDate());
         return copiedDetail;
@@ -338,7 +335,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     private PlanDetailDTO copyPlanDetailWithNewDates(PlanDetailDTO sourceDetail, LocalDate sourceRefStart, LocalDate copyRefStart) {
         PlanDetailDTO copiedDetail = new PlanDetailDTO();
         copiedDetail.setPlaceNo(sourceDetail.getPlaceNo());
-        copiedDetail.setPlanMeno(sourceDetail.getPlanMeno());
+        // 메모는 개인 정보이므로 복사하지 않는다.
         long dayOffset = 0;
         if (sourceDetail.getDetailStartDate() != null) {
             LocalDate dDate = sourceDetail.getDetailStartDate().toLocalDateTime().toLocalDate();

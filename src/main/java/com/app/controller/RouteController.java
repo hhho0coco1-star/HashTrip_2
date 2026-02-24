@@ -172,9 +172,7 @@ public class RouteController {
             response.put("success", true);
             response.put("savedUserCount", saveResult.getSavedUserCount());
             response.put("saveRegistered", saveResult.isSaveRegistered());
-            response.put("message", saveResult.isSaveRegistered()
-                    ? "내 일정으로 저장했습니다."
-                    : "이미 저장한 루트입니다.");
+            response.put("message", "내 일정으로 저장했습니다.");
             if (saveResult.getCopiedPlanNo() != null) {
                 response.put("planNo", saveResult.getCopiedPlanNo());
                 response.put("redirectUrl", "/planner/" + saveResult.getCopiedPlanNo() + "/edit");
