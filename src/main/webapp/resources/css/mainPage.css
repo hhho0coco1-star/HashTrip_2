@@ -1,5 +1,27 @@
 @charset "UTF-8";
 
+.analysis-image {
+    position: relative; /* 자식 요소인 floating-card들의 기준점이 됨 */
+    width: 100%;
+    max-width: 600px; /* 지도의 적절한 크기 설정 */
+    height: 600px;
+    margin: 0 auto;
+}
+
+.map-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('${pageContext.request.contextPath}/resources/images/map.png'); /* 이미지 경로 */
+    background-size: contain; /* 이미지가 잘리지 않게 전체 보이기 */
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 1; /* 카드들보다 뒤에 배치 */
+    opacity: 0.8; /* 지도를 살짝 흐리게 해서 글자가 잘 보이게 설정 */
+}
+
 /* 1. 스크롤 스냅 활성화 */
 html {
 	scroll-snap-type: y proximity; /* 강제 고정 대신 근접했을 때만 고정 */
@@ -98,31 +120,7 @@ section {
 	color: #999;
 }
 
-/* ================== 3. 지도 및 플로팅 카드 애니메이션 ================== */
-.analysis-image {
-	flex: 1;
-	display: flex;
-	justify-content: center;
-	position: relative;
-	height: 450px; /* 지도가 보일 수 있도록 높이 확보 */
-}
-
-.map-background {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 100%;
-	height: 100%;
-	background-image: url('/img/korea.png');
-	background-size: contain;
-	background-repeat: no-repeat;
-	background-position: center;
-	opacity: 0.2;
-	filter: grayscale(100%) brightness(1.1);
-	z-index: 1;
-	animation: map-fade 2s ease-in-out forwards;
-}
+/* ================== 3. 플로팅 카드 애니메이션 ================== */
 
 .floating-card {
 	position: absolute;

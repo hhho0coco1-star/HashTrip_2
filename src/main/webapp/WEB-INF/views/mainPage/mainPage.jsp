@@ -43,7 +43,7 @@
 			</div>
 
 			<div class="analysis-image">	
-				<div class="map-background"></div>
+				<div class="map-background" ></div>
 
 				<div class="floating-card type-1">#제주도</div>
 				<div class="floating-card type-2">#힐링</div>
