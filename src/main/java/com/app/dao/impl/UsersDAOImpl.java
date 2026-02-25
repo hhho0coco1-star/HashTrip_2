@@ -85,11 +85,9 @@ public class UsersDAOImpl implements UsersDAO {
 	public int updateUserProfileByAuthId(String authId, UsersDTO usersDTO) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("authId", authId);
-		params.put("userName", usersDTO.getUserName());
 		params.put("userNickName", usersDTO.getUserNickName());
 		params.put("userGender", usersDTO.getUserGender());
 		params.put("userPhoneNumber", usersDTO.getUserPhoneNumber());
-		params.put("userRegistrationNo", usersDTO.getUserRegistrationNo());
 		params.put("userProfileImg", usersDTO.getUserProfileImg());
 		return sqlSessionTemplate.update(UPDATE_USER_PROFILE_BY_AUTH_ID_STATEMENT_ID, params);
 	}

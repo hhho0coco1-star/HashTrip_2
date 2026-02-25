@@ -100,11 +100,12 @@
 		UPDATE
 		USERS u
 		SET
-		u.USER_NAME = #{userName},
 		u.USER_NICKNAME = #{userNickName},
-		u.USER_GENDER = #{userGender},
+		u.USER_GENDER = CASE
+			WHEN u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
+			ELSE u.USER_GENDER
+		END,
 		u.USER_PHONENUMBER = #{userPhoneNumber},
-		u.USER_REGISTRATION_NO = #{userRegistrationNo},
 		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
 		u.USER_UPDATED_AT = SYSTIMESTAMP
 		WHERE EXISTS (

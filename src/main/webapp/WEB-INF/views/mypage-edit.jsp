@@ -58,8 +58,8 @@
 				</div>
 
 				<div class="edit-field">
-					<label for="userName">이름</label>
-					<input id="userName" name="userName" type="text" value="<c:out value='${usersDTO.userName}' />" required>
+					<label for="userName">이름 (변경 불가)</label>
+					<input id="userName" name="userName" type="text" value="<c:out value='${usersDTO.userName}' />" readonly>
 				</div>
 
 				<div class="edit-field">
@@ -69,11 +69,22 @@
 
 				<div class="edit-field">
 					<label for="userGender">성별</label>
-					<select id="userGender" name="userGender">
-						<option value="">선택 안 함</option>
-						<option value="M" ${usersDTO.userGender == 'M' ? 'selected' : ''}>남성</option>
-						<option value="F" ${usersDTO.userGender == 'F' ? 'selected' : ''}>여성</option>
-					</select>
+					<c:choose>
+						<c:when test="${empty usersDTO.userGender}">
+							<select id="userGender" name="userGender">
+								<option value="">선택 안 함</option>
+								<option value="M">남성</option>
+								<option value="F">여성</option>
+							</select>
+							<p class="edit-field-help">성별은 최초 1회만 설정할 수 있습니다.</p>
+						</c:when>
+						<c:otherwise>
+							<input id="userGender" type="text"
+								value="<c:out value='${usersDTO.userGender == \"M\" ? \"남성\" : (usersDTO.userGender == \"F\" ? \"여성\" : \"미입력\")}' />"
+								readonly>
+							<p class="edit-field-help">이미 등록된 성별은 변경할 수 없습니다.</p>
+						</c:otherwise>
+					</c:choose>
 				</div>
 
 				<div class="edit-field">
@@ -82,8 +93,8 @@
 				</div>
 
 				<div class="edit-field">
-					<label for="userRegistrationNo">주민등록번호</label>
-					<input id="userRegistrationNo" name="userRegistrationNo" type="text" value="<c:out value='${usersDTO.userRegistrationNo}' />">
+					<label for="userRegistrationNo">주민등록번호 (변경 불가)</label>
+					<input id="userRegistrationNo" name="userRegistrationNo" type="text" value="<c:out value='${usersDTO.userRegistrationNo}' />" readonly>
 				</div>
 
 				<div class="edit-field">
