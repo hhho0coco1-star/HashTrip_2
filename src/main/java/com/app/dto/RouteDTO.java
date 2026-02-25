@@ -9,6 +9,7 @@ public class RouteDTO {
     private Long userNo;
     private String userName;
     private String emoji;
+    private String representativeImageUrl;
     private String typeId;
     private String title;
     private String description;
@@ -78,6 +79,14 @@ public class RouteDTO {
 
     public void setEmoji(String emoji) {
         this.emoji = emoji;
+    }
+
+    public String getRepresentativeImageUrl() {
+        return representativeImageUrl;
+    }
+
+    public void setRepresentativeImageUrl(String representativeImageUrl) {
+        this.representativeImageUrl = representativeImageUrl;
     }
 
     public String getTypeId() {

@@ -21,6 +21,7 @@ public class PlanDetailDAOImpl implements PlanDetailDAO {
 	private static final String GET_TAG_NAMES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagNamesByPlanNo";
 	private static final String GET_TAG_CATEGORIES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagCategoriesByPlanNo";
 	private static final String GET_REPRESENTATIVE_MEMO_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getRepresentativeMemoByPlanNo";
+	private static final String GET_REPRESENTATIVE_IMAGE_URL_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getRepresentativeImageUrlByPlanNo";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -69,5 +70,10 @@ public class PlanDetailDAOImpl implements PlanDetailDAO {
     @Override
     public String getRepresentativeMemoByPlanNo(Long planNo) {
         return sqlSessionTemplate.selectOne(GET_REPRESENTATIVE_MEMO_BY_PLAN_NO_STATEMENT_ID, planNo);
+    }
+
+    @Override
+    public String getRepresentativeImageUrlByPlanNo(Long planNo) {
+        return sqlSessionTemplate.selectOne(GET_REPRESENTATIVE_IMAGE_URL_BY_PLAN_NO_STATEMENT_ID, planNo);
     }
 }

@@ -15,4 +15,6 @@ public interface PlanDetailService {
     List<String> findTagCategories(Long planNo);
 
     String findRepresentativeMemo(Long planNo);
+
+    String findRepresentativeImageUrl(Long planNo);
 }

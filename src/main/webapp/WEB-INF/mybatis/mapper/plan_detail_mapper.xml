@@ -127,4 +127,15 @@
 		  AND pd.plan_meno IS NOT NULL
 	</select>
 
+	<select id="getRepresentativeImageUrlByPlanNo" parameterType="long" resultType="string">
+		SELECT MAX(p.place_thumbnail_url) KEEP (
+			DENSE_RANK FIRST ORDER BY NVL(pd.plan_visit_order, 9999), pd.plan_detail_no
+		)
+		FROM Plan_Details pd
+		INNER JOIN Place p
+			ON p.place_no = pd.place_no
+		WHERE pd.plan_no = #{value}
+		  AND pd.place_no IS NOT NULL
+	</select>
+
 </mapper>

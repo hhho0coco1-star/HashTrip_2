@@ -23,4 +23,6 @@ public interface PlanDetailDAO {
     List<String> getTagCategoriesByPlanNo(Long planNo);
 
     String getRepresentativeMemoByPlanNo(Long planNo);
+
+    String getRepresentativeImageUrlByPlanNo(Long planNo);
 }

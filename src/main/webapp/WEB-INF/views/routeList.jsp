@@ -115,12 +115,16 @@
                              onclick="location.href='${pageContext.request.contextPath}/routes/${route.id}'">
                             
                             <div class="route-head">
-                                <div class="traveler-av" style="background:${not empty routeType ? routeType.bgColor : '#f0f0f0'}">${route.emoji}</div>
+                                <div class="traveler-av ${not empty route.representativeImageUrl ? 'has-photo' : ''}" style="background:${not empty routeType ? routeType.bgColor : '#f0f0f0'}">
+                                    <c:choose>
+                                        <c:when test="${not empty route.representativeImageUrl}">
+                                            <img src="${route.representativeImageUrl}" alt="대표 여행지 사진" loading="lazy" />
+                                        </c:when>
+                                        <c:otherwise>${route.emoji}</c:otherwise>
+                                    </c:choose>
+                                </div>
                                 <div class="traveler-info">
                                     <div class="t-name">${route.userName}</div>
-                                    <c:if test="${not empty routeType}">
-                                        <div class="type-badge" style="background:${routeType.bgColor};color:${routeType.color}">${routeType.emoji} ${routeType.name}</div>
-                                    </c:if>
                                 </div>
                                 <c:if test="${not empty route.matchScore}">
                                     <div class="match-pct">
@@ -200,14 +204,20 @@
             const type = typeMap[route.typeId] || {};
             const sim = route.matchScore;
             const barClr = sim >= 80 ? 'var(--green)' : 'var(--primary-blue)';
+            const representativeImageUrl = route.representativeImageUrl
+                ? String(route.representativeImageUrl).replace(/"/g, '&quot;')
+                : '';
+            const avatarInner = representativeImageUrl
+                ? `<img src="${representativeImageUrl}" alt="대표 여행지 사진" loading="lazy">`
+                : `${route.emoji || '🧭'}`;
+            const avatarClass = representativeImageUrl ? 'traveler-av has-photo' : 'traveler-av';
 
             return `
             <div class="route-card" style="cursor:pointer" onclick="location.href='${pageContext.request.contextPath}/routes/\${route.id}'">
                 <div class="route-head">
-                    <div class="traveler-av" style="background:\${type.bgColor || '#f0f0f0'}">\${route.emoji}</div>
+                    <div class="\${avatarClass}" style="background:\${type.bgColor || '#f0f0f0'}">\${avatarInner}</div>
                     <div class="traveler-info">
                         <div class="t-name">\${route.userName}</div>
-                        <div class="type-badge" style="background:\${type.bgColor};color:\${type.color}">\${type.emoji} \${type.name}</div>
                     </div>
                     \${sim ? `<div class="match-pct"><div class="match-num" style="color:\${barClr}">\${sim}%</div><div class="match-label">취향 매칭</div></div>` : ''}
                 </div>

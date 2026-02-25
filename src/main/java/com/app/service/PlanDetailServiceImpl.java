@@ -38,4 +38,9 @@ public class PlanDetailServiceImpl implements PlanDetailService {
     public String findRepresentativeMemo(Long planNo) {
         return planDetailDAO.getRepresentativeMemoByPlanNo(planNo);
     }
+
+    @Override
+    public String findRepresentativeImageUrl(Long planNo) {
+        return planDetailDAO.getRepresentativeImageUrlByPlanNo(planNo);
+    }
 }

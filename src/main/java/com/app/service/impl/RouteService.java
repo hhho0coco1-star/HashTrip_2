@@ -129,6 +129,7 @@ public class RouteService {
         String normalizedTypeId = normalizeTypeId(route.getTypeId());
         route.setTypeId(normalizedTypeId);
         route.setEmoji(resolveEmoji(normalizedTypeId));
+        route.setRepresentativeImageUrl(defaultIfBlank(planDetailService.findRepresentativeImageUrl(route.getId()), null));
 
         List<String> steps = planDetailService.findStepNames(route.getId());
         if (steps == null || steps.isEmpty()) {
