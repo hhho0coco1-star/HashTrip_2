@@ -116,8 +116,10 @@
 		SET
 		u.USER_NICKNAME = #{userNickName},
 		u.USER_GENDER = CASE
-		WHEN u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
-		ELSE u.USER_GENDER
+		WHEN
+		u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
+		ELSE
+		u.USER_GENDER
 		END,
 		u.USER_PHONENUMBER = #{userPhoneNumber},
 		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
@@ -301,14 +303,15 @@
 		INQUIRY_NO,
 		INQUIRY_TYPE,
 		INQUIRY_TITLE,
-		INQUIRY_CONTENT AS inquiryContent, 
+		INQUIRY_CONTENT AS inquiryContent,
 		INQUIRY_DATE,
-		REPLY_CONTENT, 
-		REPLY_DATE, 
+		REPLY_CONTENT,
+		REPLY_DATE,
 		STATUS
 		FROM PLACE_INQUIRY
 		WHERE USER_NO = #{userNo}
-		ORDER BY INQUIRY_DATE DESC
+		ORDER BY
+		INQUIRY_DATE DESC
 	</select>
 
 	<!-- 1:1 문의 내용 확인(상세) -->
@@ -328,6 +331,40 @@
 		WHERE INQUIRY_NO = #{inquiryNo}
 	</select>
 
+	<!-- 1:1 문의 삭제 -->
+	<delete id="deleteInquiry" parameterType="long">
+		DELETE FROM
+		PLACE_INQUIRY
+		WHERE INQUIRY_NO = #{inquiryNo}
+		AND STATUS = 'N'
+	</delete>
 
+	<!-- 1:1 문의 수정 -->
+	<update id="updateInquiry"
+		parameterType="com.app.dto.InquiryDTO">
+		UPDATE PLACE_INQUIRY
+		SET
+		INQUIRY_TYPE = #{inquiryType},
+		INQUIRY_TITLE = #{inquiryTitle},
+		INQUIRY_CONTENT = #{inquiryContent},
+		INQUIRY_EMAIL = #{inquiryEmail},
+		INQUIRY_DATE = SYSDATE WHERE
+		INQUIRY_NO = #{inquiryNo}
+		AND STATUS = 'N'
+	</update>
+
+	<!-- 1:1 문의 조회 -->
+	<select id="getInquiryDetail" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO AS inquiryNo,
+		INQUIRY_TYPE AS inquiryType,
+		INQUIRY_TITLE AS inquiryTitle,
+		INQUIRY_CONTENT AS inquiryContent,
+		INQUIRY_EMAIL AS inquiryEmail,
+		STATUS AS status
+		FROM PLACE_INQUIRY
+		WHERE INQUIRY_NO = #{inquiryNo}
+	</select>
 
 </mapper>

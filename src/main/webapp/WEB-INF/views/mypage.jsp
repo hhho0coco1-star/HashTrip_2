@@ -431,26 +431,28 @@
 									</div>
 
 									<div class="inquiry-content"
-										style="display: none; background: #fcfcfc; padding: 20px; border-top: 1px solid #f0f0f0;">
+										style="display: none; background: #fcfcfc; padding: 20px; border-top: 1px solid #f0f0f0; position: relative;">
 										<div style="margin-bottom: 20px;">
 											<strong
-												style="display: block; margin-bottom: 10px; color: #555;">[문의 내용]</strong>
+												style="display: block; margin-bottom: 10px; color: #555;">[문의
+												내용]</strong>
 											<p
 												style="white-space: pre-wrap; line-height: 1.6; color: #333;">${inquiry.inquiryContent}</p>
 										</div>
 
-										<c:if test="${inquiry.status eq 'Y'}">
-											<div
-												style="background: #eef6ff; padding: 15px; border-radius: 8px;">
-												<strong
-													style="display: block; margin-bottom: 10px; color: #007bff;">[답변 완료]</strong>
-												<p
-													style="white-space: pre-wrap; line-height: 1.6; color: #333;">${inquiry.replyContent}</p>
-												<small
-													style="color: #999; display: block; margin-top: 10px;">답변일:
-													${inquiry.replyDate}</small>
-											</div>
-										</c:if>
+										<div class="inquiry-actions"
+											style="text-align: right; margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 15px;">
+											<c:if test="${inquiry.status eq 'N'}">
+												<button type="button"
+													onclick="editInquiry(${inquiry.inquiryNo})"
+													style="padding: 6px 12px; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 5px;">
+													수정</button>
+											</c:if>
+											<button type="button"
+												onclick="deleteInquiry(${inquiry.inquiryNo})"
+												style="padding: 6px 12px; background: #fff; border: 1px solid #dc3545; color: #dc3545; border-radius: 4px; cursor: pointer; font-size: 13px;">
+												삭제</button>
+										</div>
 									</div>
 								</div>
 							</c:forEach>
@@ -487,6 +489,37 @@
 	        content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	    }
 	}
+	
+	// 문의 삭제
+	function deleteInquiry(inquiryNo) {
+	    if (confirm("정말로 이 문의를 삭제하시겠습니까?")) {
+	        // 보안을 위해 폼을 동적으로 생성해서 POST로 전송 (CSRF 토큰 포함)
+	        const form = document.createElement('form');
+	        form.method = 'POST';
+	        form.action = '${pageContext.request.contextPath}/contact/inquiry/delete';
+	        
+	        const inputNo = document.createElement('input');
+	        inputNo.type = 'hidden';
+	        inputNo.name = 'inquiryNo';
+	        inputNo.value = inquiryNo;
+	        
+	        const inputCsrf = document.createElement('input');
+	        inputCsrf.type = 'hidden';
+	        inputCsrf.name = '${_csrf.parameterName}';
+	        inputCsrf.value = '${_csrf.token}';
+	        
+	        form.appendChild(inputNo);
+	        form.appendChild(inputCsrf);
+	        document.body.appendChild(form);
+	        form.submit();
+	    }
+	}
+
+	// 문의 수정 (수정 페이지로 이동)
+	function editInquiry(inquiryNo) {
+	    location.href = '${pageContext.request.contextPath}/contact/inquiry/edit/' + inquiryNo;
+	}
+	
 	// 1:1 문의 
 	
 		(function() {

@@ -48,5 +48,14 @@ public interface UsersDAO {
     
     // 1:1 문의내용 조회
     List<InquiryDTO> selectInquiryList(Long userNo);
+    
+    // 1:1 문의 삭제
+    int deleteInquiry(Long inquiryNo);
+
+    // 1:1 문의 수정
+    int updateInquiry(InquiryDTO dto);
+    
+    // 1:1 문의 조회
+    InquiryDTO getInquiryDetail(Long inquiryNo);
 
 }

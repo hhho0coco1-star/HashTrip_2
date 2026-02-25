@@ -256,5 +256,20 @@ public class UsersServiceImpl implements UsersService {
     public List<InquiryDTO> getMyInquiries(Long userNo) {
         return usersDAO.selectInquiryList(userNo);
     }
+    
+    @Override
+    public int removeInquiry(Long inquiryNo) {
+        return usersDAO.deleteInquiry(inquiryNo);
+    }
+    
+    @Override
+    public int modifyInquiry(InquiryDTO dto) {
+        return usersDAO.updateInquiry(dto);
+    }
+    
+    @Override
+    public InquiryDTO getInquiryDetail(Long inquiryNo) {
+        return usersDAO.getInquiryDetail(inquiryNo); // DAO와 이름 통일
+    }
 
 }

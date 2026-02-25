@@ -153,4 +153,19 @@ public class UsersDAOImpl implements UsersDAO {
     public List<InquiryDTO> selectInquiryList(Long userNo) {
         return sqlSessionTemplate.selectList("users_mapper.selectMyInquiries", userNo);
     }
+    
+    @Override
+    public int deleteInquiry(Long inquiryNo) {
+        return sqlSessionTemplate.delete("users_mapper.deleteInquiry", inquiryNo);
+    }
+    
+    @Override
+    public int updateInquiry(InquiryDTO dto) {
+        return sqlSessionTemplate.update("users_mapper.updateInquiry", dto);
+    }
+    
+    @Override
+    public InquiryDTO getInquiryDetail(Long inquiryNo) {
+        return sqlSessionTemplate.selectOne("users_mapper.getInquiryDetail", inquiryNo);
+    }
 }

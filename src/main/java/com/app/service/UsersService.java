@@ -35,7 +35,17 @@ public interface UsersService {
     
     // 1:1 문의 등록
     int registerInquiry(InquiryDTO dto);
+    
     // 특정 유저의 문의 목록 조회
     List<InquiryDTO> getMyInquiries(Long userNo);
     
+    // 1:1 문의 삭제
+    int removeInquiry(Long inquiryNo);
+    
+    // 1:1 문의 수정
+    int modifyInquiry(InquiryDTO dto);
+    
+    // 1:1 문의 조회
+    InquiryDTO getInquiryDetail(Long inquiryNo);
+
 }
