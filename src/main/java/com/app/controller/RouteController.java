@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.app.dto.CommunityDTO;
 import com.app.dto.RouteDTO;
 import com.app.dto.RouteSaveResultDTO;
+import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlanDetailService;
@@ -73,6 +74,7 @@ public class RouteController {
         model.addAttribute("myTagCount", userTags.size());
         model.addAttribute("myTopTags", extractTopTagNames(userTags, 5));
         model.addAttribute("categories", routeService.getAllTagCategories());
+        model.addAttribute("preferenceCategories", routeService.getPreferenceCategories());
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         return "routeList";
     }
@@ -101,12 +103,21 @@ public class RouteController {
     @ResponseBody
     public List<RouteDTO> filterRoutes(
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String prefCategory,
+            @RequestParam(required = false) String prefTagCode,
             Authentication authentication) {
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
-        List<RouteDTO> routes = routeService.getRoutesByCategory(category);
+        List<RouteDTO> routes = routeService.getRoutesByFilters(category, prefCategory, prefTagCode);
         routes = excludeCurrentUserRoutes(routes, currentUser);
         applySimilarityScores(routes, authentication);
         return routes;
+    }
+
+    @GetMapping("/preference-tags")
+    @ResponseBody
+    public List<TagMasterDTO> preferenceTags(
+            @RequestParam String category) {
+        return routeService.getPreferenceTagsByCategory(category);
     }
 
     @PostMapping("/save")
