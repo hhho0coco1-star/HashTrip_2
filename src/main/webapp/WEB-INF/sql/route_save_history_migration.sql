@@ -1,0 +1,73 @@
+-- Run with the same schema user as application datasource (root-context.xml: SCOTT)
+-- Purpose: create ROUTE_SAVE_HISTORY + SEQ_ROUTE_SAVE_NO safely (idempotent).
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_TABLES
+     WHERE TABLE_NAME = 'ROUTE_SAVE_HISTORY';
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE TABLE ROUTE_SAVE_HISTORY (
+                SAVE_NO NUMBER(19) PRIMARY KEY,
+                SOURCE_PLAN_NO NUMBER(19) NOT NULL,
+                SAVED_USER_NO NUMBER(19) NOT NULL,
+                SAVED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                CONSTRAINT UK_ROUTE_SAVE_ONCE UNIQUE (SOURCE_PLAN_NO, SAVED_USER_NO),
+                CONSTRAINT FK_ROUTE_SAVE_PLAN FOREIGN KEY (SOURCE_PLAN_NO) REFERENCES TRAVEL_PLANS(PLAN_NO),
+                CONSTRAINT FK_ROUTE_SAVE_USER FOREIGN KEY (SAVED_USER_NO) REFERENCES USERS(USER_NO)
+            )
+        ';
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_SEQUENCES
+     WHERE SEQUENCE_NAME = 'SEQ_ROUTE_SAVE_NO';
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE SEQUENCE SEQ_ROUTE_SAVE_NO
+            START WITH 1
+            INCREMENT BY 1
+        ';
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_INDEXES
+     WHERE INDEX_NAME = 'IDX_ROUTE_SAVE_PLAN_NO';
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE INDEX IDX_ROUTE_SAVE_PLAN_NO
+            ON ROUTE_SAVE_HISTORY(SOURCE_PLAN_NO)
+        ';
+    END IF;
+
+    SELECT COUNT(*)
+      INTO v_count
+      FROM USER_INDEXES
+     WHERE INDEX_NAME = 'IDX_ROUTE_SAVE_USER_NO';
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE INDEX IDX_ROUTE_SAVE_USER_NO
+            ON ROUTE_SAVE_HISTORY(SAVED_USER_NO)
+        ';
+    END IF;
+END;
+/

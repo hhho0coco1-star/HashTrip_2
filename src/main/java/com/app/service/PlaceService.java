@@ -48,4 +48,7 @@ public interface PlaceService {
 	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
 
 	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception;
+	
+	public List<PlaceDTO> searchPlaces(String keyword);
+	
 }

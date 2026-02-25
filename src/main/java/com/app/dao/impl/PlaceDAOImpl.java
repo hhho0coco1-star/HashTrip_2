@@ -274,4 +274,11 @@ public class PlaceDAOImpl implements PlaceDAO {
 			batchSession.close();
 		}
 	}
+
+	// mainPage 인기 추천 여행지 검색
+	@Override
+	public List<PlaceDTO> searchPlaces(String keyword) {
+		return sqlSessionTemplate.selectList("place_mapper.searchPlaces", keyword);
+	}
+
 }

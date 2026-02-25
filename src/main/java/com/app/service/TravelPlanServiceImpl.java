@@ -3,12 +3,14 @@ package com.app.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dao.PlanDetailDAO;
 import com.app.dao.TravelPlanDAO;
 import com.app.dto.PlanDetailDTO;
+import com.app.dto.RouteSaveResultDTO;
 import com.app.dto.TravelPlanDTO;
 
 @Service
@@ -101,39 +103,33 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long copyTravelPlanWithDetails(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
-        TravelPlanDTO sourcePlan = requireTravelPlan(sourcePlanNo);
+        return copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RouteSaveResultDTO saveRouteForUser(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
         if (targetUserNo == null || targetUserNo <= 0L) {
             throw new IllegalArgumentException("대상 사용자 정보가 필요합니다.");
         }
+        requireTravelPlan(sourcePlanNo);
 
-        TravelPlanDTO copiedPlan = new TravelPlanDTO();
-        copiedPlan.setUserNo(targetUserNo);
-        copiedPlan.setPlanTitle(resolveCopiedPlanTitle(sourcePlan.getPlanTitle(), copiedPlanTitle));
-        copiedPlan.setPlanIsPublic("N");
-        copiedPlan.setPlanStatus("PLANNING");
-        copiedPlan.setPlanStartDate(sourcePlan.getPlanStartDate());
-        copiedPlan.setPlanEndDate(sourcePlan.getPlanEndDate());
-
-        int inserted = travelPlanDAO.insertTravelPlan(copiedPlan);
-        if (inserted != 1 || copiedPlan.getPlanNo() == null) {
-            throw new IllegalStateException("일정 복사에 실패했습니다.");
+        int insertedSaveHistory;
+        try {
+            insertedSaveHistory = travelPlanDAO.registerRouteSave(sourcePlanNo, targetUserNo);
+        } catch (DuplicateKeyException e) {
+            insertedSaveHistory = 0;
+        }
+        Long copiedPlanNo = null;
+        if (insertedSaveHistory > 0) {
+            copiedPlanNo = copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
         }
 
-        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
-        if (sourceDetails == null || sourceDetails.isEmpty()) {
-            return copiedPlan.getPlanNo();
-        }
-
-        int visitOrder = 1;
-        for (PlanDetailDTO sourceDetail : sourceDetails) {
-            PlanDetailDTO copiedDetail = copyPlanDetail(sourceDetail);
-            copiedDetail.setPlanNo(copiedPlan.getPlanNo());
-            copiedDetail.setUserNo(targetUserNo);
-            copiedDetail.setPlanVisitOrder(visitOrder++);
-            planDetailDAO.insertPlanDetail(copiedDetail);
-        }
-
-        return copiedPlan.getPlanNo();
+        RouteSaveResultDTO result = new RouteSaveResultDTO();
+        result.setSaveRegistered(insertedSaveHistory > 0);
+        result.setCopiedPlanNo(copiedPlanNo);
+        result.setSavedUserCount(travelPlanDAO.countSavedUsersBySourcePlan(sourcePlanNo));
+        return result;
     }
 
     @Override
@@ -210,6 +206,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         }
 
         planDetailDAO.deletePlanDetailsByPlanNo(planNo);
+        travelPlanDAO.deleteRouteSaveHistoryBySourcePlan(planNo);
 
         int deleted = travelPlanDAO.deleteTravelPlanByOwner(planNo, ownerUserNo);
         if (deleted != 1) {
@@ -238,6 +235,42 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             return "복사한 일정";
         }
         return truncate(baseTitle + " (복사본)", 200);
+    }
+
+    private Long copyTravelPlanWithDetailsInternal(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
+        TravelPlanDTO sourcePlan = requireTravelPlan(sourcePlanNo);
+        if (targetUserNo == null || targetUserNo <= 0L) {
+            throw new IllegalArgumentException("대상 사용자 정보가 필요합니다.");
+        }
+
+        TravelPlanDTO copiedPlan = new TravelPlanDTO();
+        copiedPlan.setUserNo(targetUserNo);
+        copiedPlan.setPlanTitle(resolveCopiedPlanTitle(sourcePlan.getPlanTitle(), copiedPlanTitle));
+        copiedPlan.setPlanIsPublic("N");
+        copiedPlan.setPlanStatus("PLANNING");
+        copiedPlan.setPlanStartDate(sourcePlan.getPlanStartDate());
+        copiedPlan.setPlanEndDate(sourcePlan.getPlanEndDate());
+
+        int inserted = travelPlanDAO.insertTravelPlan(copiedPlan);
+        if (inserted != 1 || copiedPlan.getPlanNo() == null) {
+            throw new IllegalStateException("일정 복사에 실패했습니다.");
+        }
+
+        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
+        if (sourceDetails == null || sourceDetails.isEmpty()) {
+            return copiedPlan.getPlanNo();
+        }
+
+        int visitOrder = 1;
+        for (PlanDetailDTO sourceDetail : sourceDetails) {
+            PlanDetailDTO copiedDetail = copyPlanDetail(sourceDetail);
+            copiedDetail.setPlanNo(copiedPlan.getPlanNo());
+            copiedDetail.setUserNo(targetUserNo);
+            copiedDetail.setPlanVisitOrder(visitOrder++);
+            planDetailDAO.insertPlanDetail(copiedDetail);
+        }
+
+        return copiedPlan.getPlanNo();
     }
 
     private String normalizeTitle(String planTitle) {

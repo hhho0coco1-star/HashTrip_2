@@ -43,6 +43,7 @@
 				</div>
 			</section>
 
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 			<section class="dashboard-card">
 				<details class="tag-manage-details">
 					<summary>성향 태그 관리</summary>
@@ -51,6 +52,7 @@
 					</div>
 				</details>
 			</section>
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 
 			<section class="dashboard-card">
 				<div class="review-section-head">
@@ -569,6 +571,7 @@
 				showToast((tagName || tagCode) + " 태그 제거됐어요");
 			}
 
+			// JS 태그 연결
 			const container = document.getElementById("tag-managers");
 			if (container) {
 				container.addEventListener("click", function(event) {
