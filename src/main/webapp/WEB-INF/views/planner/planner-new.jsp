@@ -18,10 +18,13 @@
 
     <div class="page-container">
         <div class="routes-wrap planner-new-wrap">
-            <div class="routes-header">
-                <div class="section-badge">NEW PLAN</div>
-                <h2 class="section-title">✈️ 새 여행 만들기</h2>
-                <p class="section-subtitle">추천 루트를 선택하거나 직접 장소를 추가해 일정을 만들어 보세요</p>
+            <div class="routes-header planner-new-header-row">
+                <div>
+                    <div class="section-badge">NEW PLAN</div>
+                    <h2 class="section-title">✈️ 새 여행 만들기</h2>
+                    <p class="section-subtitle">추천 루트를 선택하거나 직접 장소를 추가해 일정을 만들어 보세요</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/planner" class="btn-cta-outline">목록으로</a>
             </div>
 
             <c:if test="${not empty plannerError}">
@@ -80,14 +83,12 @@
                     <div id="step3Panel" class="planner-wizard-panel hidden">
                         <section class="planner-section planner-step planner-question-card">
                             <h2 class="planner-step-title">어디로 갈까요?</h2>
-                            <p class="planner-hint">선택한 장소 태그와 맞는 루트를 우선해서 보여드려요.</p>
-                            <div class="planner-tag-list" id="placeTagList">
-                                <c:forEach var="tag" items="${placeTagList}">
-                                    <label class="planner-tag-chip">
-                                        <input type="checkbox" name="placeTag" value="${tag.tagCode}" data-name="${tag.tagName}" />
-                                        <span><c:out value="${tag.tagName}"/></span>
-                                    </label>
-                                </c:forEach>
+                            <p class="planner-hint">지역을 선택하거나 검색하면 해당 지역이 포함된 루트만 보여드려요.</p>
+                            <div class="planner-region-combobox" id="regionCombobox">
+                                <input type="text" id="regionSearch" class="planner-region-input" placeholder="지역 선택 또는 검색" autocomplete="off" />
+                                <input type="hidden" id="regionValue" name="region" value="" />
+                                <button type="button" class="planner-region-toggle" id="regionToggle" aria-label="지역 목록 열기">&nbsp;</button>
+                                <div class="planner-region-dropdown" id="regionDropdown" role="listbox"></div>
                             </div>
                             <div class="planner-wizard-nav">
                                 <button type="button" id="btnStep3Prev" class="planner-btn planner-btn-ghost">이전</button>
@@ -112,10 +113,6 @@
                         </section>
                     </div>
                 </div>
-
-                <section class="planner-section planner-actions">
-                    <a href="${pageContext.request.contextPath}/planner" class="btn-cta-outline">목록으로</a>
-                </section>
             </form>
         </div>
 

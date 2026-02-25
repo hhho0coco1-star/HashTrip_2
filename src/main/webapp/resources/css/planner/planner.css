@@ -7,6 +7,116 @@
     margin: 0 auto;
 }
 
+.planner-new-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.planner-new-header-row .btn-cta-outline {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--primary-blue);
+    background: #fff;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.planner-new-header-row .btn-cta-outline:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(91, 141, 238, 0.15);
+}
+
+.planner-region-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+/* 지역 검색 드롭다운(자동완성) */
+.planner-region-combobox {
+    position: relative;
+    max-width: 320px;
+    margin-bottom: 16px;
+}
+
+.planner-region-combobox .planner-region-input {
+    width: 100%;
+    padding: 12px 40px 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.planner-region-combobox .planner-region-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 2px rgba(91, 141, 238, 0.15);
+}
+
+.planner-region-combobox .planner-region-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;
+    cursor: pointer;
+}
+
+.planner-region-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+}
+
+.planner-region-dropdown.is-open {
+    display: block;
+}
+
+.planner-region-option {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.planner-region-option:last-child {
+    border-bottom: none;
+}
+
+.planner-region-option:hover,
+.planner-region-option[aria-selected="true"] {
+    background: #eff6ff;
+    color: var(--primary-blue);
+}
+
+.planner-region-option.no-match {
+    padding: 12px 14px;
+    color: #64748b;
+    cursor: default;
+}
+
 .planner-edit-wrap {
     max-width: 720px;
     margin: 0 auto;
@@ -356,6 +466,143 @@
     gap: 10px;
 }
 
+/* 디테일 루트 카드 */
+.planner-route-card {
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.planner-route-card-hero {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 200px;
+    background: #f1f5f9;
+    overflow: hidden;
+}
+
+.planner-route-card-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.planner-route-card-hero-placeholder {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.planner-route-card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.planner-route-card .planner-route-item-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.planner-route-card-title {
+    font-size: 1.1rem;
+    line-height: 1.35;
+}
+
+.planner-route-match {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-left: 6px;
+}
+
+.planner-route-tag-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.planner-route-tag-chip {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+}
+
+.planner-route-card-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.planner-route-card-snippet {
+    font-size: 0.9rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.planner-route-card-places {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.planner-route-place-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.planner-route-card .planner-route-steps-thumbs {
+    gap: 12px;
+}
+
+.planner-route-card .planner-route-step-thumb {
+    width: 80px;
+}
+
+.planner-route-card .planner-route-step-thumb img {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+}
+
+.planner-route-card .planner-route-step-name {
+    max-width: 80px;
+    font-size: 0.75rem;
+}
+
+.planner-route-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.planner-route-btn-detail {
+    text-decoration: none;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.planner-route-btn-detail:hover {
+    color: var(--primary-blue);
+}
+
 .planner-route-item-head {
     display: flex;
     align-items: center;
@@ -448,12 +695,6 @@
 .planner-route-page-info {
     font-size: 0.9rem;
     color: #64748b;
-}
-
-.planner-route-match {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #2563eb;
 }
 
 .planner-btn-use-route {

@@ -15,6 +15,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.app.dto.CommunityDTO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteDTO;
 import com.app.dto.TagCategoryDTO;
@@ -36,6 +37,9 @@ public class RouteService {
 
     @Autowired
     private UsersService usersService;
+
+    @Autowired
+    private CommunityService communityService;
 
     public RouteDTO getRouteById(Long routeId) {
         TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
@@ -158,6 +162,28 @@ public class RouteService {
 
         if (route.getDescription() == null || route.getDescription().trim().isEmpty()) {
             route.setDescription("\uC124\uBA85 \uC815\uBCF4 \uC5C6\uC74C");
+        }
+
+        List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(route.getId());
+        if (reviews != null && !reviews.isEmpty()) {
+            route.setReviewCount(reviews.size());
+            double sum = 0;
+            int rated = 0;
+            for (CommunityDTO r : reviews) {
+                if (r.getRating() != null) {
+                    sum += r.getRating();
+                    rated++;
+                }
+            }
+            route.setAvgRating(rated > 0 ? sum / rated : null);
+            String content = reviews.get(0).getReviewContent();
+            if (content != null && !content.trim().isEmpty()) {
+                String snippet = content.trim();
+                if (snippet.length() > 80) {
+                    snippet = snippet.substring(0, 80) + "\u2026";
+                }
+                route.setRepresentativeReviewSnippet(snippet);
+            }
         }
     }
 

@@ -129,4 +129,12 @@
 		  AND pd.plan_meno IS NOT NULL
 	</select>
 
+	<!-- 루트에 포함된 여행지 중 주소/이름에 지역 키워드가 포함된 plan_no 목록 (지역 필터용) -->
+	<select id="getPlanNosByRegion" parameterType="string" resultType="long">
+		SELECT DISTINCT pd.plan_no
+		FROM Plan_Details pd
+		INNER JOIN Place p ON p.place_no = pd.place_no
+		WHERE (NVL(p.place_address, '') LIKE '%' || #{region} || '%' OR NVL(p.place_name, '') LIKE '%' || #{region} || '%')
+	</select>
+
 </mapper>

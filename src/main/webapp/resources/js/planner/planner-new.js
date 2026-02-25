@@ -52,6 +52,7 @@
         if (id("btnDirectPrev")) id("btnDirectPrev").addEventListener("click", function () { showPanel(step1Panel); updateSaveState(); });
 
         if (btnSearchRoutes) btnSearchRoutes.addEventListener("click", searchAndShowRoutes);
+        initRegionCombobox();
         if (btnAddPlace) btnAddPlace.addEventListener("click", openMapModal);
         if (id("closeMapModal")) id("closeMapModal").addEventListener("click", closeMapModal);
         if (id("searchBtn")) id("searchBtn").addEventListener("click", searchPlace);
@@ -203,11 +204,45 @@
         var pageRoutes = routes.slice(start, start + routeListPageSize);
 
         var listHtml = pageRoutes.map(function (route) {
-            var matchLabel = route.matchScore != null ? " <span class=\"planner-route-match\">" + route.matchScore + "% 적합</span>" : "";
+            var stepDetails = route.stepDetails || [];
+            var heroImg = "";
+            for (var i = 0; i < stepDetails.length; i++) {
+                if (stepDetails[i] && stepDetails[i].placeThumbnailUrl) {
+                    heroImg = stepDetails[i].placeThumbnailUrl;
+                    break;
+                }
+            }
+            var heroHtml = heroImg
+                ? "<div class=\"planner-route-card-hero\"><img src=\"" + escapeHtml(heroImg) + "\" alt=\"\" /></div>"
+                : "<div class=\"planner-route-card-hero planner-route-card-hero-placeholder\"></div>";
+
+            var matchLabel = route.matchScore != null ? "<span class=\"planner-route-match\">" + route.matchScore + "% 적합</span>" : "";
+            var tagChips = "";
+            if (route.tags && typeof route.tags === "object") {
+                var tagVals = [];
+                for (var k in route.tags) { if (route.tags.hasOwnProperty(k) && route.tags[k]) tagVals.push(escapeHtml(route.tags[k])); }
+                if (tagVals.length > 0) {
+                    tagChips = tagVals.slice(0, 3).map(function (v) { return "<span class=\"planner-route-tag-chip\">" + v + "</span>"; }).join("");
+                }
+            }
+
+            var authorStr = (route.emoji || "") + " " + escapeHtml(route.userName || "");
+            var savedStr = route.savedCount != null && route.savedCount > 0 ? "저장 " + route.savedCount + "회" : "";
+            var reviewStr = "";
+            if (route.reviewCount != null && route.reviewCount > 0) {
+                reviewStr = "리뷰 " + route.reviewCount + "개";
+                if (route.avgRating != null) reviewStr = "★ " + Number(route.avgRating).toFixed(1) + " · " + reviewStr;
+            }
+            var metaParts = [authorStr, savedStr, reviewStr].filter(Boolean);
+            var metaHtml = "<div class=\"planner-route-card-meta\">" + metaParts.join(" · ") + "</div>";
+
+            var snippet = route.representativeReviewSnippet || route.description || "";
+            var snippetHtml = snippet ? "<p class=\"planner-route-card-snippet\">" + escapeHtml(snippet) + "</p>" : "";
+
+            var placeCount = stepDetails.length;
             var stepsHtml = "";
-            var stepDetails = route.stepDetails;
-            if (Array.isArray(stepDetails) && stepDetails.length > 0) {
-                var parts = stepDetails.slice(0, 8).map(function (s) {
+            if (stepDetails.length > 0) {
+                var parts = stepDetails.slice(0, 6).map(function (s) {
                     var name = escapeHtml((s && s.placeName) ? s.placeName : "");
                     var img = (s && s.placeThumbnailUrl) ? s.placeThumbnailUrl : "";
                     if (img) {
@@ -215,22 +250,34 @@
                     }
                     return "<span class=\"planner-route-step-thumb planner-route-step-noimg\"><span class=\"planner-route-step-name\">" + name + "</span></span>";
                 });
-                if (stepDetails.length > 8) parts.push("<span class=\"planner-route-step-more\">…</span>");
-                stepsHtml = "<div class=\"planner-route-steps planner-route-steps-thumbs\">" + parts.join("") + "</div>";
-            } else {
-                var steps = route.steps;
-                if (Array.isArray(steps) && steps.length > 0) {
-                    var stepsText = steps.slice(0, 5).map(function (s) { return escapeHtml(s || ""); }).join(" → ");
-                    if (steps.length > 5) stepsText += " …";
-                    stepsHtml = "<div class=\"planner-route-steps\">" + stepsText + "</div>";
-                }
+                if (stepDetails.length > 6) parts.push("<span class=\"planner-route-step-more\">+" + (stepDetails.length - 6) + "</span>");
+                stepsHtml = "<div class=\"planner-route-card-places\">" +
+                    "<span class=\"planner-route-place-count\">" + placeCount + "개 장소</span>" +
+                    "<div class=\"planner-route-steps planner-route-steps-thumbs\">" + parts.join("") + "</div></div>";
+            } else if (route.steps && route.steps.length > 0) {
+                var stepsText = route.steps.slice(0, 4).map(function (s) { return escapeHtml(s || ""); }).join(" → ");
+                if (route.steps.length > 4) stepsText += " …";
+                stepsHtml = "<div class=\"planner-route-card-places\"><span class=\"planner-route-place-count\">" + route.steps.length + "개 장소</span><div class=\"planner-route-steps\">" + stepsText + "</div></div>";
             }
-            return "<div class=\"planner-route-item\">" +
-                "<div class=\"planner-route-item-head\">" +
-                "<strong>" + escapeHtml(route.title || "") + "</strong>" + matchLabel +
-                "</div>" + stepsHtml +
-                "<button type=\"button\" class=\"planner-btn-use-route\" data-route-id=\"" + (route.id || "") + "\">이 루트로 만들기</button>" +
+
+            var detailUrl = ctx + "/routes/" + (route.id || "");
+            var actionsHtml = "<div class=\"planner-route-card-actions\">" +
+                "<a href=\"" + detailUrl + "\" class=\"planner-btn planner-btn-ghost planner-route-btn-detail\" target=\"_blank\" rel=\"noopener\">상세 보기</a>" +
+                "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-btn-use-route\" data-route-id=\"" + (route.id || "") + "\">이 루트로 만들기</button>" +
                 "</div>";
+
+            return "<article class=\"planner-route-item planner-route-card\">" +
+                heroHtml +
+                "<div class=\"planner-route-card-body\">" +
+                "<div class=\"planner-route-item-head\">" +
+                "<strong class=\"planner-route-card-title\">" + escapeHtml(route.title || "") + "</strong>" + matchLabel +
+                (tagChips ? "<div class=\"planner-route-tag-wrap\">" + tagChips + "</div>" : "") +
+                "</div>" +
+                metaHtml +
+                snippetHtml +
+                stepsHtml +
+                actionsHtml +
+                "</div></article>";
         }).join("");
 
         var listEl = area.querySelector(".planner-route-list");
@@ -254,7 +301,8 @@
         }
 
         qsAll(".planner-btn-use-route", area).forEach(function (btn) {
-            btn.addEventListener("click", function () {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
                 var routeId = btn.getAttribute("data-route-id");
                 if (!routeId) return;
                 useRoute(routeId);
@@ -262,33 +310,121 @@
         });
     }
 
+    /* value: 주소/이름 매칭용 문자열, label: 표시명 */
+    var REGION_OPTIONS = [
+        { value: "", label: "전체" },
+        { value: "서울", label: "서울" },
+        { value: "부산", label: "부산" },
+        { value: "대구", label: "대구" },
+        { value: "인천", label: "인천" },
+        { value: "광주", label: "광주" },
+        { value: "대전", label: "대전" },
+        { value: "울산", label: "울산" },
+        { value: "세종", label: "세종" },
+        { value: "경기", label: "경기" },
+        { value: "강원", label: "강원" },
+        { value: "충청북도", label: "충북" },
+        { value: "충청남도", label: "충남" },
+        { value: "전북", label: "전북" },
+        { value: "전라남도", label: "전남" },
+        { value: "경상북도", label: "경북" },
+        { value: "경상남도", label: "경남" },
+        { value: "제주", label: "제주" }
+    ];
+
+    function initRegionCombobox() {
+        var combo = id("regionCombobox");
+        var input = id("regionSearch");
+        var hidden = id("regionValue");
+        var toggle = id("regionToggle");
+        var dropdown = id("regionDropdown");
+        if (!combo || !input || !hidden || !dropdown) return;
+
+        function getFilteredOptions() {
+            var q = (input.value || "").trim().toLowerCase();
+            if (!q) return REGION_OPTIONS.slice();
+            return REGION_OPTIONS.filter(function (opt) {
+                return (opt.label || "").toLowerCase().indexOf(q) !== -1;
+            });
+        }
+
+        function renderDropdown(options) {
+            dropdown.innerHTML = "";
+            if (options.length === 0) {
+                dropdown.innerHTML = "<div class=\"planner-region-option no-match\">검색 결과가 없습니다.</div>";
+                return;
+            }
+            options.forEach(function (opt) {
+                var div = document.createElement("div");
+                div.className = "planner-region-option";
+                div.setAttribute("role", "option");
+                div.setAttribute("data-value", opt.value);
+                div.setAttribute("data-label", opt.label);
+                div.textContent = opt.label;
+                div.addEventListener("click", function () {
+                    hidden.value = opt.value;
+                    input.value = opt.label;
+                    dropdown.classList.remove("is-open");
+                    input.blur();
+                });
+                dropdown.appendChild(div);
+            });
+        }
+
+        function openDropdown() {
+            var options = getFilteredOptions();
+            renderDropdown(options);
+            dropdown.classList.add("is-open");
+        }
+
+        function closeDropdown() {
+            dropdown.classList.remove("is-open");
+        }
+
+        input.addEventListener("focus", function () { openDropdown(); });
+        input.addEventListener("input", function () { openDropdown(); });
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") { closeDropdown(); input.blur(); }
+        });
+        if (toggle) toggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            input.value = "";
+            hidden.value = "";
+            renderDropdown(REGION_OPTIONS.slice());
+            dropdown.classList.add("is-open");
+            input.focus();
+        });
+
+        document.addEventListener("click", function (e) {
+            if (combo && !combo.contains(e.target)) closeDropdown();
+        });
+    }
+
+    function getSelectedRegion() {
+        var hidden = id("regionValue");
+        return hidden ? (hidden.value || "").trim() : "";
+    }
+
     function searchAndShowRoutes() {
-        var url = ctx + "/routes/filter?category=";
+        var region = getSelectedRegion();
+        var url = ctx + "/routes/recommend" + (region ? "?region=" + encodeURIComponent(region) : "");
         var area = id("routeResultArea");
         if (!area) return;
         area.classList.remove("hidden");
         area.innerHTML = "<p>로딩 중...</p>";
-        fetch(url)
+        fetch(url, { credentials: "same-origin" })
             .then(function (r) { return r.json(); })
             .then(function (routes) {
                 if (!routes || routes.length === 0) {
-                    area.innerHTML = "<p>추천 루트가 없습니다. 직접 장소를 추가해 보세요.</p>";
+                    area.innerHTML = "<p>해당 지역의 추천 루트가 없습니다. 다른 지역을 선택하거나 직접 장소를 추가해 보세요.</p>";
                     return;
                 }
-                var selectedTagNames = getSelectedPlaceTagNames();
-                routes = routes.slice();
-                routes.sort(function (a, b) {
-                    var aMatch = routeMatchesPlaceTags(a, selectedTagNames);
-                    var bMatch = routeMatchesPlaceTags(b, selectedTagNames);
-                    if (aMatch && !bMatch) return -1;
-                    if (!aMatch && bMatch) return 1;
-                    var scoreA = a.matchScore != null ? a.matchScore : 0;
-                    var scoreB = b.matchScore != null ? b.matchScore : 0;
-                    return scoreB - scoreA;
-                });
                 routeListAll = routes;
                 routeListPage = 1;
-                area.innerHTML = "<p class=\"planner-route-result-intro\">선택한 장소 태그에 맞는 루트를 우선 보여드려요. 아래 루트를 선택하면 내 일정으로 저장됩니다.</p>" +
+                var introText = region
+                    ? "선택한 지역(<strong>" + escapeHtml(region) + "</strong>)에 맞는 루트예요. 아래 루트를 선택하면 내 일정으로 저장됩니다."
+                    : "추천 루트예요. 아래 루트를 선택하면 내 일정으로 저장됩니다.";
+                area.innerHTML = "<p class=\"planner-route-result-intro\">" + introText + "</p>" +
                     "<div class=\"planner-route-list\"></div>" +
                     "<div class=\"planner-route-pagination\"></div>";
                 renderRouteListPage(area, routes, 1);

@@ -19,6 +19,12 @@ public class RouteDTO {
     private int likeCount;
     private int savedCount;
     private Integer matchScore;
+    /** 리뷰 평균 별점 (목록용, DB 없음) */
+    private Double avgRating;
+    /** 리뷰 개수 (목록용) */
+    private Integer reviewCount;
+    /** 대표 리뷰 한 줄 (목록용) */
+    private String representativeReviewSnippet;
 
     public RouteDTO() {
     }
@@ -152,5 +158,29 @@ public class RouteDTO {
 
     public void setMatchScore(Integer matchScore) {
         this.matchScore = matchScore;
+    }
+
+    public Double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(Double avgRating) {
+        this.avgRating = avgRating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    public String getRepresentativeReviewSnippet() {
+        return representativeReviewSnippet;
+    }
+
+    public void setRepresentativeReviewSnippet(String representativeReviewSnippet) {
+        this.representativeReviewSnippet = representativeReviewSnippet;
     }
 }
