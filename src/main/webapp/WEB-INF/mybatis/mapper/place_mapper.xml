@@ -180,8 +180,15 @@
 		)
 	</insert>
 
-	<update id="updatePlaceReviewByOwner"
-		parameterType="PlaceReviewDTO">
+	<insert id="insertReviewPhoto" parameterType="PhotoDataDTO">
+		INSERT INTO PHOTO_DATA (
+			PHOTO_NO, COMMENT_NO, LOG_PHOTO_URL, PHOTO_BINARY, PHOTO_MIME_TYPE, PHOTO_FILE_NAME
+		) VALUES (
+			SEQ_PHOTO_NO.NEXTVAL, #{commentNo}, #{logPhotoUrl}, #{photoBinary,jdbcType=BLOB}, #{photoMimeType}, #{photoFileName}
+		)
+	</insert>
+
+	<update id="updatePlaceReviewByOwner" parameterType="PlaceReviewDTO">
 		UPDATE PLACE_REVIEW
 		SET COMMENT_CONTENT =
 		#{commentContent},
@@ -190,6 +197,29 @@
 		AND PLACE_NO = #{placeNo}
 		AND CREATED_BY = #{createdBy}
 	</update>
+
+	<select id="existsPlaceReviewByOwner" parameterType="map" resultType="int">
+		SELECT COUNT(1)
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO = #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+	</select>
+
+	<delete id="deleteReviewPhotosByOwner" parameterType="map">
+		DELETE FROM PHOTO_DATA
+		WHERE PHOTO_NO IN
+		<foreach collection="photoNoList" item="photoNo" open="(" separator="," close=")">
+			#{photoNo}
+		</foreach>
+		AND COMMENT_NO IN (
+		SELECT COMMENT_NO
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO = #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+		)
+	</delete>
 
 	<insert id="insertWishlistCategory" parameterType="CategoryDTO">
 		INSERT INTO
@@ -363,21 +393,65 @@
 		PTM.TAG_WEIGHT DESC, TM.TAG_NAME ASC
 	</select>
 
-	<select id="selectPlacePhotoUrlsByPlaceNo" parameterType="long"
-		resultType="string">
-		SELECT PD.LOG_PHOTO_URL
+	<select id="selectPlacePhotoUrlsByPlaceNo" parameterType="long" resultType="string">
+		SELECT
+			CASE
+				WHEN PD.LOG_PHOTO_URL LIKE '/resources/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL LIKE '/place/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL IS NOT NULL THEN PD.LOG_PHOTO_URL
+				WHEN PD.PHOTO_BINARY IS NOT NULL THEN '../place/review-photo/' || TO_CHAR(PD.PHOTO_NO)
+				ELSE NULL
+			END AS PHOTO_URL
 		FROM PLACE_REVIEW PR
 		JOIN PHOTO_DATA
 		PD
 		ON PD.COMMENT_NO = PR.COMMENT_NO
 		WHERE PR.PLACE_NO = #{placeNo}
-		AND
-		PD.LOG_PHOTO_URL IS NOT NULL
+		  AND (PD.LOG_PHOTO_URL IS NOT NULL OR PD.PHOTO_BINARY IS NOT NULL)
 		ORDER BY PD.PHOTO_NO DESC
 	</select>
 
-	<select id="selectPlaceReviewsByPlaceNo" parameterType="long"
-		resultType="PlaceReviewDTO">
+	<select id="selectReviewPhotoUrlsByCommentNo" parameterType="long" resultType="string">
+		SELECT
+			CASE
+				WHEN PD.LOG_PHOTO_URL LIKE '/resources/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL LIKE '/place/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL IS NOT NULL THEN PD.LOG_PHOTO_URL
+				WHEN PD.PHOTO_BINARY IS NOT NULL THEN '../place/review-photo/' || TO_CHAR(PD.PHOTO_NO)
+				ELSE NULL
+			END AS PHOTO_URL
+		FROM PHOTO_DATA PD
+		WHERE PD.COMMENT_NO = #{value}
+		  AND (PD.LOG_PHOTO_URL IS NOT NULL OR PD.PHOTO_BINARY IS NOT NULL)
+		ORDER BY PD.PHOTO_NO ASC
+	</select>
+
+	<select id="selectPhotoDataByPhotoNo" parameterType="long" resultType="PhotoDataDTO">
+		SELECT
+			PHOTO_NO,
+			COMMENT_NO,
+			LOG_PHOTO_URL,
+			PHOTO_BINARY,
+			PHOTO_MIME_TYPE,
+			PHOTO_FILE_NAME
+		FROM PHOTO_DATA
+		WHERE PHOTO_NO = #{value}
+	</select>
+
+	<resultMap id="placeReviewWithPhotosResultMap" type="PlaceReviewDTO">
+		<id property="commentNo" column="COMMENT_NO" />
+		<result property="logNo" column="LOG_NO" />
+		<result property="placeNo" column="PLACE_NO" />
+		<result property="placeName" column="PLACE_NAME" />
+		<result property="commentContent" column="COMMENT_CONTENT" />
+		<result property="rating" column="RATING" />
+		<result property="createdByAuthId" column="CREATED_BY_AUTH_ID" />
+		<result property="createdBy" column="CREATED_BY" />
+		<result property="createdAt" column="CREATED_AT" />
+		<collection property="photoUrlList" ofType="string" column="COMMENT_NO" select="selectReviewPhotoUrlsByCommentNo" />
+	</resultMap>
+
+	<select id="selectPlaceReviewsByPlaceNo" parameterType="long" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
 		pr.COMMENT_NO,
 		pr.LOG_NO,
@@ -408,7 +482,7 @@
 	</select>
 
 	<select id="selectPlaceReviewsByCreatedByPaged"
-		parameterType="map" resultType="PlaceReviewDTO">
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
 		r.COMMENT_NO,
 		r.LOG_NO,
@@ -450,7 +524,7 @@
 	</select>
 
 	<select id="selectPlaceReviewsByCreatedByPagedSorted"
-		parameterType="map" resultType="PlaceReviewDTO">
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
 		r.COMMENT_NO,
 		r.LOG_NO,
@@ -660,15 +734,18 @@
 		p.PLACE_CATEGORY as placeCategory,
 		p.PLACE_ADDRESS as placeAddress,
 		p.PLACE_RATING as placeRating,
-		p.PLACE_THUMBNAIL_URL as placeThumbnailUrl,
-		(SELECT COUNT(*) FROM PLACE_REVIEW r WHERE r.PLACE_NO = p.PLACE_NO) as
+		p.PLACE_THUMBNAIL_URL as
+		placeThumbnailUrl,
+		(SELECT COUNT(*) FROM PLACE_REVIEW r WHERE
+		r.PLACE_NO = p.PLACE_NO) as
 		reviewCount
 		FROM PLACE p
 		<where>
 			<choose>
 				<when test="keyword != null and keyword != ''">
 					(p.PLACE_NAME LIKE '%' || #{keyword} || '%'
-					OR p.PLACE_ADDRESS LIKE '%' || #{keyword} || '%')
+					OR
+					p.PLACE_ADDRESS LIKE '%' || #{keyword} || '%')
 				</when>
 				<otherwise>
 					1=1
@@ -692,18 +769,22 @@
 			WHERE ROWNUM &lt;= 10
 		</if>
 	</select>
-	
-	<select id="searchPlacesWithLike" resultType="com.app.dto.PlaceDTO" parameterType="map">
-    SELECT 
-        p.place_no AS placeNo,
-        p.place_name AS placeName,
-        p.place_address AS placeAddress,
-        p.place_thumbnail_url AS placeThumbnailUrl,
-        CASE WHEN up.user_id IS NOT NULL THEN 'Y' ELSE 'N' END AS savedYn
-    FROM places p
-    LEFT JOIN users_place up ON p.place_no = up.place_no 
-         AND up.user_id = #{userId}
-    WHERE p.place_name LIKE CONCAT('%', #{keyword}, '%')
+
+	<select id="searchPlacesWithLike"
+		resultType="com.app.dto.PlaceDTO" parameterType="map">
+		SELECT
+		p.place_no AS
+		placeNo,
+		p.place_name AS placeName,
+		p.place_address AS placeAddress,
+		p.place_thumbnail_url AS placeThumbnailUrl,
+		CASE WHEN up.user_id IS NOT
+		NULL THEN 'Y' ELSE 'N' END AS savedYn
+		FROM places p
+		LEFT JOIN
+		users_place up ON p.place_no = up.place_no
+		AND up.user_id = #{userId}
+		WHERE p.place_name LIKE CONCAT('%', #{keyword}, '%')
 	</select>
 
 	<!-- 반경(km) 내 근처 장소 조회 (haversine), 현재 장소 제외 가능 -->

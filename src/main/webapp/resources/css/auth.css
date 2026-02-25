@@ -69,6 +69,33 @@ body {
     box-shadow: 0 0 0 2px rgba(0, 100, 255, 0.12);
 }
 
+.input-group input[type="file"] {
+    padding: 10px 12px;
+    height: auto;
+    background: #fff;
+}
+
+.input-help {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.profile-preview {
+    display: none;
+    width: 88px;
+    height: 88px;
+    margin-top: 8px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #d9d9d9;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.profile-preview.is-show {
+    display: block;
+}
+
 .checkbox-group {
     margin-top: 4px;
     display: flex;

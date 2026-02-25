@@ -666,12 +666,10 @@ to {
     color: #ffffff; /* 빨간 배경에 흰색 하트 */
 }
 /* ============ heart css ============ */
-
 </style>
 
 </head>
 <body>
-
 	<!-- header -->
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 	<!-- header -->

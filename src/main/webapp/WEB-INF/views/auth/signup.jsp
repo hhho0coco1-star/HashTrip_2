@@ -61,7 +61,9 @@
 
             <div class="input-group">
                 <label>프로필 이미지 등록 (선택)</label>
-                <input type="file" name="profileImage" accept="image/*">
+                <input id="signupProfileImage" type="file" name="profileImage" accept="image/*">
+                <p class="input-help">이미지 파일만 업로드 가능 (최대 5MB)</p>
+                <img id="signupProfilePreview" class="profile-preview" alt="프로필 미리보기">
             </div>
 
             <div class="input-group">
@@ -92,6 +94,29 @@
         </div>
     </div>
     </main>
+    <script>
+        (function() {
+            const input = document.getElementById("signupProfileImage");
+            const preview = document.getElementById("signupProfilePreview");
+            if (!input || !preview) return;
+
+            input.addEventListener("change", function() {
+                const file = input.files && input.files[0];
+                if (!file || !file.type || file.type.indexOf("image/") !== 0) {
+                    preview.classList.remove("is-show");
+                    preview.removeAttribute("src");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    preview.src = event.target && event.target.result ? String(event.target.result) : "";
+                    preview.classList.add("is-show");
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 </body>
 </html>

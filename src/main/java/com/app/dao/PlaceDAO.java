@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -51,7 +52,15 @@ public interface PlaceDAO {
 
 	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception;
 
+	public int insertReviewPhotos(Long commentNo, List<PhotoDataDTO> photoDataList) throws Exception;
+
+	public PhotoDataDTO selectPhotoDataByPhotoNo(Long photoNo) throws Exception;
+
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception;
+
+	public boolean existsPlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
+
+	public int deleteReviewPhotosByOwner(Long commentNo, Long placeNo, String createdBy, List<Long> photoNoList) throws Exception;
 
 	public int deletePlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
 

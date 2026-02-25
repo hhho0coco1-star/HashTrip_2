@@ -19,9 +19,27 @@
 			<c:if test="${empty displayName}">
 				<c:set var="displayName" value="${currentAuthId}" />
 			</c:if>
+			<c:set var="profileImageUrl" value="${usersDTO.userProfileImg}" />
+			<c:if test="${not empty profileImageUrl and fn:startsWith(profileImageUrl, '/')}">
+				<c:choose>
+					<c:when test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and !fn:startsWith(profileImageUrl, pageContext.request.contextPath)}">
+						<c:set var="profileImageUrl" value="${pageContext.request.contextPath}${profileImageUrl}" />
+					</c:when>
+					<c:otherwise>
+						<c:set var="profileImageUrl" value="${profileImageUrl}" />
+					</c:otherwise>
+				</c:choose>
+			</c:if>
 
 			<section class="profile-card">
-				<div id="my-av" class="profile-avatar">${fn:substring(displayName, 0, 1)}</div>
+				<div id="my-av" class="profile-avatar">
+					<c:choose>
+						<c:when test="${not empty profileImageUrl}">
+							<img class="profile-avatar-image" src="${fn:escapeXml(profileImageUrl)}" alt="프로필 사진" />
+						</c:when>
+						<c:otherwise>${fn:substring(displayName, 0, 1)}</c:otherwise>
+					</c:choose>
+				</div>
 				<h2 class="profile-name"><c:out value="${displayName}" /></h2>
 				<div id="my-badge" class="profile-badge">🧭 나의 여행 성향</div>
 				<p id="my-desc" class="profile-desc">태그를 추가/삭제하면 여행 매칭 추천에 반영됩니다.</p>
@@ -43,6 +61,7 @@
 				</div>
 			</section>
 
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 			<section class="dashboard-card">
 				<details class="tag-manage-details">
 					<summary>성향 태그 관리</summary>
@@ -51,6 +70,7 @@
 					</div>
 				</details>
 			</section>
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 
 			<section class="dashboard-card">
 				<div class="review-section-head">
@@ -107,6 +127,29 @@
 											</span>
 										</div>
 										<p class="review-content"><c:out value="${review.commentContent}" /></p>
+										<c:if test="${not empty review.photoUrlList}">
+											<div class="review-photo-list">
+												<c:forEach var="photoUrl" items="${review.photoUrlList}">
+													<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+													<c:if test="${not empty photoUrl and fn:startsWith(photoUrl, '../')}">
+														<c:set var="resolvedPhotoUrl" value="${pageContext.request.contextPath}${fn:substringAfter(photoUrl, '..')}" />
+													</c:if>
+													<c:if test="${not empty photoUrl and fn:startsWith(photoUrl, '/')}">
+														<c:choose>
+															<c:when test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and fn:startsWith(photoUrl, pageContext.request.contextPath)}">
+																<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+															</c:when>
+															<c:otherwise>
+																<c:set var="resolvedPhotoUrl" value="${pageContext.request.contextPath}${photoUrl}" />
+															</c:otherwise>
+														</c:choose>
+													</c:if>
+													<a class="review-photo-item" href="${fn:escapeXml(resolvedPhotoUrl)}" target="_blank" rel="noopener noreferrer">
+														<img class="review-photo-thumb" src="${fn:escapeXml(resolvedPhotoUrl)}" alt="리뷰 사진" loading="lazy">
+													</a>
+												</c:forEach>
+											</div>
+										</c:if>
 										<p class="review-date">
 											<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
 										</p>
@@ -474,7 +517,7 @@
 					const avatar = document.getElementById("my-av");
 					const badge = document.getElementById("my-badge");
 					const desc = document.getElementById("my-desc");
-					if (avatar) {
+					if (avatar && !avatar.querySelector("img")) {
 						avatar.textContent = myType.emoji;
 						avatar.style.background = "rgba(255,255,255,0.2)";
 					}
@@ -569,6 +612,7 @@
 				showToast((tagName || tagCode) + " 태그 제거됐어요");
 			}
 
+			// JS 태그 연결
 			const container = document.getElementById("tag-managers");
 			if (container) {
 				container.addEventListener("click", function(event) {

@@ -16,6 +16,10 @@ import com.app.dto.UsersDTO;
 @Repository
 public class UsersDAOImpl implements UsersDAO {
 
+	private static final String GET_USER_NO_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserNoByAuthId";
+	private static final String DELETE_USER_TAGS_BY_USER_NO_STATEMENT_ID = "users_mapper.deleteUserTagsByUserNo";
+	private static final String INSERT_USER_ANALYSIS_TAGS_STATEMENT_ID = "users_mapper.insertUserAnalysisTags";
+	
 	private static final String GET_USER_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserByAuthId";
 	private static final String GET_USER_NICKNAME_STATEMENT_ID = "users_mapper.getUserNickname";
 	private static final String GET_USER_TAGS_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserTagsByAuthId";
@@ -81,11 +85,10 @@ public class UsersDAOImpl implements UsersDAO {
 	public int updateUserProfileByAuthId(String authId, UsersDTO usersDTO) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("authId", authId);
-		params.put("userName", usersDTO.getUserName());
 		params.put("userNickName", usersDTO.getUserNickName());
 		params.put("userGender", usersDTO.getUserGender());
 		params.put("userPhoneNumber", usersDTO.getUserPhoneNumber());
-		params.put("userRegistrationNo", usersDTO.getUserRegistrationNo());
+		params.put("userProfileImg", usersDTO.getUserProfileImg());
 		return sqlSessionTemplate.update(UPDATE_USER_PROFILE_BY_AUTH_ID_STATEMENT_ID, params);
 	}
 
@@ -118,5 +121,25 @@ public class UsersDAOImpl implements UsersDAO {
 		params.put("tagCode", tagCode);
 		params.put("questionId", questionId);
 		return params;
+	}
+	
+	@Override
+	public int deleteUserTagsByUserNo(Long userNo) {
+	    // 특정 태그가 아닌 userNo를 기준으로 해당 유저의 모든 태그 삭제
+	    return sqlSessionTemplate.delete(DELETE_USER_TAGS_BY_USER_NO_STATEMENT_ID, userNo);
+	}
+	
+	@Override
+	public int insertUserAnalysisTags(Map<String, Object> params) {
+	    // Service에서 만든 {userNo: 1, list: [...]} 형태의 맵을 전달
+	    return sqlSessionTemplate.insert(INSERT_USER_ANALYSIS_TAGS_STATEMENT_ID, params);
+	}
+
+	@Override
+	public int getUserNoByAuthId(String authId) {
+	    // 쿼리 결과가 없을 경우를 대비해 Integer로 받은 뒤 0으로 처리하거나, 
+	    // 결과가 확실히 있다면 바로 int로 리턴합니다.
+	    Integer userNo = sqlSessionTemplate.selectOne(GET_USER_NO_BY_AUTH_ID_STATEMENT_ID, authId);
+	    return userNo != null ? userNo : 0;
 	}
 }
