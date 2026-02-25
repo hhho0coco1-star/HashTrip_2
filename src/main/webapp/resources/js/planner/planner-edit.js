@@ -14,6 +14,8 @@
     let replaceMapInstance = null;
     let replaceMarkers = [];
     let replaceCurrentOverlay = null;
+    let mapSearchKakaoList = [];
+    let mapSearchEnriched = {};
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
@@ -579,6 +581,8 @@
         const modal = id("mapModal");
         if (modal) modal.classList.add("hidden");
         selectedPlace = null;
+        mapSearchKakaoList = [];
+        mapSearchEnriched = {};
         const res = id("searchResults");
         if (res) res.innerHTML = "";
     }
@@ -633,6 +637,79 @@
         });
     }
 
+    function clearAllSearchCardExpanded() {
+        var container = id("searchResults");
+        if (!container) return;
+        qsAll(".planner-replace-card-expanded", container).forEach(function (el) { el.innerHTML = ""; });
+    }
+
+    function loadSearchPlacePreview(placeNo, cardEl) {
+        if (!cardEl) return;
+        var expanded = cardEl.querySelector(".planner-replace-card-expanded");
+        if (!expanded) return;
+        if (!placeNo) {
+            expanded.innerHTML = "<p class=\"planner-replace-msg\">등록된 상세 정보가 없습니다.</p>";
+            return;
+        }
+        expanded.innerHTML = "<span class=\"planner-replace-msg\">로딩 중...</span>";
+        var requestedPlaceNo = placeNo;
+        fetch(ctx + "/planner/place-preview?placeNo=" + placeNo, { credentials: "same-origin" })
+            .then(function (res) { return res.ok ? res.json() : {}; })
+            .then(function (data) {
+                var exp = cardEl.querySelector(".planner-replace-card-expanded");
+                if (!exp) return;
+                var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
+                var urls = data.photoUrls || [];
+                var photosHtml = urls.length === 0
+                    ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
+                    : urls.slice(0, 10).map(function (url) {
+                        return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
+                    }).join("");
+                var reviews = data.reviews || [];
+                var reviewsHtml = reviews.length === 0
+                    ? "<p class=\"planner-replace-msg\">최근 리뷰가 없습니다.</p>"
+                    : "<h5>최근 리뷰</h5>" + reviews.map(function (r) {
+                        var rating = r.rating != null ? "★ " + r.rating : "";
+                        var by = escapeHtml(r.createdBy || "");
+                        var dateStr = formatReviewDate(r.createdAt);
+                        var meta = [rating, by, dateStr].filter(Boolean).join(" · ");
+                        var content = escapeHtml((r.commentContent || "").slice(0, 120));
+                        if ((r.commentContent || "").length > 120) content += "…";
+                        return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
+                    }).join("");
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+            })
+            .catch(function () {
+                var exp = cardEl.querySelector(".planner-replace-card-expanded");
+                if (exp) exp.innerHTML = "<p class=\"planner-replace-msg\">불러올 수 없습니다.</p>";
+            });
+    }
+
+    function updateSearchCardContent(cardEl, place) {
+        if (!cardEl || !place) return;
+        var inner = cardEl.querySelector(".planner-replace-card-inner");
+        if (!inner) return;
+        var name = escapeHtml(place.placeName || "");
+        var addr = escapeHtml(place.placeAddress || "");
+        var thumb = place.placeThumbnailUrl ? escapeHtml(place.placeThumbnailUrl) : "";
+        var thumbHtml = thumb ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />" : "<div class=\"planner-replace-thumb placeholder\"></div>";
+        var detailUrl = place.placeNo ? (ctx + "/place/detail?place_no=" + place.placeNo) : "";
+        var nameEl = detailUrl
+            ? "<span class=\"planner-replace-name-wrap\"><a href=\"" + detailUrl + "\" class=\"planner-replace-name\" target=\"_blank\" rel=\"noopener\">" + name + "</a></span>"
+            : "<strong class=\"planner-replace-name\">" + name + "</strong>";
+        var rating = place.placeRating != null ? Number(place.placeRating).toFixed(1) : "";
+        inner.innerHTML = "<div class=\"planner-replace-thumb-wrap\">" + thumbHtml + "</div>" +
+            "<div class=\"planner-replace-info\">" +
+            nameEl +
+            (addr ? "<span class=\"planner-replace-addr\">" + addr + "</span>" : "") +
+            "<div class=\"planner-replace-meta\">" +
+            (rating ? "<span class=\"planner-replace-rating\">★ " + escapeHtml(rating) + "</span>" : "") +
+            "</div></div>";
+        qsAll("a.planner-replace-name", inner).forEach(function (link) {
+            link.addEventListener("click", function (e) { e.stopPropagation(); });
+        });
+    }
+
     function searchPlace() {
         const q = (id("placeSearch") && id("placeSearch").value) || "";
         if (!q.trim()) return;
@@ -642,35 +719,101 @@
                 if (!res) return;
                 if (status !== kakao.maps.services.Status.OK || !data || data.length === 0) {
                     res.innerHTML = "<div class=\"planner-search-item\">검색 결과가 없습니다.</div>";
+                    mapSearchKakaoList = [];
                     return;
                 }
-                res.innerHTML = data.map(function (item) {
+                mapSearchKakaoList = data;
+                mapSearchEnriched = {};
+                res.innerHTML = data.map(function (item, idx) {
                     const name = escapeHtml(item.place_name || "");
                     const addr = escapeHtml(item.road_address_name || item.address_name || "");
                     const y = item.y || "";
                     const x = item.x || "";
-                    return "<div class=\"planner-search-item\" data-name=\"" + name + "\" data-address=\"" + addr + "\" data-lat=\"" + y + "\" data-lng=\"" + x + "\">" +
-                        "<strong>" + name + "</strong><br><span class=\"planner-search-addr\">" + addr + "</span></div>";
+                    return "<div class=\"planner-replace-item planner-search-card\" data-idx=\"" + idx + "\" data-name=\"" + name + "\" data-address=\"" + addr + "\" data-lat=\"" + y + "\" data-lng=\"" + x + "\">" +
+                        "<div class=\"planner-replace-card-inner\">" +
+                        "<div class=\"planner-replace-thumb-wrap\"><div class=\"planner-replace-thumb placeholder\"></div></div>" +
+                        "<div class=\"planner-replace-info\">" +
+                        "<strong class=\"planner-replace-name\">" + name + "</strong>" +
+                        (addr ? "<span class=\"planner-replace-addr\">" + addr + "</span>" : "") +
+                        "<div class=\"planner-replace-meta\"></div></div></div>" +
+                        "<div class=\"planner-replace-card-expanded\"></div></div>";
                 }).join("");
-                qsAll(".planner-search-item", res).forEach(function (el) {
+                qsAll(".planner-search-card", res).forEach(function (el) {
                     el.addEventListener("click", function () {
-                        qsAll(".planner-search-item", res).forEach(function (x) { x.classList.remove("selected"); });
+                        qsAll(".planner-search-card", res).forEach(function (x) { x.classList.remove("selected"); });
                         el.classList.add("selected");
-                        const lat = parseFloat(el.getAttribute("data-lat"));
-                        const lng = parseFloat(el.getAttribute("data-lng"));
+                        var idx = parseInt(el.getAttribute("data-idx"), 10);
+                        var lat = parseFloat(el.getAttribute("data-lat"));
+                        var lng = parseFloat(el.getAttribute("data-lng"));
+                        var name = el.getAttribute("data-name") || "";
+                        var address = el.getAttribute("data-address") || "";
                         if (map && !isNaN(lat) && !isNaN(lng)) {
                             map.setCenter(new kakao.maps.LatLng(lat, lng));
                             marker.setPosition(new kakao.maps.LatLng(lat, lng));
                             marker.setMap(map);
                         }
-                        selectedPlace = {
-                            placeNo: null,
-                            placeName: el.getAttribute("data-name") || "",
-                            placeAddress: el.getAttribute("data-address") || "",
-                            placeLatitude: lat,
-                            placeLongitude: lng
-                        };
+                        clearAllSearchCardExpanded();
+                        var enriched = mapSearchEnriched[idx];
+                        if (enriched != null) {
+                            selectedPlace = {
+                                placeNo: enriched.placeNo || null,
+                                placeName: enriched.placeName || "",
+                                placeAddress: enriched.placeAddress || "",
+                                placeLatitude: lat,
+                                placeLongitude: lng
+                            };
+                            updateSearchCardContent(el, enriched);
+                            loadSearchPlacePreview(enriched.placeNo || null, el);
+                        } else {
+                            var url = ctx + "/planner/nearby-places?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng) + "&radiusKm=1";
+                            fetch(url, { credentials: "same-origin" })
+                                .then(function (r) { return r.ok ? r.json() : []; })
+                                .then(function (arr) {
+                                    var list = Array.isArray(arr) ? arr : [];
+                                    var place = list.length > 0 ? list[0] : null;
+                                    mapSearchEnriched[idx] = place;
+                                    if (place) {
+                                        selectedPlace = {
+                                            placeNo: place.placeNo || null,
+                                            placeName: place.placeName || "",
+                                            placeAddress: place.placeAddress || "",
+                                            placeLatitude: lat,
+                                            placeLongitude: lng
+                                        };
+                                        updateSearchCardContent(el, place);
+                                        loadSearchPlacePreview(place.placeNo || null, el);
+                                    } else {
+                                        selectedPlace = {
+                                            placeNo: null,
+                                            placeName: name,
+                                            placeAddress: address,
+                                            placeLatitude: lat,
+                                            placeLongitude: lng
+                                        };
+                                        loadSearchPlacePreview(null, el);
+                                    }
+                                })
+                                .catch(function () {
+                                    selectedPlace = { placeNo: null, placeName: name, placeAddress: address, placeLatitude: lat, placeLongitude: lng };
+                                    loadSearchPlacePreview(null, el);
+                                });
+                        }
                     });
+                });
+                data.forEach(function (item, idx) {
+                    var lat = parseFloat(item.y);
+                    var lng = parseFloat(item.x);
+                    if (isNaN(lat) || isNaN(lng)) return;
+                    var url = ctx + "/planner/nearby-places?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng) + "&radiusKm=1";
+                    fetch(url, { credentials: "same-origin" })
+                        .then(function (r) { return r.ok ? r.json() : []; })
+                        .then(function (arr) {
+                            var place = (Array.isArray(arr) && arr.length > 0) ? arr[0] : null;
+                            mapSearchEnriched[idx] = place;
+                            var cardEl = res.querySelector(".planner-search-card[data-idx=\"" + idx + "\"]");
+                            if (cardEl && place) updateSearchCardContent(cardEl, place);
+                        })
+                        .catch(function () {});
                 });
                 if (data.length > 0 && map) {
                     const bounds = new kakao.maps.LatLngBounds();

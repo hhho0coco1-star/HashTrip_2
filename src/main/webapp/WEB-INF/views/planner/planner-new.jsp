@@ -131,7 +131,7 @@
                         <button type="button" id="searchBtn">검색</button>
                     </div>
                     <div id="map" class="planner-map-container"></div>
-                    <div id="searchResults" class="planner-search-results"></div>
+                    <div id="searchResults" class="planner-search-results planner-replace-list"></div>
                 </div>
                 <div class="planner-modal-footer">
                     <button type="button" id="confirmPlace" class="planner-btn planner-btn-primary">선택 완료</button>
