@@ -149,19 +149,19 @@
 						name="inquiryType" required>
 						<option value="">유형을 선택해 주세요</option>
 						<%-- 2. 기존 선택값 유지 --%>
-						<option value="service"
+						<option value="서비스"
 							${inquiry.inquiryType == 'service' ? 'selected' : ''}>서비스
 							이용 문의</option>
-						<option value="account"
+						<option value="계정/로그인"
 							${inquiry.inquiryType == 'account' ? 'selected' : ''}>계정/로그인
 							관련</option>
-						<option value="error"
+						<option value="오류"
 							${inquiry.inquiryType == 'error' ? 'selected' : ''}>오류
 							제보</option>
-						<option value="proposal"
+						<option value="제휴"
 							${inquiry.inquiryType == 'proposal' ? 'selected' : ''}>제휴
 							및 건의사항</option>
-						<option value="etc"
+						<option value="기타"
 							${inquiry.inquiryType == 'etc' ? 'selected' : ''}>기타</option>
 					</select>
 				</div>
