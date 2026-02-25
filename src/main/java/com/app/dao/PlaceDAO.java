@@ -56,6 +56,10 @@ public interface PlaceDAO {
 
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception;
 
+	public boolean existsPlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
+
+	public int deleteReviewPhotosByOwner(Long commentNo, Long placeNo, String createdBy, List<Long> photoNoList) throws Exception;
+
 	public int deletePlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
 
 	public int updatePlaceRatingByPlaceNo(Long placeNo) throws Exception;

@@ -373,9 +373,17 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		return updatePlaceReview(placeNo, commentNo, commentContent, rating, createdBy, Collections.emptyList(), Collections.emptyList());
+	}
+
+	@Override
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy,
+			List<Long> deletePhotoNoList, List<PhotoDataDTO> newPhotoDataList) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		String safeContent = normalizeReviewContent(commentContent);
 		int safeRating = normalizeRating(rating);
+		List<Long> safeDeletePhotoNoList = normalizePhotoNoList(deletePhotoNoList);
+		List<PhotoDataDTO> safeNewPhotoDataList = normalizePhotoData(newPhotoDataList);
 
 		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
 		placeReviewDTO.setCommentNo(commentNo);
@@ -384,11 +392,20 @@ public class PlaceServiceImpl implements PlaceService {
 		placeReviewDTO.setRating(safeRating);
 		placeReviewDTO.setCreatedBy(safeCreatedBy);
 
-		boolean updated = placeDAO.updatePlaceReviewByOwner(placeReviewDTO) > 0;
-		if (updated) {
-			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		int updatedRows = placeDAO.updatePlaceReviewByOwner(placeReviewDTO);
+		boolean ownerMatched = updatedRows > 0 || placeDAO.existsPlaceReviewByOwner(commentNo, placeNo, safeCreatedBy);
+		if (!ownerMatched) {
+			return false;
 		}
-		return updated;
+
+		if (!safeDeletePhotoNoList.isEmpty()) {
+			placeDAO.deleteReviewPhotosByOwner(commentNo, placeNo, safeCreatedBy, safeDeletePhotoNoList);
+		}
+		if (!safeNewPhotoDataList.isEmpty()) {
+			placeDAO.insertReviewPhotos(commentNo, safeNewPhotoDataList);
+		}
+		placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		return true;
 	}
 
 	@Override
@@ -789,6 +806,19 @@ public class PlaceServiceImpl implements PlaceService {
 			normalized.add(normalizedData);
 		}
 		return normalized;
+	}
+
+	private List<Long> normalizePhotoNoList(List<Long> photoNoList) {
+		if (photoNoList == null || photoNoList.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Set<Long> unique = new LinkedHashSet<>();
+		for (Long photoNo : photoNoList) {
+			if (photoNo != null && photoNo > 0) {
+				unique.add(photoNo);
+			}
+		}
+		return unique.isEmpty() ? Collections.emptyList() : new ArrayList<>(unique);
 	}
 
 	private String normalizeReviewSort(String sortType) {

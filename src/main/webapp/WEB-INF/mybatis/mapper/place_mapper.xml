@@ -198,6 +198,29 @@
 		AND CREATED_BY = #{createdBy}
 	</update>
 
+	<select id="existsPlaceReviewByOwner" parameterType="map" resultType="int">
+		SELECT COUNT(1)
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO = #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+	</select>
+
+	<delete id="deleteReviewPhotosByOwner" parameterType="map">
+		DELETE FROM PHOTO_DATA
+		WHERE PHOTO_NO IN
+		<foreach collection="photoNoList" item="photoNo" open="(" separator="," close=")">
+			#{photoNo}
+		</foreach>
+		AND COMMENT_NO IN (
+		SELECT COMMENT_NO
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO = #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+		)
+	</delete>
+
 	<insert id="insertWishlistCategory" parameterType="CategoryDTO">
 		INSERT INTO
 		CATEGORY (

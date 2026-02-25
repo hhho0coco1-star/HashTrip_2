@@ -45,6 +45,9 @@ public interface PlaceService {
 
 	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception;
 
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy,
+			List<Long> deletePhotoNoList, List<PhotoDataDTO> newPhotoDataList) throws Exception;
+
 	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
 
 	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception;

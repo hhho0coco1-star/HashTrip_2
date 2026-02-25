@@ -269,7 +269,7 @@
 							<p class="review-alert review-alert-error"><c:out value="${reviewActionError}" /></p>
 						</c:if>
 
-						<form class="review-write-form" method="post" action="${pageContext.request.contextPath}/place/${placeNo}/reviews">
+						<form class="review-write-form" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/place/${placeNo}/reviews">
 							<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 							<input type="hidden" id="review-rating-value" name="rating" value="5" />
 							<div class="rating-row">
@@ -281,6 +281,16 @@
 								</div>
 							</div>
 							<textarea name="commentContent" class="review-write-input" maxlength="2000" placeholder="이 여행지에 대한 리뷰를 남겨주세요." required></textarea>
+							<div class="review-upload-row">
+								<label for="reviewImages">리뷰 사진 (최대 10장)</label>
+								<input id="reviewImages"
+									   class="review-image-input"
+									   type="file"
+									   name="reviewImages"
+									   accept="image/*"
+									   multiple />
+								<p class="review-file-hint">JPG/PNG/WebP, each file up to 5MB.</p>
+							</div>
 							<button type="submit" class="review-submit-btn">리뷰 등록</button>
 						</form>
 
@@ -325,6 +335,21 @@
 												</c:choose>
 											</p>
 
+											<c:if test="${not empty review.photoUrlList}">
+												<div class="review-photo-strip">
+													<c:forEach var="reviewPhotoUrl" items="${review.photoUrlList}" varStatus="photoStatus">
+														<button type="button"
+																class="review-photo-thumb-btn review-photo-trigger"
+																data-review-photo-group="review-${review.commentNo}"
+																data-photo-url="${fn:escapeXml(reviewPhotoUrl)}"
+																data-photo-index="${photoStatus.index}"
+																aria-label="Open review photo">
+															<img src="${reviewPhotoUrl}" alt="Review photo ${photoStatus.count}">
+														</button>
+													</c:forEach>
+												</div>
+											</c:if>
+
 											<c:if test="${not empty currentAuthId and review.createdByAuthId eq currentAuthId}">
 												<div class="review-owner-actions">
 													<div class="review-owner-buttons">
@@ -339,6 +364,7 @@
 													<form id="review-edit-form-${review.commentNo}"
 														  class="review-edit-form review-edit-form-hidden"
 														  method="post"
+														  enctype="multipart/form-data"
 														  action="${pageContext.request.contextPath}/place/${placeNo}/reviews/${review.commentNo}/update">
 														<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 														<c:set var="editRatingValue" value="${empty review.rating ? 5 : review.rating}" />
@@ -353,6 +379,36 @@
 																			aria-label="${star}점">&#9733;</button>
 																</c:forEach>
 															</div>
+														</div>
+														<c:if test="${not empty review.photoUrlList}">
+															<div class="review-upload-row">
+																<label>기존 리뷰 사진</label>
+																<div class="review-photo-strip review-photo-strip-edit">
+																	<c:forEach var="editPhotoUrl" items="${review.photoUrlList}" varStatus="editPhotoStatus">
+																		<div class="review-edit-photo-item">
+																			<img src="${editPhotoUrl}" alt="Review photo ${editPhotoStatus.count}" />
+																			<c:if test="${fn:contains(editPhotoUrl, '/place/review-photo/')}">
+																				<label class="review-edit-photo-delete">
+																					<input type="checkbox"
+																						   name="deletePhotoNoList"
+																						   value="${fn:substringAfter(editPhotoUrl, '/place/review-photo/')}" />
+																					삭제
+																				</label>
+																			</c:if>
+																		</div>
+																	</c:forEach>
+																</div>
+															</div>
+														</c:if>
+														<div class="review-upload-row">
+															<label for="reviewEditImages-${review.commentNo}">추가 리뷰 사진</label>
+															<input id="reviewEditImages-${review.commentNo}"
+																   class="review-image-input"
+																   type="file"
+																   name="reviewImages"
+																   accept="image/*"
+																   multiple />
+															<p class="review-file-hint">선택한 파일은 저장 시 추가됩니다.</p>
 														</div>
 														<textarea name="commentContent" class="review-edit-input" maxlength="2000" required><c:out value="${review.commentContent}" /></textarea>
 														<div class="review-edit-buttons">
@@ -490,6 +546,18 @@
 				<figcaption class="review-photo-modal-counter" id="place-photo-modal-counter"></figcaption>
 			</figure>
 			<button type="button" class="review-photo-modal-nav review-photo-modal-next" id="place-photo-modal-next" aria-label="Next">&#8250;</button>
+		</div>
+	</div>
+	<div class="review-photo-modal" id="review-photo-modal" aria-hidden="true">
+		<div class="review-photo-modal-dim" data-modal-close="true"></div>
+		<div class="review-photo-modal-panel" role="dialog" aria-modal="true" aria-label="Review photos">
+			<button type="button" class="review-photo-modal-close" id="review-photo-modal-close" aria-label="Close">&times;</button>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-prev" id="review-photo-modal-prev" aria-label="Previous">&#8249;</button>
+			<figure class="review-photo-modal-figure">
+				<img id="review-photo-modal-image" alt="Review photo">
+				<figcaption class="review-photo-modal-counter" id="review-photo-modal-counter"></figcaption>
+			</figure>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-next" id="review-photo-modal-next" aria-label="Next">&#8250;</button>
 		</div>
 	</div>
 
@@ -641,9 +709,19 @@
 			const placePhotoModalNext = document.getElementById("place-photo-modal-next");
 			const placePhotoTriggers = Array.from(document.querySelectorAll(".place-photo-trigger"));
 			const placePhotoSourceItems = Array.from(document.querySelectorAll(".place-photo-source-item"));
+			const reviewPhotoModal = document.getElementById("review-photo-modal");
+			const reviewPhotoModalImage = document.getElementById("review-photo-modal-image");
+			const reviewPhotoModalCounter = document.getElementById("review-photo-modal-counter");
+			const reviewPhotoModalClose = document.getElementById("review-photo-modal-close");
+			const reviewPhotoModalPrev = document.getElementById("review-photo-modal-prev");
+			const reviewPhotoModalNext = document.getElementById("review-photo-modal-next");
+			const reviewPhotoTriggers = Array.from(document.querySelectorAll(".review-photo-trigger"));
 			const placePhotoList = [];
 			const seenPlacePhotoUrl = {};
+			const reviewPhotoGroups = {};
 			let currentPlacePhotoIndex = 0;
+			let currentReviewPhotoGroup = "";
+			let currentReviewPhotoIndex = 0;
 
 			function pushPlacePhoto(urlValue) {
 				const normalized = (urlValue || "").trim();
@@ -670,10 +748,25 @@
 				}
 			});
 
+			reviewPhotoTriggers.forEach(function(trigger) {
+				const group = trigger.dataset ? (trigger.dataset.reviewPhotoGroup || "") : "";
+				const url = trigger.dataset ? (trigger.dataset.photoUrl || "").trim() : "";
+				if (!group || !url) {
+					return;
+				}
+				if (!reviewPhotoGroups[group]) {
+					reviewPhotoGroups[group] = [];
+				}
+				if (reviewPhotoGroups[group].indexOf(url) < 0) {
+					reviewPhotoGroups[group].push(url);
+				}
+			});
+
 			function syncBodyModalOpenState() {
 				const wishlistOpen = modalOverlay && modalOverlay.classList.contains("is-open");
 				const photoOpen = placePhotoModal && placePhotoModal.classList.contains("is-open");
-				if (wishlistOpen || photoOpen) {
+				const reviewPhotoOpen = reviewPhotoModal && reviewPhotoModal.classList.contains("is-open");
+				if (wishlistOpen || photoOpen || reviewPhotoOpen) {
 					document.body.classList.add("modal-open");
 				} else {
 					document.body.classList.remove("modal-open");
@@ -720,6 +813,54 @@
 				renderPlacePhotoModal();
 			}
 
+			function currentReviewPhotoList() {
+				return reviewPhotoGroups[currentReviewPhotoGroup] || [];
+			}
+
+			function renderReviewPhotoModal() {
+				const photoList = currentReviewPhotoList();
+				if (!reviewPhotoModalImage || !reviewPhotoModalCounter || photoList.length === 0) {
+					return;
+				}
+				if (currentReviewPhotoIndex < 0) {
+					currentReviewPhotoIndex = photoList.length - 1;
+				}
+				if (currentReviewPhotoIndex >= photoList.length) {
+					currentReviewPhotoIndex = 0;
+				}
+				reviewPhotoModalImage.src = photoList[currentReviewPhotoIndex];
+				reviewPhotoModalCounter.textContent = (currentReviewPhotoIndex + 1) + " / " + photoList.length;
+			}
+
+			function openReviewPhotoModal(groupKey, index) {
+				const photoList = reviewPhotoGroups[groupKey] || [];
+				if (!reviewPhotoModal || photoList.length === 0) {
+					return;
+				}
+				currentReviewPhotoGroup = groupKey;
+				currentReviewPhotoIndex = Number.isFinite(index) ? index : 0;
+				renderReviewPhotoModal();
+				reviewPhotoModal.classList.add("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function closeReviewPhotoModal() {
+				if (!reviewPhotoModal) {
+					return;
+				}
+				reviewPhotoModal.classList.remove("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function moveReviewPhoto(step) {
+				const photoList = currentReviewPhotoList();
+				if (photoList.length === 0) {
+					return;
+				}
+				currentReviewPhotoIndex += step;
+				renderReviewPhotoModal();
+			}
+
 			function resolvePlacePhotoIndex(trigger) {
 				if (!trigger || placePhotoList.length === 0) {
 					return 0;
@@ -748,10 +889,32 @@
 				});
 			});
 
+			reviewPhotoTriggers.forEach(function(trigger) {
+				function openForReviewTrigger() {
+					const group = trigger.dataset ? (trigger.dataset.reviewPhotoGroup || "") : "";
+					const index = Number(trigger.dataset ? trigger.dataset.photoIndex : "0");
+					openReviewPhotoModal(group, Number.isFinite(index) ? index : 0);
+				}
+				trigger.addEventListener("click", openForReviewTrigger);
+				trigger.addEventListener("keydown", function(event) {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						openForReviewTrigger();
+					}
+				});
+			});
+
 			if (placePhotoModal) {
 				placePhotoModal.addEventListener("click", function(event) {
 					if (event.target && event.target.dataset && event.target.dataset.modalClose === "true") {
 						closePlacePhotoModal();
+					}
+				});
+			}
+			if (reviewPhotoModal) {
+				reviewPhotoModal.addEventListener("click", function(event) {
+					if (event.target && event.target.dataset && event.target.dataset.modalClose === "true") {
+						closeReviewPhotoModal();
 					}
 				});
 			}
@@ -771,17 +934,49 @@
 					movePlacePhoto(1);
 				});
 			}
+			if (reviewPhotoModalClose) {
+				reviewPhotoModalClose.addEventListener("click", closeReviewPhotoModal);
+			}
+			if (reviewPhotoModalPrev) {
+				reviewPhotoModalPrev.addEventListener("click", function() {
+					moveReviewPhoto(-1);
+				});
+			}
+			if (reviewPhotoModalNext) {
+				reviewPhotoModalNext.addEventListener("click", function() {
+					moveReviewPhoto(1);
+				});
+			}
 
 			document.addEventListener("keydown", function(event) {
-				if (!placePhotoModal || !placePhotoModal.classList.contains("is-open")) {
+				const isPlacePhotoOpen = placePhotoModal && placePhotoModal.classList.contains("is-open");
+				const isReviewPhotoOpen = reviewPhotoModal && reviewPhotoModal.classList.contains("is-open");
+				if (!isPlacePhotoOpen && !isReviewPhotoOpen) {
 					return;
 				}
 				if (event.key === "Escape") {
-					closePlacePhotoModal();
-				} else if (event.key === "ArrowLeft") {
-					movePlacePhoto(-1);
+					if (isPlacePhotoOpen) {
+						closePlacePhotoModal();
+					}
+					if (isReviewPhotoOpen) {
+						closeReviewPhotoModal();
+					}
+					return;
+				}
+				if (event.key === "ArrowLeft") {
+					if (isPlacePhotoOpen) {
+						movePlacePhoto(-1);
+					}
+					if (isReviewPhotoOpen) {
+						moveReviewPhoto(-1);
+					}
 				} else if (event.key === "ArrowRight") {
-					movePlacePhoto(1);
+					if (isPlacePhotoOpen) {
+						movePlacePhoto(1);
+					}
+					if (isReviewPhotoOpen) {
+						moveReviewPhoto(1);
+					}
 				}
 			});
 

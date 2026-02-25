@@ -31,6 +31,8 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String INSERT_REVIEW_PHOTO_STATEMENT_ID = "place_mapper.insertReviewPhoto";
 	private static final String SELECT_PHOTO_DATA_BY_PHOTO_NO_STATEMENT_ID = "place_mapper.selectPhotoDataByPhotoNo";
 	private static final String UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.updatePlaceReviewByOwner";
+	private static final String EXISTS_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.existsPlaceReviewByOwner";
+	private static final String DELETE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deleteReviewPhotosByOwner";
 	private static final String DELETE_PLACE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewPhotosByOwner";
 	private static final String DELETE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewByOwner";
 	private static final String UPDATE_PLACE_RATING_BY_PLACE_NO_STATEMENT_ID = "place_mapper.updatePlaceRatingByPlaceNo";
@@ -209,6 +211,24 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception {
 		return sqlSessionTemplate.update(UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, placeReviewDTO);
+	}
+
+	@Override
+	public boolean existsPlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception {
+		Map<String, Object> params = buildReviewOwnerParams(commentNo, placeNo, createdBy);
+		Integer count = sqlSessionTemplate.selectOne(EXISTS_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, params);
+		return count != null && count > 0;
+	}
+
+	@Override
+	public int deleteReviewPhotosByOwner(Long commentNo, Long placeNo, String createdBy, List<Long> photoNoList) throws Exception {
+		if (photoNoList == null || photoNoList.isEmpty()) {
+			return 0;
+		}
+
+		Map<String, Object> params = buildReviewOwnerParams(commentNo, placeNo, createdBy);
+		params.put("photoNoList", photoNoList);
+		return sqlSessionTemplate.delete(DELETE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID, params);
 	}
 
 	@Override

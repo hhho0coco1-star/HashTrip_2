@@ -119,6 +119,8 @@ public class PlaceDetailPageController {
 			@PathVariable Long commentNo,
 			@RequestParam String commentContent,
 			@RequestParam(name = "rating", required = false, defaultValue = "5") Integer rating,
+			@RequestParam(name = "deletePhotoNoList", required = false) List<Long> deletePhotoNoList,
+			@RequestParam(name = "reviewImages", required = false) MultipartFile[] reviewImages,
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) throws Exception {
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
@@ -128,7 +130,15 @@ public class PlaceDetailPageController {
 		}
 
 		try {
-			boolean updated = placeService.updatePlaceReview(placeNo, commentNo, commentContent, rating, currentAuthId);
+			List<PhotoDataDTO> photoDataList = buildReviewPhotoData(reviewImages);
+			boolean updated = placeService.updatePlaceReview(
+					placeNo,
+					commentNo,
+					commentContent,
+					rating,
+					currentAuthId,
+					deletePhotoNoList,
+					photoDataList);
 			if (updated) {
 				redirectAttributes.addFlashAttribute("reviewActionMessage", "리뷰가 수정되었습니다.");
 			} else {
@@ -136,6 +146,8 @@ public class PlaceDetailPageController {
 			}
 		} catch (IllegalArgumentException e) {
 			redirectAttributes.addFlashAttribute("reviewActionError", e.getMessage());
+		} catch (IOException e) {
+			redirectAttributes.addFlashAttribute("reviewActionError", "Image upload failed.");
 		}
 		return buildDetailRedirect(placeNo);
 	}
