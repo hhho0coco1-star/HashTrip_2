@@ -9,6 +9,7 @@
     let mapReady = false;
     let draggedId = null;
     let replacePlaceId = null;
+    let replaceNearbyList = [];
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
@@ -214,8 +215,72 @@
         if (!modal || !list) return;
         const place = places.find(function (p) { return String(p.id) === String(replacePlaceId); });
         if (!place) return;
-        list.innerHTML = "<p>근처 여행지 검색은 준비 중입니다. 장소 추가로 새 장소를 넣은 뒤 순서를 바꿔 보세요.</p>";
+        const lat = place.placeLatitude != null ? parseFloat(place.placeLatitude) : NaN;
+        const lng = place.placeLongitude != null ? parseFloat(place.placeLongitude) : NaN;
+        if (isNaN(lat) || isNaN(lng)) {
+            list.innerHTML = "<p class=\"planner-replace-msg\">이 장소에는 위치 정보가 없어 근처 여행지를 검색할 수 없습니다. 장소 추가로 새 장소를 넣은 뒤 순서를 바꿔 보세요.</p>";
+            modal.classList.remove("hidden");
+            return;
+        }
+        list.innerHTML = "<p class=\"planner-replace-msg\">검색 중...</p>";
         modal.classList.remove("hidden");
+        fetchReplacePlaces();
+    }
+
+    function fetchReplacePlaces() {
+        const list = id("replacePlaceList");
+        const place = places.find(function (p) { return String(p.id) === String(replacePlaceId); });
+        if (!list || !place) return;
+        const lat = parseFloat(place.placeLatitude);
+        const lng = parseFloat(place.placeLongitude);
+        const radiusEl = id("replaceRadius");
+        const radiusKm = radiusEl ? Math.max(1, Math.min(50, parseInt(radiusEl.value, 10) || 10)) : 10;
+        const excludePlaceNo = place.placeNo || null;
+        const url = ctx + "/planner/nearby-places?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng) + "&radiusKm=" + radiusKm + (excludePlaceNo ? "&excludePlaceNo=" + excludePlaceNo : "");
+        fetch(url, { credentials: "same-origin" })
+            .then(function (res) { return res.ok ? res.json() : []; })
+            .then(function (arr) {
+                replaceNearbyList = Array.isArray(arr) ? arr : [];
+                if (replaceNearbyList.length === 0) {
+                    list.innerHTML = "<p class=\"planner-replace-msg\">반경 " + radiusKm + " km 안에 다른 여행지가 없습니다. 반경을 늘려 보세요.</p>";
+                    return;
+                }
+                list.innerHTML = replaceNearbyList.map(function (item, idx) {
+                    const name = escapeHtml(item.placeName || "장소");
+                    const addr = escapeHtml(item.placeAddress || "");
+                    return "<div class=\"planner-replace-item\" data-idx=\"" + idx + "\">" +
+                        "<strong>" + name + "</strong>" + (addr ? "<br><span class=\"planner-replace-addr\">" + addr + "</span>" : "") + "</div>";
+                }).join("");
+                qsAll(".planner-replace-item", list).forEach(function (el) {
+                    el.addEventListener("click", function () {
+                        const idx = parseInt(el.getAttribute("data-idx"), 10);
+                        const item = replaceNearbyList[idx];
+                        if (!item) return;
+                        applyReplacePlace({
+                            placeNo: item.placeNo || null,
+                            placeName: item.placeName || "",
+                            placeAddress: item.placeAddress || "",
+                            placeLatitude: item.placeLatitude != null ? item.placeLatitude : null,
+                            placeLongitude: item.placeLongitude != null ? item.placeLongitude : null
+                        });
+                    });
+                });
+            })
+            .catch(function () {
+                list.innerHTML = "<p class=\"planner-replace-msg\">검색 중 오류가 발생했습니다.</p>";
+            });
+    }
+
+    function applyReplacePlace(newPlace) {
+        const place = places.find(function (p) { return String(p.id) === String(replacePlaceId); });
+        if (!place) { closeReplaceModal(); return; }
+        place.placeNo = newPlace.placeNo;
+        place.placeName = newPlace.placeName;
+        place.placeAddress = newPlace.placeAddress;
+        place.placeLatitude = newPlace.placeLatitude;
+        place.placeLongitude = newPlace.placeLongitude;
+        closeReplaceModal();
+        render();
     }
 
     function closeReplaceModal() {
@@ -430,6 +495,7 @@
         if (id("cancelCompleteReview")) id("cancelCompleteReview").addEventListener("click", closeCompleteReviewModal);
         if (id("closeMapModal")) id("closeMapModal").addEventListener("click", closeMapModal);
         if (id("closeReplaceModal")) id("closeReplaceModal").addEventListener("click", closeReplaceModal);
+        if (id("replaceSearchBtn")) id("replaceSearchBtn").addEventListener("click", fetchReplacePlaces);
         if (id("searchBtn")) id("searchBtn").addEventListener("click", searchPlace);
         if (id("confirmPlace")) id("confirmPlace").addEventListener("click", confirmPlace);
         if (id("placeSearch")) id("placeSearch").addEventListener("keypress", function (e) {

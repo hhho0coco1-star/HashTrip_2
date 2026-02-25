@@ -2,6 +2,8 @@ package com.app.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -60,5 +62,8 @@ public interface PlaceDAO {
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
 	
 	public List<PlaceDTO> searchPlaces(String keyword);
-	
+
+	/** 위경도 기준 반경(km) 내 장소 목록 (현재 장소 제외 가능) */
+	List<PlaceDTO> selectPlacesNearby(@Param("lat") double lat, @Param("lng") double lng, @Param("radiusKm") int radiusKm, @Param("excludePlaceNo") Long excludePlaceNo);
+
 }

@@ -29,9 +29,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CommunityDTO;
+import com.app.dto.PlaceDTO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.TravelPlanDTO;
@@ -96,6 +98,21 @@ public class PlannerController {
         model.addAttribute("myPlans", plans);
         model.addAttribute("activeStatus", status);
         return "planner/planner-list";
+    }
+
+    /** 근처 여행지 검색 (다른 여행지로 교체용). 로그인 필요. */
+    @GetMapping("/nearby-places")
+    @ResponseBody
+    public List<PlaceDTO> nearbyPlaces(Authentication auth,
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "10") int radiusKm,
+            @RequestParam(required = false) Long excludePlaceNo) {
+        if (resolveUser(auth) == null) {
+            return new ArrayList<>();
+        }
+        int safeRadius = Math.max(1, Math.min(50, radiusKm));
+        return placeService.getPlacesNearby(lat, lng, safeRadius, excludePlaceNo);
     }
 
     @GetMapping("/new")

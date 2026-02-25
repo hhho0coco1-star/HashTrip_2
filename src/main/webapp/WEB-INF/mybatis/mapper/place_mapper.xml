@@ -706,4 +706,27 @@
     WHERE p.place_name LIKE CONCAT('%', #{keyword}, '%')
 	</select>
 
+	<!-- 반경(km) 내 근처 장소 조회 (haversine), 현재 장소 제외 가능 -->
+	<select id="selectPlacesNearby" resultType="com.app.dto.PlaceDTO" parameterType="map">
+		SELECT * FROM (
+			SELECT t.PLACE_NO, t.PLACE_CONTENT_ID, t.PLACE_NAME, t.PLACE_CATEGORY, t.PLACE_ADDRESS,
+				t.PLACE_LATITUDE, t.PLACE_LONGITUDE, t.PLACE_RATING, t.PLACE_NUMBER, t.PLACE_THUMBNAIL_URL
+			FROM (
+				SELECT p.PLACE_NO, p.PLACE_CONTENT_ID, p.PLACE_NAME, p.PLACE_CATEGORY, p.PLACE_ADDRESS,
+					p.PLACE_LATITUDE, p.PLACE_LONGITUDE, p.PLACE_RATING, p.PLACE_NUMBER, p.PLACE_THUMBNAIL_URL,
+					6371 * ACOS(LEAST(1, GREATEST(-1,
+						COS(#{lat} * 0.017453292519943) * COS(p.PLACE_LATITUDE * 0.017453292519943) * COS((p.PLACE_LONGITUDE - #{lng}) * 0.017453292519943)
+						+ SIN(#{lat} * 0.017453292519943) * SIN(p.PLACE_LATITUDE * 0.017453292519943)
+					))) AS dist
+				FROM PLACE p
+				WHERE p.PLACE_LATITUDE IS NOT NULL AND p.PLACE_LONGITUDE IS NOT NULL
+				<if test="excludePlaceNo != null">
+					AND p.PLACE_NO != #{excludePlaceNo}
+				</if>
+			) t
+			WHERE t.dist &lt;= #{radiusKm}
+			ORDER BY t.dist
+		) WHERE ROWNUM &lt;= 30
+	</select>
+
 </mapper>

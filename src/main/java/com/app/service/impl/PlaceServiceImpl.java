@@ -765,4 +765,9 @@ public class PlaceServiceImpl implements PlaceService {
 		return placeDAO.searchPlaces(keyword);
 	}
 
+	@Override
+	public List<PlaceDTO> getPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo) {
+		return placeDAO.selectPlacesNearby(lat, lng, radiusKm, excludePlaceNo);
+	}
+
 }

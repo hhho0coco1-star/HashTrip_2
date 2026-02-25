@@ -55,6 +55,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPaged";
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_SORTED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPagedSorted";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
+	private static final String SELECT_PLACES_NEARBY_STATEMENT_ID = "place_mapper.selectPlacesNearby";
 	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
 	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
 
@@ -259,6 +260,16 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceDTO> searchPlaces(String keyword) {
 		return sqlSessionTemplate.selectList("place_mapper.searchPlaces", keyword);
+	}
+
+	@Override
+	public List<PlaceDTO> selectPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("lat", lat);
+		params.put("lng", lng);
+		params.put("radiusKm", radiusKm);
+		params.put("excludePlaceNo", excludePlaceNo);
+		return sqlSessionTemplate.selectList(SELECT_PLACES_NEARBY_STATEMENT_ID, params);
 	}
 
 }

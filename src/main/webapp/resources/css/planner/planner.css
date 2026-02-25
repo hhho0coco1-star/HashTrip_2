@@ -971,6 +971,7 @@
 
 .planner-replace-list {
     min-height: 100px;
+    margin-top: 8px;
 }
 
 .planner-replace-list input[type="number"] {
@@ -978,4 +979,32 @@
     padding: 4px 8px;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
+}
+
+.planner-replace-msg {
+    color: #64748b;
+    padding: 12px 0;
+}
+
+.planner-replace-item {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.planner-replace-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.planner-replace-item .planner-replace-addr {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+#replaceSearchBtn {
+    margin-bottom: 8px;
 }

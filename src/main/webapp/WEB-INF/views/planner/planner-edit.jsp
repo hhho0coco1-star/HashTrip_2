@@ -88,6 +88,7 @@
                 </div>
                 <div class="planner-modal-body">
                     <p class="planner-replace-hint">근처 여행지를 선택하세요 (반경 <input type="number" id="replaceRadius" value="10" min="1" max="50" /> km)</p>
+                    <button type="button" id="replaceSearchBtn" class="planner-btn planner-btn-primary">검색</button>
                     <div id="replacePlaceList" class="planner-replace-list"></div>
                 </div>
             </div>
