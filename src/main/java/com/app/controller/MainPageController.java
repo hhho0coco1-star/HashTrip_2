@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlaceService;
@@ -114,6 +116,29 @@ public class MainPageController {
 	    
 	    res.setBody("SUCCESS");
 	    return res;
+	}
+	
+	// 1:1문의 답변 작성
+	@PostMapping("/contact/submit")
+	public String submitInquiry(InquiryDTO dto, Authentication authentication, RedirectAttributes ra) {
+	    // 1. 로그인 유저 확인 (이전에 만든 메서드 활용)
+	    String authId = resolveAuthenticatedAuthId(authentication);
+	    if (authId == null) return "redirect:/auth/login";
+
+	    // 2. 유저 정보 세팅 (DB 조회를 통해 userNo 가져오기)
+	    UsersDTO user = usersService.getUserByAuthId(authId);
+	    dto.setUserNo(user.getUserNo());
+
+	    // 3. DB 저장 서비스 호출
+	    int result = usersService.registerInquiry(dto);
+
+	    if (result > 0) {
+	        ra.addFlashAttribute("msg", "문의가 성공적으로 접수되었습니다.");
+	        return "redirect:/mypage"; // 마이페이지 리스트로 이동
+	    } else {
+	        ra.addFlashAttribute("msg", "접수에 실패했습니다.");
+	        return "redirect:/hashTrip"; 
+	    }
 	}
 	
 	private String resolveAuthenticatedAuthId(Authentication authentication) {

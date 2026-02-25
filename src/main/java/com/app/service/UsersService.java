@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.List;
 import java.util.Map;
 
+import com.app.dto.InquiryDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
@@ -31,5 +32,10 @@ public interface UsersService {
     // 4. 개별 태그 추가/삭제 (마이페이지 개별 수정용)
     boolean addUserTagByAuthId(String authId, String tagCode);
     boolean removeUserTagByAuthId(String authId, String tagCode);
+    
+    // 1:1 문의 등록
+    int registerInquiry(InquiryDTO dto);
+    // 특정 유저의 문의 목록 조회
+    List<InquiryDTO> getMyInquiries(Long userNo);
     
 }

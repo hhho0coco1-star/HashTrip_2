@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.app.dao.UsersDAO;
+import com.app.dto.InquiryDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
@@ -20,7 +21,7 @@ public class UsersServiceImpl implements UsersService {
 
 	@Autowired
 	UsersDAO usersDAO;
-
+	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
@@ -244,5 +245,16 @@ public class UsersServiceImpl implements UsersService {
 	        usersDAO.insertUserAnalysisTags(params);
 	    }
 	}
+	
+    @Override
+    public int registerInquiry(InquiryDTO dto) {
+        // 필요 시 여기서 가공 로직 추가 (예: 알림 메일 발송 등)
+        return usersDAO.insertInquiry(dto);
+    }
+
+    @Override
+    public List<InquiryDTO> getMyInquiries(Long userNo) {
+        return usersDAO.selectInquiryList(userNo);
+    }
 
 }

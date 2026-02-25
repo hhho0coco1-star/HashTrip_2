@@ -245,5 +245,56 @@
 		</foreach>
 		) A
 	</insert>
+	
+	<!-- 1:1 문의내용 저장 -->
+	<insert id="insertInquiry" parameterType="com.app.dto.InquiryDTO">
+    INSERT INTO PLACE_INQUIRY (
+        INQUIRY_NO,
+        USER_NO,
+        INQUIRY_TYPE,
+        INQUIRY_TITLE,
+        INQUIRY_CONTENT,
+        INQUIRY_EMAIL,
+        INQUIRY_DATE,
+        STATUS
+    ) VALUES (
+        SEQ_INQUIRY_NO.NEXTVAL,
+        #{userNo},
+        #{inquiryType},
+        #{inquiryTitle},
+        #{inquiryContent},
+        #{inquiryEmail},
+        SYSDATE,
+        'N'               )
+	</insert>
+	
+	<!-- 1:1 문의 내용 확인 -->
+	<select id="selectMyInquiries" parameterType="long" resultType="com.app.dto.InquiryDTO">
+    SELECT 
+        INQUIRY_NO,
+        INQUIRY_TYPE,
+        INQUIRY_TITLE,
+        INQUIRY_DATE,
+        STATUS
+    FROM PLACE_INQUIRY
+    WHERE USER_NO = #{userNo}
+    ORDER BY INQUIRY_DATE DESC
+	</select>
+	
+	<!-- 1:1 문의 내용 확인(상세) -->
+	<select id="selectInquiryDetail" parameterType="long" resultType="com.app.dto.InquiryDTO">
+    SELECT 
+        INQUIRY_NO,
+        INQUIRY_TYPE,
+        INQUIRY_TITLE,
+        INQUIRY_CONTENT,
+        INQUIRY_EMAIL,
+        INQUIRY_DATE,
+        REPLY_CONTENT,
+        REPLY_DATE,
+        STATUS
+    FROM PLACE_INQUIRY
+    WHERE INQUIRY_NO = #{inquiryNo}
+	</select>
 
 </mapper>

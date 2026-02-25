@@ -3,6 +3,7 @@ package com.app.dao;
 import java.util.List;
 import java.util.Map;
 
+import com.app.dto.InquiryDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
@@ -41,5 +42,11 @@ public interface UsersDAO {
 
     // 4. (기존 기능) 마이페이지용 태그 리스트 조회
     List<UserTagMapDTO> getUserTagsByAuthId(String authId);
+    
+    // 1:1 문의
+    int insertInquiry(InquiryDTO dto);
+    
+    // 1:1 문의내용 조회
+    List<InquiryDTO> selectInquiryList(Long userNo);
 
 }

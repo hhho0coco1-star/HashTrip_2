@@ -133,10 +133,11 @@
 				<p>궁금한 점이나 건의사항을 남겨주시면 정성껏 답변해 드리겠습니다.</p>
 			</div>
 
-			<form action="/contact/submit" method="post" class="contact-form">
+			<form action="${pageContext.request.contextPath}/contact/submit" method="post" class="contact-form">
+				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 				<div class="form-group">
 					<label for="category">문의 유형</label> <select id="category"
-						name="category" required>
+						name="inquiryType" required>
 						<option value="">유형을 선택해 주세요</option>
 						<option value="service">서비스 이용 문의</option>
 						<option value="account">계정/로그인 관련</option>
@@ -148,17 +149,17 @@
 
 				<div class="form-group">
 					<label for="title">제목</label> <input type="text" id="title"
-						name="title" placeholder="제목을 입력해 주세요" required>
+						name="inquiryTitle" placeholder="제목을 입력해 주세요" required>
 				</div>
 
 				<div class="form-group">
 					<label for="email">답변 받을 이메일</label> <input type="email" id="email"
-						name="email" placeholder="example@mail.com" required>
+						name="inquiryEmail" placeholder="example@mail.com" required>
 				</div>
 
 				<div class="form-group">
 					<label for="content">문의 내용</label>
-					<textarea id="content" name="content" rows="10"
+					<textarea id="content" name="inquiryContent" rows="10"
 						placeholder="내용을 상세히 작성해 주세요. (최대 2000자)" required></textarea>
 				</div>
 

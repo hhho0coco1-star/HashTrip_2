@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.app.dao.UsersDAO;
+import com.app.dto.InquiryDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
@@ -142,4 +143,14 @@ public class UsersDAOImpl implements UsersDAO {
 	    Integer userNo = sqlSessionTemplate.selectOne(GET_USER_NO_BY_AUTH_ID_STATEMENT_ID, authId);
 	    return userNo != null ? userNo : 0;
 	}
+	
+	@Override
+    public int insertInquiry(InquiryDTO dto) {
+        return sqlSessionTemplate.insert("users_mapper.insertInquiry", dto);
+    }
+
+    @Override
+    public List<InquiryDTO> selectInquiryList(Long userNo) {
+        return sqlSessionTemplate.selectList("users_mapper.selectMyInquiries", userNo);
+    }
 }
