@@ -10,6 +10,10 @@
     let draggedId = null;
     let replacePlaceId = null;
     let replaceNearbyList = [];
+    let selectedReplaceIdx = -1;
+    let replaceMapInstance = null;
+    let replaceMarkers = [];
+    let replaceCurrentOverlay = null;
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
@@ -241,28 +245,86 @@
             .then(function (res) { return res.ok ? res.json() : []; })
             .then(function (arr) {
                 replaceNearbyList = Array.isArray(arr) ? arr : [];
+                const mapEl = id("replaceMap");
                 if (replaceNearbyList.length === 0) {
+                    selectedReplaceIdx = -1;
+                    updateReplaceConfirmButton();
+                    loadReplacePlacePreview(null);
+                    if (mapEl) mapEl.classList.add("hidden");
                     list.innerHTML = "<p class=\"planner-replace-msg\">반경 " + radiusKm + " km 안에 다른 여행지가 없습니다. 반경을 늘려 보세요.</p>";
                     return;
                 }
+                ensureReplaceMapReady().then(function () {
+                    updateReplaceMap(place, replaceNearbyList);
+                }).catch(function () { /* map optional */ });
+                selectedReplaceIdx = -1;
+                updateReplaceConfirmButton();
+                loadReplacePlacePreview(null);
                 list.innerHTML = replaceNearbyList.map(function (item, idx) {
                     const name = escapeHtml(item.placeName || "장소");
                     const addr = escapeHtml(item.placeAddress || "");
+                    const dist = item.distance != null ? Number(item.distance).toFixed(1) : "";
+                    const rating = item.placeRating != null ? Number(item.placeRating).toFixed(1) : "";
+                    const thumb = item.placeThumbnailUrl ? escapeHtml(item.placeThumbnailUrl) : "";
+                    const thumbHtml = thumb ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />" : "<div class=\"planner-replace-thumb placeholder\"></div>";
+                    const detailUrl = item.placeNo ? (ctx + "/place/detail?place_no=" + item.placeNo) : "";
+                    const nameEl = detailUrl
+                        ? "<span class=\"planner-replace-name-wrap\"><a href=\"" + detailUrl + "\" class=\"planner-replace-name\" target=\"_blank\" rel=\"noopener\">" + name + "</a></span>"
+                        : "<strong class=\"planner-replace-name\">" + name + "</strong>";
                     return "<div class=\"planner-replace-item\" data-idx=\"" + idx + "\">" +
-                        "<strong>" + name + "</strong>" + (addr ? "<br><span class=\"planner-replace-addr\">" + addr + "</span>" : "") + "</div>";
+                        "<div class=\"planner-replace-card-inner\">" +
+                        "<div class=\"planner-replace-thumb-wrap\">" + thumbHtml + "</div>" +
+                        "<div class=\"planner-replace-info\">" +
+                        nameEl +
+                        (addr ? "<span class=\"planner-replace-addr\">" + addr + "</span>" : "") +
+                        "<div class=\"planner-replace-meta\">" +
+                        (dist ? "<span class=\"planner-replace-dist\">" + escapeHtml(dist) + " km</span>" : "") +
+                        (rating ? "<span class=\"planner-replace-rating\">★ " + escapeHtml(rating) + "</span>" : "") +
+                        "</div></div></div>" +
+                        "<div class=\"planner-replace-card-expanded\"></div></div>";
                 }).join("");
+                qsAll(".planner-replace-item a.planner-replace-name", list).forEach(function (link) {
+                    link.addEventListener("click", function (e) { e.stopPropagation(); });
+                });
                 qsAll(".planner-replace-item", list).forEach(function (el) {
+                    var idx = parseInt(el.getAttribute("data-idx"), 10);
                     el.addEventListener("click", function () {
-                        const idx = parseInt(el.getAttribute("data-idx"), 10);
-                        const item = replaceNearbyList[idx];
-                        if (!item) return;
-                        applyReplacePlace({
-                            placeNo: item.placeNo || null,
-                            placeName: item.placeName || "",
-                            placeAddress: item.placeAddress || "",
-                            placeLatitude: item.placeLatitude != null ? item.placeLatitude : null,
-                            placeLongitude: item.placeLongitude != null ? item.placeLongitude : null
-                        });
+                        selectedReplaceIdx = idx;
+                        qsAll(".planner-replace-item", list).forEach(function (x) { x.classList.remove("selected"); });
+                        el.classList.add("selected");
+                        setReplaceMapSelectedIdx(idx);
+                        var item = replaceNearbyList[idx];
+                        if (item && replaceMapInstance) {
+                            var lat = item.placeLatitude != null ? parseFloat(item.placeLatitude) : NaN;
+                            var lng = item.placeLongitude != null ? parseFloat(item.placeLongitude) : NaN;
+                            var curPlace = places.find(function (p) { return String(p.id) === String(replacePlaceId); });
+                            var curLat = curPlace && curPlace.placeLatitude != null ? parseFloat(curPlace.placeLatitude) : NaN;
+                            var curLng = curPlace && curPlace.placeLongitude != null ? parseFloat(curPlace.placeLongitude) : NaN;
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                var bounds = new kakao.maps.LatLngBounds();
+                                bounds.extend(new kakao.maps.LatLng(lat, lng));
+                                if (!isNaN(curLat) && !isNaN(curLng)) bounds.extend(new kakao.maps.LatLng(curLat, curLng));
+                                var sw = bounds.getSouthWest();
+                                var ne = bounds.getNorthEast();
+                                var midLat = !isNaN(curLat) ? (lat + curLat) / 2 : lat;
+                                var midLng = !isNaN(curLng) ? (lng + curLng) / 2 : lng;
+                                if (sw && ne) {
+                                    var latSpan = Math.abs(ne.getLat() - sw.getLat());
+                                    var lngSpan = Math.abs(ne.getLng() - sw.getLng());
+                                    if (latSpan < 0.005 && lngSpan < 0.005) {
+                                        replaceMapInstance.setCenter(new kakao.maps.LatLng(midLat, midLng));
+                                        replaceMapInstance.setLevel(5);
+                                    } else {
+                                        replaceMapInstance.setBounds(bounds, 50, 50, 50, 50);
+                                    }
+                                } else {
+                                    replaceMapInstance.setCenter(new kakao.maps.LatLng(midLat, midLng));
+                                    replaceMapInstance.setLevel(5);
+                                }
+                            }
+                        }
+                        updateReplaceConfirmButton();
+                        loadReplacePlacePreview(item ? item.placeNo : null);
                     });
                 });
             })
@@ -281,12 +343,180 @@
         place.placeLongitude = newPlace.placeLongitude;
         closeReplaceModal();
         render();
+        alert("변경되었습니다. 아래 저장 버튼을 눌러 반영해 주세요.");
+    }
+
+    function updateReplaceConfirmButton() {
+        var btn = id("replaceConfirmBtn");
+        if (btn) btn.disabled = selectedReplaceIdx < 0;
+    }
+
+    function formatReviewDate(ts) {
+        if (ts == null) return "";
+        var d = new Date(ts);
+        if (isNaN(d.getTime())) return "";
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var then = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        var diffDays = Math.floor((today - then) / (24 * 60 * 60 * 1000));
+        if (diffDays === 0) return "오늘";
+        if (diffDays === 1) return "어제";
+        if (diffDays < 7) return diffDays + "일 전";
+        var y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+        return y + "." + m + "." + day;
+    }
+
+    function clearAllReplaceCardExpanded() {
+        var list = id("replacePlaceList");
+        if (!list) return;
+        qsAll(".planner-replace-card-expanded", list).forEach(function (el) { el.innerHTML = ""; });
+    }
+
+    function loadReplacePlacePreview(placeNo) {
+        var list = id("replacePlaceList");
+        clearAllReplaceCardExpanded();
+        if (!placeNo) return;
+        var card = list && selectedReplaceIdx >= 0 ? list.querySelector(".planner-replace-item[data-idx=\"" + selectedReplaceIdx + "\"]") : null;
+        var expanded = card ? card.querySelector(".planner-replace-card-expanded") : null;
+        if (!expanded) return;
+        expanded.innerHTML = "<span class=\"planner-replace-msg\">로딩 중...</span>";
+        var requestedPlaceNo = placeNo;
+        fetch(ctx + "/planner/place-preview?placeNo=" + placeNo, { credentials: "same-origin" })
+            .then(function (res) { return res.ok ? res.json() : {}; })
+            .then(function (data) {
+                var current = selectedReplaceIdx >= 0 && replaceNearbyList[selectedReplaceIdx] ? replaceNearbyList[selectedReplaceIdx].placeNo : null;
+                if (current !== requestedPlaceNo) return;
+                var cardEl = list.querySelector(".planner-replace-item[data-idx=\"" + selectedReplaceIdx + "\"]");
+                var exp = cardEl ? cardEl.querySelector(".planner-replace-card-expanded") : null;
+                if (!exp) return;
+                var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
+                var urls = data.photoUrls || [];
+                var photosHtml = urls.length === 0
+                    ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
+                    : urls.slice(0, 10).map(function (url) {
+                        return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
+                    }).join("");
+                var reviews = data.reviews || [];
+                var reviewsHtml = reviews.length === 0
+                    ? "<p class=\"planner-replace-msg\">최근 리뷰가 없습니다.</p>"
+                    : "<h5>최근 리뷰</h5>" + reviews.map(function (r) {
+                        var rating = r.rating != null ? "★ " + r.rating : "";
+                        var by = escapeHtml(r.createdBy || "");
+                        var dateStr = formatReviewDate(r.createdAt);
+                        var meta = [rating, by, dateStr].filter(Boolean).join(" · ");
+                        var content = escapeHtml((r.commentContent || "").slice(0, 120));
+                        if ((r.commentContent || "").length > 120) content += "…";
+                        return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
+                    }).join("");
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+            })
+            .catch(function () {
+                if (selectedReplaceIdx >= 0 && replaceNearbyList[selectedReplaceIdx] && replaceNearbyList[selectedReplaceIdx].placeNo === requestedPlaceNo) {
+                    var cardEl = list && list.querySelector(".planner-replace-item[data-idx=\"" + selectedReplaceIdx + "\"]");
+                    var exp = cardEl ? cardEl.querySelector(".planner-replace-card-expanded") : null;
+                    if (exp) exp.innerHTML = "<p class=\"planner-replace-msg\">불러올 수 없습니다.</p>";
+                }
+            });
     }
 
     function closeReplaceModal() {
+        selectedReplaceIdx = -1;
+        updateReplaceConfirmButton();
+        loadReplacePlacePreview(null);
+        replaceMarkers.forEach(function (item) {
+            if (item && item.overlay && item.overlay.setMap) item.overlay.setMap(null);
+        });
+        replaceMarkers = [];
+        if (replaceCurrentOverlay && replaceCurrentOverlay.setMap) replaceCurrentOverlay.setMap(null);
+        replaceCurrentOverlay = null;
+        const mapEl = id("replaceMap");
+        if (mapEl) mapEl.classList.add("hidden");
         const modal = id("replaceModal");
         if (modal) modal.classList.add("hidden");
         replacePlaceId = null;
+    }
+
+    function setReplaceMapSelectedIdx(idx) {
+        replaceMarkers.forEach(function (item, i) {
+            if (!item || !item.content) return;
+            item.content.className = i === idx ? "planner-pin-wrap planner-marker-selected" : "planner-pin-wrap planner-marker-candidate";
+        });
+    }
+
+    function createPinSvg() {
+        return "<svg class=\"planner-pin-svg\" viewBox=\"0 0 24 36\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"0.8\" d=\"M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24s12-15 12-24C24 5.373 18.627 0 12 0z M18 12A6 6 0 0 1 12 18A6 6 0 0 1 6 12A6 6 0 0 1 12 6A6 6 0 0 1 18 12z\"/></svg>";
+    }
+
+    function ensureReplaceMapReady() {
+        if (replaceMapInstance) return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            if (!window.kakao || !window.kakao.maps) {
+                reject(new Error("Kakao maps not loaded"));
+                return;
+            }
+            window.kakao.maps.load(function () {
+                const container = id("replaceMap");
+                if (!container) { reject(new Error("replaceMap not found")); return; }
+                try {
+                    container.classList.remove("hidden");
+                    replaceMapInstance = new kakao.maps.Map(container, {
+                        center: new kakao.maps.LatLng(37.5665, 126.978),
+                        level: 6
+                    });
+                    resolve();
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+    }
+
+    function updateReplaceMap(currentPlace, nearbyList) {
+        const mapEl = id("replaceMap");
+        if (!mapEl || !replaceMapInstance) return;
+        mapEl.classList.remove("hidden");
+        replaceMarkers.forEach(function (item) {
+            if (item && item.overlay && item.overlay.setMap) item.overlay.setMap(null);
+        });
+        replaceMarkers = [];
+        if (replaceCurrentOverlay && replaceCurrentOverlay.setMap) replaceCurrentOverlay.setMap(null);
+        var curLat = parseFloat(currentPlace.placeLatitude);
+        var curLng = parseFloat(currentPlace.placeLongitude);
+        if (!isNaN(curLat) && !isNaN(curLng)) {
+            var currentContent = document.createElement("div");
+            currentContent.className = "planner-pin-wrap planner-marker-current";
+            currentContent.innerHTML = createPinSvg();
+            replaceCurrentOverlay = new kakao.maps.CustomOverlay({
+                position: new kakao.maps.LatLng(curLat, curLng),
+                content: currentContent,
+                yAnchor: 1
+            });
+            replaceCurrentOverlay.setMap(replaceMapInstance);
+        }
+        var bounds = new kakao.maps.LatLngBounds();
+        if (!isNaN(curLat) && !isNaN(curLng)) bounds.extend(new kakao.maps.LatLng(curLat, curLng));
+        nearbyList.forEach(function (item, idx) {
+            var lat = item.placeLatitude != null ? parseFloat(item.placeLatitude) : NaN;
+            var lng = item.placeLongitude != null ? parseFloat(item.placeLongitude) : NaN;
+            if (isNaN(lat) || isNaN(lng)) return;
+            var content = document.createElement("div");
+            content.className = "planner-pin-wrap planner-marker-candidate";
+            content.innerHTML = createPinSvg();
+            var overlay = new kakao.maps.CustomOverlay({
+                position: new kakao.maps.LatLng(lat, lng),
+                content: content,
+                yAnchor: 1
+            });
+            overlay.setMap(replaceMapInstance);
+            replaceMarkers.push({ overlay: overlay, content: content });
+            bounds.extend(new kakao.maps.LatLng(lat, lng));
+        });
+        if (bounds.getSouthWest() && bounds.getNorthEast()) {
+            replaceMapInstance.setBounds(bounds, 40, 40, 40, 40);
+        } else if (!isNaN(curLat) && !isNaN(curLng)) {
+            replaceMapInstance.setCenter(new kakao.maps.LatLng(curLat, curLng));
+            replaceMapInstance.setLevel(6);
+        }
     }
 
     function openCompleteReviewModal() {
@@ -496,6 +726,18 @@
         if (id("closeMapModal")) id("closeMapModal").addEventListener("click", closeMapModal);
         if (id("closeReplaceModal")) id("closeReplaceModal").addEventListener("click", closeReplaceModal);
         if (id("replaceSearchBtn")) id("replaceSearchBtn").addEventListener("click", fetchReplacePlaces);
+        if (id("replaceConfirmBtn")) id("replaceConfirmBtn").addEventListener("click", function () {
+            if (selectedReplaceIdx < 0) return;
+            var item = replaceNearbyList[selectedReplaceIdx];
+            if (!item) return;
+            applyReplacePlace({
+                placeNo: item.placeNo || null,
+                placeName: item.placeName || "",
+                placeAddress: item.placeAddress || "",
+                placeLatitude: item.placeLatitude != null ? item.placeLatitude : null,
+                placeLongitude: item.placeLongitude != null ? item.placeLongitude : null
+            });
+        });
         if (id("searchBtn")) id("searchBtn").addEventListener("click", searchPlace);
         if (id("confirmPlace")) id("confirmPlace").addEventListener("click", confirmPlace);
         if (id("placeSearch")) id("placeSearch").addEventListener("keypress", function (e) {

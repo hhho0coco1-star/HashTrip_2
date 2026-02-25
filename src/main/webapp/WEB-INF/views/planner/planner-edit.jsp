@@ -87,9 +87,14 @@
                     <button type="button" id="closeReplaceModal" class="planner-modal-close">&times;</button>
                 </div>
                 <div class="planner-modal-body">
+                    <div id="replaceMap" class="planner-replace-map hidden"></div>
                     <p class="planner-replace-hint">근처 여행지를 선택하세요 (반경 <input type="number" id="replaceRadius" value="10" min="1" max="50" /> km)</p>
                     <button type="button" id="replaceSearchBtn" class="planner-btn planner-btn-primary">검색</button>
                     <div id="replacePlaceList" class="planner-replace-list"></div>
+                </div>
+                <div class="planner-modal-footer">
+                    <p class="planner-replace-footer-hint">장소를 선택한 뒤 버튼을 눌러 주세요.</p>
+                    <button type="button" id="replaceConfirmBtn" class="planner-btn planner-btn-primary" disabled>장소 선택</button>
                 </div>
             </div>
         </div>

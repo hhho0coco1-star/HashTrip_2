@@ -34,6 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CommunityDTO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.PlaceReviewDTO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.TravelPlanDTO;
@@ -113,6 +114,36 @@ public class PlannerController {
         }
         int safeRadius = Math.max(1, Math.min(50, radiusKm));
         return placeService.getPlacesNearby(lat, lng, safeRadius, excludePlaceNo);
+    }
+
+    /** 장소 미리보기(사진·리뷰). 교체 모달 선택 시 사용. */
+    @GetMapping("/place-preview")
+    @ResponseBody
+    public Map<String, Object> placePreview(Authentication auth, @RequestParam Long placeNo) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("photoUrls", new ArrayList<String>());
+        out.put("reviews", new ArrayList<Map<String, Object>>());
+        if (resolveUser(auth) == null || placeNo == null) return out;
+        try {
+            List<String> urls = placeService.getPlacePhotoUrlsByPlaceNo(placeNo);
+            if (urls != null) out.put("photoUrls", urls);
+            List<PlaceReviewDTO> reviews = placeService.getPlaceReviewsByPlaceNo(placeNo);
+            if (reviews != null) {
+                int limit = 5;
+                List<Map<String, Object>> list = new ArrayList<>();
+                for (int i = 0; i < Math.min(limit, reviews.size()); i++) {
+                    PlaceReviewDTO r = reviews.get(i);
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("rating", r.getRating());
+                    m.put("commentContent", r.getCommentContent());
+                    m.put("createdBy", r.getCreatedBy());
+                    m.put("createdAt", r.getCreatedAt() != null ? r.getCreatedAt().getTime() : null);
+                    list.add(m);
+                }
+                out.put("reviews", list);
+            }
+        } catch (Exception ignored) { }
+        return out;
     }
 
     @GetMapping("/new")
