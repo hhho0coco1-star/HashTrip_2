@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.PlaceDTO;
+import com.app.dto.UsersDTO;
 import com.app.service.PlaceService;
+import com.app.service.UsersService;
 import com.app.util.ApiResponse;
 
 @Controller
@@ -24,10 +26,20 @@ public class MainPageController {
 	@Autowired
 	private PlaceService placeService;
 	
+	@Autowired
+	private UsersService usersService;
+	
 	@GetMapping({"/", "/main", "/hashTrip"}) // 메인 페이지
-	public String hashTag(Model model) {
+	public String hashTag(Model model, Authentication authentication) {
+		
 		List<PlaceDTO> list = placeService.searchPlaces("");
+		String currentAuthId = resolveAuthenticatedAuthId(authentication);
+		
+		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		
+		model.addAttribute("usersDTO", usersDTO);
 		model.addAttribute("places", list);
+		
 		return "mainPage/mainPage";
 	}
 	
@@ -96,6 +108,19 @@ public class MainPageController {
 	    
 	    res.setBody("SUCCESS");
 	    return res;
+	}
+	
+	private String resolveAuthenticatedAuthId(Authentication authentication) {
+		if (authentication == null
+				|| !authentication.isAuthenticated()
+				|| authentication instanceof AnonymousAuthenticationToken) {
+			return null;
+		}
+		String authId = authentication.getName();
+		if (authId == null || authId.trim().isEmpty()) {
+			return null;
+		}
+		return authId.trim();
 	}
 	
 }
