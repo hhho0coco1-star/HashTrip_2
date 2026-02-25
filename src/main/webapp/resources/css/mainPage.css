@@ -22,6 +22,40 @@
     opacity: 0.8; /* 지도를 살짝 흐리게 해서 글자가 잘 보이게 설정 */
 }
 
+/* 1. 애니메이션 정의: 위아래로 10px~15px 정도 부드럽게 움직임 */
+@keyframes float {
+0% { transform: translateY(0px); }
+50% { transform: translateY(-15px); }
+100% { transform: translateY(0px); }
+}
+
+
+.floating-card {
+display: inline-block;
+padding: 10px 20px;
+border-radius: 20px;
+background: white;
+box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+font-weight: bold;
+animation: float 3s ease-in-out infinite;
+}
+
+/* 3. 개별 설정: 움직임이 겹치지 않도록 시작 시간(delay)과 속도를 다르게 조절 */
+.type-1 {
+animation-duration: 3s;
+animation-delay: 0s;
+}
+
+.type-2 {
+animation-duration: 3.5s;
+animation-delay: 0.5s;  
+}
+
+.type-3 {
+animation-duration: 2.8s; 
+animation-delay: 1s;   
+}
+
 /* 1. 스크롤 스냅 활성화 */
 html {
 	scroll-snap-type: y proximity; /* 강제 고정 대신 근접했을 때만 고정 */
@@ -131,22 +165,19 @@ section {
 	font-weight: bold;
 	font-size: 15px;
 	z-index: 10;
-	animation: floating 4s infinite ease-in-out;
 }
 
 /* 개별 카드 위치 설정 - 지도 레이아웃에 맞춰 분산 */
-.floating-card:nth-of-type(1) {
-	top: 10%;
-	left: 10%;
+.solo {
+	top: 15%;
+	left: 15%;
 	color: #007bff;
-	animation-delay: 0s;
 }
 
 .floating-card:nth-of-type(2) {
 	top: 35%;
 	right: 5%;
 	color: #ff4757;
-	animation-delay: 0.5s;
 	font-size: 18px;
 }
 
@@ -154,21 +185,18 @@ section {
 	bottom: 20%;
 	left: 15%;
 	color: #2ed573;
-	animation-delay: 1.2s;
 }
 
 .floating-card:nth-of-type(4) {
 	top: 25%;
 	left: 45%;
 	color: #ffa502;
-	animation-delay: 0.8s;
 }
 
 .floating-card:nth-of-type(5) {
 	bottom: 45%;
 	left: 5%;
 	color: #747d8c;
-	animation-delay: 1.5s;
 	font-size: 13px;
 }
 
@@ -176,22 +204,17 @@ section {
 	top: 65%;
 	right: 20%;
 	color: #a4b0be;
-	animation-delay: 2s;
 }
 
 .floating-card:nth-of-type(7) {
 	bottom: 5%;
 	right: 30%;
 	color: #5352ed;
-	animation-delay: 0.3s;
 }
 
 /* 애니메이션 키프레임 (하나로 통합) */
-@keyframes floating { 
-	0%, 100% { transform: translate(0, 0); }
-	50 % { transform : translate(0,-15px); }}
 
-@ keyframes map-fade {
+@keyframes map-fade {
 	from { opacity:0; transform: translate(-50%, -48%); }
 to {
 	opacity: 0.2;

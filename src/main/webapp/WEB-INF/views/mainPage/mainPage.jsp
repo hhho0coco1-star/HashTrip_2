@@ -51,7 +51,7 @@
 				<div class="floating-card type-1">#맛집탐방</div>
 				<div class="floating-card type-2">#인생샷</div>
 				<div class="floating-card type-3">#차박</div>
-				<div class="floating-card type-1">#혼자여행</div>
+				<div class="floating-card type-1 solo">#혼자여행</div>
 			</div>
 		</div>
 	</section>
