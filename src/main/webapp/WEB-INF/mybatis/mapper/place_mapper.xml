@@ -397,6 +397,7 @@
 		SELECT
 			CASE
 				WHEN PD.LOG_PHOTO_URL LIKE '/resources/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL LIKE '/place/%' THEN '..' || PD.LOG_PHOTO_URL
 				WHEN PD.LOG_PHOTO_URL IS NOT NULL THEN PD.LOG_PHOTO_URL
 				WHEN PD.PHOTO_BINARY IS NOT NULL THEN '../place/review-photo/' || TO_CHAR(PD.PHOTO_NO)
 				ELSE NULL
@@ -414,6 +415,7 @@
 		SELECT
 			CASE
 				WHEN PD.LOG_PHOTO_URL LIKE '/resources/%' THEN '..' || PD.LOG_PHOTO_URL
+				WHEN PD.LOG_PHOTO_URL LIKE '/place/%' THEN '..' || PD.LOG_PHOTO_URL
 				WHEN PD.LOG_PHOTO_URL IS NOT NULL THEN PD.LOG_PHOTO_URL
 				WHEN PD.PHOTO_BINARY IS NOT NULL THEN '../place/review-photo/' || TO_CHAR(PD.PHOTO_NO)
 				ELSE NULL
@@ -480,7 +482,7 @@
 	</select>
 
 	<select id="selectPlaceReviewsByCreatedByPaged"
-		parameterType="map" resultType="PlaceReviewDTO">
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
 		r.COMMENT_NO,
 		r.LOG_NO,
@@ -522,7 +524,7 @@
 	</select>
 
 	<select id="selectPlaceReviewsByCreatedByPagedSorted"
-		parameterType="map" resultType="PlaceReviewDTO">
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
 		r.COMMENT_NO,
 		r.LOG_NO,

@@ -433,6 +433,28 @@ body {
 	word-break: break-word;
 }
 
+.review-photo-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 8px;
+}
+
+.review-photo-item {
+	display: inline-flex;
+	border-radius: 10px;
+	overflow: hidden;
+	border: 1px solid var(--line-weak);
+	background: #fff;
+}
+
+.review-photo-thumb {
+	display: block;
+	width: 72px;
+	height: 72px;
+	object-fit: cover;
+}
+
 .review-date {
 	margin: 0;
 	color: var(--text-muted);

@@ -109,6 +109,29 @@
 											</span>
 										</div>
 										<p class="review-content"><c:out value="${review.commentContent}" /></p>
+										<c:if test="${not empty review.photoUrlList}">
+											<div class="review-photo-list">
+												<c:forEach var="photoUrl" items="${review.photoUrlList}">
+													<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+													<c:if test="${not empty photoUrl and fn:startsWith(photoUrl, '../')}">
+														<c:set var="resolvedPhotoUrl" value="${pageContext.request.contextPath}${fn:substringAfter(photoUrl, '..')}" />
+													</c:if>
+													<c:if test="${not empty photoUrl and fn:startsWith(photoUrl, '/')}">
+														<c:choose>
+															<c:when test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and fn:startsWith(photoUrl, pageContext.request.contextPath)}">
+																<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+															</c:when>
+															<c:otherwise>
+																<c:set var="resolvedPhotoUrl" value="${pageContext.request.contextPath}${photoUrl}" />
+															</c:otherwise>
+														</c:choose>
+													</c:if>
+													<a class="review-photo-item" href="${fn:escapeXml(resolvedPhotoUrl)}" target="_blank" rel="noopener noreferrer">
+														<img class="review-photo-thumb" src="${fn:escapeXml(resolvedPhotoUrl)}" alt="리뷰 사진" loading="lazy">
+													</a>
+												</c:forEach>
+											</div>
+										</c:if>
 										<p class="review-date">
 											<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
 										</p>
