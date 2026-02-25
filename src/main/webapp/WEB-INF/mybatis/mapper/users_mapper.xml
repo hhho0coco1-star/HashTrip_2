@@ -13,21 +13,27 @@
 		u.USER_UPDATED_AT AS userUpdatedAt,
 		u.USER_STATUS AS userStatus,
 		u.USER_NAME AS userName,
-		u.USER_GENDER AS userGender,
+		u.USER_GENDER AS
+		userGender,
 		u.USER_PHONENUMBER AS userPhoneNumber,
 		u.USER_REGISTRATION_NO AS userRegistrationNo,
-		u.USER_NICKNAME AS userNickName,
+		u.USER_NICKNAME AS
+		userNickName,
 		u.USER_PROFILE_IMG AS userProfileImg,
-		ua2.USER_ADDRESS_NO AS userAddressNo,
+		ua2.USER_ADDRESS_NO
+		AS userAddressNo,
 		ua2.USER_ZIP_CODE AS userZipCode,
 		ua2.USER_BASE_ADDRESS AS userBaseAddress,
-		ua2.USER_DETAIL_ADDRESS AS userDetailAddress
+		ua2.USER_DETAIL_ADDRESS AS
+		userDetailAddress
 		FROM USERS u
 		JOIN USER_AUTHENTICATION ua
-		ON ua.USER_NO = u.USER_NO
+		ON ua.USER_NO
+		= u.USER_NO
 		LEFT JOIN USER_ADDRESS ua2
 		ON ua2.USER_NO = u.USER_NO
-		WHERE ua.USER_AUTH_ID = #{value}
+		WHERE
+		ua.USER_AUTH_ID = #{value}
 	</select>
 
 	<select id="getUserTagsByAuthId" resultType="UserTagMapDTO"
@@ -40,12 +46,15 @@
 		tm.TAG_NAME,
 		tm.TAG_CATEGORY
 		FROM USER_TAG_MAP utm
-		JOIN USER_AUTHENTICATION ua
+		JOIN
+		USER_AUTHENTICATION ua
 		ON ua.USER_NO = utm.USER_NO
-		LEFT JOIN TAG_MASTER tm
+		LEFT JOIN TAG_MASTER
+		tm
 		ON tm.TAG_CODE = utm.TAG_CODE
 		WHERE ua.USER_AUTH_ID = #{value}
-		ORDER BY
+		ORDER
+		BY
 		tm.TAG_CATEGORY ASC, tm.TAG_NAME ASC, utm.MAPPING_NO ASC
 	</select>
 
@@ -55,7 +64,8 @@
 		TAG_NAME,
 		TAG_CATEGORY
 		FROM TAG_MASTER
-		ORDER BY TAG_CATEGORY ASC, TAG_NAME ASC
+		ORDER BY TAG_CATEGORY ASC,
+		TAG_NAME ASC
 	</select>
 
 	<select id="countTagMasterByTagCode" resultType="int"
@@ -75,13 +85,16 @@
 		ua.USER_NO,
 		#{questionId},
 		#{tagCode}
-		FROM USER_AUTHENTICATION ua
+		FROM
+		USER_AUTHENTICATION ua
 		WHERE ua.USER_AUTH_ID = #{authId}
-		AND NOT EXISTS (
+		AND NOT EXISTS
+		(
 		SELECT 1
 		FROM USER_TAG_MAP utm
 		WHERE utm.USER_NO = ua.USER_NO
-		AND utm.TAG_CODE = #{tagCode}
+		AND
+		utm.TAG_CODE = #{tagCode}
 		)
 	</insert>
 
@@ -90,7 +103,8 @@
 		USER_TAG_MAP
 		WHERE USER_NO = (
 		SELECT ua.USER_NO
-		FROM USER_AUTHENTICATION ua
+		FROM USER_AUTHENTICATION
+		ua
 		WHERE ua.USER_AUTH_ID = #{authId}
 		)
 		AND TAG_CODE = #{tagCode}
@@ -102,17 +116,19 @@
 		SET
 		u.USER_NICKNAME = #{userNickName},
 		u.USER_GENDER = CASE
-			WHEN u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
-			ELSE u.USER_GENDER
+		WHEN u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
+		ELSE u.USER_GENDER
 		END,
 		u.USER_PHONENUMBER = #{userPhoneNumber},
 		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
 		u.USER_UPDATED_AT = SYSTIMESTAMP
 		WHERE EXISTS (
 		SELECT 1
-		FROM USER_AUTHENTICATION ua
+		FROM
+		USER_AUTHENTICATION ua
 		WHERE ua.USER_NO = u.USER_NO
-		AND ua.USER_AUTH_ID = #{authId}
+		AND ua.USER_AUTH_ID
+		= #{authId}
 		)
 	</update>
 
@@ -121,14 +137,17 @@
 		USER_ADDRESS ua
 		USING (
 		SELECT ua2.USER_NO AS userNo
-		FROM USER_AUTHENTICATION ua2
+		FROM
+		USER_AUTHENTICATION ua2
 		WHERE ua2.USER_AUTH_ID = #{authId}
 		) src
-		ON (ua.USER_NO = src.userNo)
+		ON
+		(ua.USER_NO = src.userNo)
 		WHEN
 		MATCHED THEN
 		UPDATE SET
-		ua.USER_ZIP_CODE = #{userZipCode},
+		ua.USER_ZIP_CODE =
+		#{userZipCode},
 		ua.USER_BASE_ADDRESS = #{userBaseAddress},
 		ua.USER_DETAIL_ADDRESS = #{userDetailAddress}
 		WHEN NOT MATCHED THEN
@@ -180,11 +199,13 @@
 		#{userNo},
 		#{questionId},
 		#{tagCode}
-		FROM DUAL
+		FROM
+		DUAL
 		WHERE NOT EXISTS (
 		SELECT 1
 		FROM USER_TAG_MAP utm
-		WHERE utm.USER_NO = #{userNo}
+		WHERE utm.USER_NO =
+		#{userNo}
 		AND utm.TAG_CODE = #{tagCode}
 		)
 	</insert>
@@ -199,7 +220,8 @@
 		tm.TAG_NAME,
 		tm.TAG_CATEGORY
 		FROM USER_TAG_MAP utm
-		LEFT JOIN TAG_MASTER tm
+		LEFT JOIN
+		TAG_MASTER tm
 		ON tm.TAG_CODE = utm.TAG_CODE
 		WHERE utm.USER_NO = #{value}
 		ORDER BY
@@ -220,15 +242,18 @@
 		A.TAG_CODE,
 		B.TAG_NAME,
 		B.CATEGORY,
-		FROM USER_TAG_MAP A
+		FROM
+		USER_TAG_MAP A
 		JOIN TAG_MASTER B ON (A.TAG_CODE =
 		B.TAG_CODE)
-		WHERE A.USER_NO = #{userNo}
+		WHERE
+		A.USER_NO = #{userNo}
 		ORDER BY A.QUESTION_ID ASC
 	</select>
 
 	<delete id="deleteUserTags" parameterType="long">
-		DELETE FROM USER_TAG_MAP
+		DELETE FROM
+		USER_TAG_MAP
 		WHERE USER_NO = #{userNo}
 	</delete>
 
@@ -245,56 +270,64 @@
 		</foreach>
 		) A
 	</insert>
-	
+
 	<!-- 1:1 문의내용 저장 -->
-	<insert id="insertInquiry" parameterType="com.app.dto.InquiryDTO">
-    INSERT INTO PLACE_INQUIRY (
-        INQUIRY_NO,
-        USER_NO,
-        INQUIRY_TYPE,
-        INQUIRY_TITLE,
-        INQUIRY_CONTENT,
-        INQUIRY_EMAIL,
-        INQUIRY_DATE,
-        STATUS
-    ) VALUES (
-        SEQ_INQUIRY_NO.NEXTVAL,
-        #{userNo},
-        #{inquiryType},
-        #{inquiryTitle},
-        #{inquiryContent},
-        #{inquiryEmail},
-        SYSDATE,
-        'N'               )
+	<insert id="insertInquiry"
+		parameterType="com.app.dto.InquiryDTO">
+		INSERT INTO PLACE_INQUIRY (
+		INQUIRY_NO,
+		USER_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT,
+		INQUIRY_EMAIL,
+		INQUIRY_DATE,
+		STATUS
+		) VALUES (
+		SEQ_INQUIRY_NO.NEXTVAL,
+		#{userNo},
+		#{inquiryType},
+		#{inquiryTitle},
+		#{inquiryContent},
+		#{inquiryEmail},
+		SYSDATE,
+		'N' )
 	</insert>
-	
+
 	<!-- 1:1 문의 내용 확인 -->
-	<select id="selectMyInquiries" parameterType="long" resultType="com.app.dto.InquiryDTO">
-    SELECT 
-        INQUIRY_NO,
-        INQUIRY_TYPE,
-        INQUIRY_TITLE,
-        INQUIRY_DATE,
-        STATUS
-    FROM PLACE_INQUIRY
-    WHERE USER_NO = #{userNo}
-    ORDER BY INQUIRY_DATE DESC
+	<select id="selectMyInquiries" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT AS inquiryContent, 
+		INQUIRY_DATE,
+		REPLY_CONTENT, 
+		REPLY_DATE, 
+		STATUS
+		FROM PLACE_INQUIRY
+		WHERE USER_NO = #{userNo}
+		ORDER BY INQUIRY_DATE DESC
 	</select>
-	
+
 	<!-- 1:1 문의 내용 확인(상세) -->
-	<select id="selectInquiryDetail" parameterType="long" resultType="com.app.dto.InquiryDTO">
-    SELECT 
-        INQUIRY_NO,
-        INQUIRY_TYPE,
-        INQUIRY_TITLE,
-        INQUIRY_CONTENT,
-        INQUIRY_EMAIL,
-        INQUIRY_DATE,
-        REPLY_CONTENT,
-        REPLY_DATE,
-        STATUS
-    FROM PLACE_INQUIRY
-    WHERE INQUIRY_NO = #{inquiryNo}
+	<select id="selectInquiryDetail" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT,
+		INQUIRY_EMAIL,
+		INQUIRY_DATE,
+		REPLY_CONTENT,
+		REPLY_DATE,
+		STATUS
+		FROM PLACE_INQUIRY
+		WHERE INQUIRY_NO = #{inquiryNo}
 	</select>
+
+
 
 </mapper>

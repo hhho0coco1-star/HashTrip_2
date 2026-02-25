@@ -14,13 +14,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CommunityDTO;
+import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
@@ -125,6 +125,11 @@ public class MyPageController {
 		model.addAttribute("reviewPageSize", REVIEW_PAGE_SIZE);
 		model.addAttribute("reviewPreviewSize", REVIEW_PREVIEW_SIZE);
 		model.addAttribute("kakaoMapAppKey", kakaoMapAppKey);
+		
+		// 1:1 문의
+		List<InquiryDTO> inquiryList = usersService.getMyInquiries(usersDTO.getUserNo());
+	    model.addAttribute("inquiryList", inquiryList); // JSP로 전달
+	    
 		return "mypage";
 	}
 
