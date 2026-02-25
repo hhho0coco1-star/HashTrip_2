@@ -67,7 +67,13 @@ public class MainPageController {
 	}
 	
 	@GetMapping("/hashTrip/faq") // 메인 페이지 자주묻는질문
-	public String hashTrip_faq() {
+	public String hashTrip_faq(Model model, Authentication authentication) {
+		
+		String currentAuthId = resolveAuthenticatedAuthId(authentication);
+		
+		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		model.addAttribute("usersDTO", usersDTO);
+		
 	    return "mainPage/mainPage-faq"; 
 	}
 	

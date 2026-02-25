@@ -529,6 +529,7 @@
 					}
 				}
 
+				// ==================== 태그 관리 ====================
 				const container = document.getElementById("tag-managers");
 				if (!container) {
 					return;
