@@ -10,12 +10,14 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CommunityDTO;
@@ -25,6 +27,7 @@ import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.dto.WishListDTO;
 import com.app.service.PlaceService;
+import com.app.service.ProfileImageStorageService;
 import com.app.service.UsersService;
 import com.app.service.WishListService;
 import com.app.service.impl.CommunityService;
@@ -46,6 +49,9 @@ public class MyPageController {
 
 	@Autowired
 	private CommunityService communityService;
+
+	@Autowired
+	private ProfileImageStorageService profileImageStorageService;
 
 	@GetMapping({ "/mypage", "/mypage/", "/myPage", "/my-page", "/hashTrip/mypage" })
 	public String mypage(
@@ -144,6 +150,7 @@ public class MyPageController {
 	public String updateMypageProfile(
 			Authentication authentication,
 			@ModelAttribute("usersDTO") UsersDTO usersDTO,
+			@RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
 			RedirectAttributes redirectAttributes,
 			Model model) {
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
@@ -151,13 +158,49 @@ public class MyPageController {
 			return "redirect:/auth/login";
 		}
 
+		UsersDTO currentUsersDTO = usersService.getUserByAuthId(currentAuthId);
+		String savedProfileImagePath = null;
 		try {
+			savedProfileImagePath = profileImageStorageService.store(profileImage);
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				usersDTO.setUserProfileImg(savedProfileImagePath);
+			}
+
 			usersService.updateProfileByAuthId(currentAuthId, usersDTO);
+			if (StringUtils.hasText(savedProfileImagePath)
+					&& currentUsersDTO != null
+					&& StringUtils.hasText(currentUsersDTO.getUserProfileImg())
+					&& !savedProfileImagePath.equals(currentUsersDTO.getUserProfileImg())) {
+				profileImageStorageService.deleteIfManaged(currentUsersDTO.getUserProfileImg());
+			}
 			redirectAttributes.addFlashAttribute("message", "회원 정보가 수정되었습니다.");
 			return "redirect:/mypage";
 		} catch (IllegalArgumentException e) {
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+			}
+			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
+				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
+				if (fallbackUser != null) {
+					usersDTO.setUserProfileImg(fallbackUser.getUserProfileImg());
+				}
+			}
 			model.addAttribute("usersDTO", usersDTO);
 			model.addAttribute("errorMessage", e.getMessage());
+			model.addAttribute("currentAuthId", currentAuthId);
+			return "mypage-edit";
+		} catch (Exception e) {
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+			}
+			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
+				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
+				if (fallbackUser != null) {
+					usersDTO.setUserProfileImg(fallbackUser.getUserProfileImg());
+				}
+			}
+			model.addAttribute("usersDTO", usersDTO);
+			model.addAttribute("errorMessage", "회원정보 수정 중 오류가 발생했습니다.");
 			model.addAttribute("currentAuthId", currentAuthId);
 			return "mypage-edit";
 		}

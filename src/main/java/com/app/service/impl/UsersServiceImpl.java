@@ -151,6 +151,7 @@ public class UsersServiceImpl implements UsersService {
 		String userNickName = safeText(users.getUserNickName(), 50);
 		String userPhone = safeText(users.getUserPhoneNumber(), 50);
 		String userRegNo = safeText(users.getUserRegistrationNo(), 100);
+		String userProfileImg = safeText(users.getUserProfileImg(), 255);
 		String zipCode = safeText(users.getUserZipCode(), 6);
 		String baseAddress = safeText(users.getUserBaseAddress(), 255);
 		String detailAddress = safeText(users.getUserDetailAddress(), 255);
@@ -168,6 +169,7 @@ public class UsersServiceImpl implements UsersService {
 		normalized.setUserGender(gender);
 		normalized.setUserPhoneNumber(userPhone);
 		normalized.setUserRegistrationNo(userRegNo);
+		normalized.setUserProfileImg(userProfileImg);
 		normalized.setUserZipCode(zipCode);
 		normalized.setUserBaseAddress(baseAddress);
 		normalized.setUserDetailAddress(detailAddress);

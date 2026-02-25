@@ -105,6 +105,7 @@
 		u.USER_GENDER = #{userGender},
 		u.USER_PHONENUMBER = #{userPhoneNumber},
 		u.USER_REGISTRATION_NO = #{userRegistrationNo},
+		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
 		u.USER_UPDATED_AT = SYSTIMESTAMP
 		WHERE EXISTS (
 		SELECT 1

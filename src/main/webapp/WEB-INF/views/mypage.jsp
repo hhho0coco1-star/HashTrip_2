@@ -19,9 +19,27 @@
 			<c:if test="${empty displayName}">
 				<c:set var="displayName" value="${currentAuthId}" />
 			</c:if>
+			<c:set var="profileImageUrl" value="${usersDTO.userProfileImg}" />
+			<c:if test="${not empty profileImageUrl and fn:startsWith(profileImageUrl, '/')}">
+				<c:choose>
+					<c:when test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and !fn:startsWith(profileImageUrl, pageContext.request.contextPath)}">
+						<c:set var="profileImageUrl" value="${pageContext.request.contextPath}${profileImageUrl}" />
+					</c:when>
+					<c:otherwise>
+						<c:set var="profileImageUrl" value="${profileImageUrl}" />
+					</c:otherwise>
+				</c:choose>
+			</c:if>
 
 			<section class="profile-card">
-				<div id="my-av" class="profile-avatar">${fn:substring(displayName, 0, 1)}</div>
+				<div id="my-av" class="profile-avatar">
+					<c:choose>
+						<c:when test="${not empty profileImageUrl}">
+							<img class="profile-avatar-image" src="${fn:escapeXml(profileImageUrl)}" alt="프로필 사진" />
+						</c:when>
+						<c:otherwise>${fn:substring(displayName, 0, 1)}</c:otherwise>
+					</c:choose>
+				</div>
 				<h2 class="profile-name"><c:out value="${displayName}" /></h2>
 				<div id="my-badge" class="profile-badge">🧭 나의 여행 성향</div>
 				<p id="my-desc" class="profile-desc">태그를 추가/삭제하면 여행 매칭 추천에 반영됩니다.</p>
@@ -499,7 +517,7 @@
 					const avatar = document.getElementById("my-av");
 					const badge = document.getElementById("my-badge");
 					const desc = document.getElementById("my-desc");
-					if (avatar) {
+					if (avatar && !avatar.querySelector("img")) {
 						avatar.textContent = myType.emoji;
 						avatar.style.background = "rgba(255,255,255,0.2)";
 					}
