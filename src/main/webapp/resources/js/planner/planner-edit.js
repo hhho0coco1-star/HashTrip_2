@@ -610,10 +610,37 @@
             alert("장소를 최소 1개 이상 추가한 뒤 여행 완료를 할 수 있어요.");
             return;
         }
-        var steps = places.map(function (p, i) {
-            return (i + 1) + ". " + escapeHtml(p.placeName || "장소");
-        }).join(" → ");
-        summaryEl.innerHTML = "<p class=\"planner-complete-route-text\">" + steps + "</p>";
+
+        // 일차별로 묶어서 "1일차 (2/26) : 장소A → 장소B" 형식으로 표시
+        var byDay = {};
+        places.forEach(function (p) {
+            var dayNum = p.dayNumber || 1;
+            if (!byDay[dayNum]) byDay[dayNum] = [];
+            byDay[dayNum].push(p);
+        });
+        var dayKeys = Object.keys(byDay).map(function (k) { return parseInt(k, 10); }).sort(function (a, b) { return a - b; });
+
+        var html = dayKeys.map(function (dayNum) {
+            var list = byDay[dayNum] || [];
+            if (list.length === 0) return "";
+            var rawDate = (list[0].date || "").toString();
+            var displayDate = "";
+            if (rawDate) {
+                var d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                    var mm = d.getMonth() + 1;
+                    var dd = d.getDate();
+                    displayDate = mm + "/" + dd;
+                }
+            }
+            var header = dayNum + "일차" + (displayDate ? " (" + displayDate + ")" : "");
+            var stepNames = list.map(function (p, idx) {
+                return (idx + 1) + ". " + escapeHtml(p.placeName || "장소");
+            }).join(" → ");
+            return "<p class=\"planner-complete-route-text\">" + header + " : " + stepNames + "</p>";
+        }).filter(function (s) { return s; }).join("");
+
+        summaryEl.innerHTML = html;
         var titleInput = id("completeReviewPlanTitle");
         var headerTitle = id("planTitle");
         if (titleInput && headerTitle) titleInput.value = headerTitle.value || "";

@@ -57,6 +57,13 @@
                     <button type="submit" id="btnSave" class="planner-btn planner-btn-save">저장</button>
                     <button type="button" id="btnCompleteReview" class="planner-btn planner-btn-complete"><c:choose><c:when test="${hasCompleteReview}">리뷰 수정</c:when><c:otherwise>여행 완료! 리뷰 작성하기</c:otherwise></c:choose></button>
                 </div>
+
+                <c:if test="${not empty plan.planStartDate}">
+                    <p class="planner-plan-created-at">
+                        작성일
+                        <fmt:formatDate value="${plan.planStartDate}" pattern="dd.MM.yy"/>
+                    </p>
+                </c:if>
             </form>
         </div>
 

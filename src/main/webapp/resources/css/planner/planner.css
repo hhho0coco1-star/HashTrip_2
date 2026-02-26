@@ -932,6 +932,12 @@
     align-items: center;
 }
 
+.planner-plan-created-at {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
 .planner-actions .btn-cta-outline,
 .planner-edit-actions .btn-cta-outline,
 .planner-edit-header .btn-cta-outline {

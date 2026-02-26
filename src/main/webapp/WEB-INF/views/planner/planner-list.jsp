@@ -122,6 +122,12 @@
                                             </div>
                                         </div>
                                     </c:if>
+                                    <c:if test="${not empty plan.planStartDate}">
+                                        <div class="planner-plan-meta">
+                                            작성일
+                                            <fmt:formatDate value="${plan.planStartDate}" pattern="dd.MM.yy"/>
+                                        </div>
+                                    </c:if>
                                 </a>
                                 <form class="planner-plan-delete-form" action="${pageContext.request.contextPath}/planner/${plan.planNo}/delete" method="post">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
