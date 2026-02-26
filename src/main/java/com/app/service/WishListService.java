@@ -20,6 +20,8 @@ public interface WishListService {
 
 	public boolean deleteWishList(String authId, Long wishNo) throws Exception;
 
+	public boolean deleteWishListByPlace(String authId, Long placeNo) throws Exception;
+
 	public int getWishUserCountByPlaceNo(Long placeNo) throws Exception;
 
 	public int getWishPlaceCountByAuthId(String authId) throws Exception;
