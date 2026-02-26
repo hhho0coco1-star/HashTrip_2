@@ -65,14 +65,19 @@ public class RouteController {
         }
 
         List<UserTagMapDTO> userTags = resolveCurrentUserTags(authentication);
+        List<String> allTagNames = extractTopTagNames(userTags, Integer.MAX_VALUE);
+        List<String> previewTagNames = allTagNames.size() > 5
+                ? new ArrayList<>(allTagNames.subList(0, 5))
+                : new ArrayList<>(allTagNames);
         List<RouteDTO> routes = routeService.getAllRoutes();
         routes = excludeCurrentUserRoutes(routes, currentUser);
         Integer similarityPct = applySimilarityScores(routes, authentication, userTags);
 
         model.addAttribute("routes", routes);
         model.addAttribute("similarityPct", similarityPct);
-        model.addAttribute("myTagCount", userTags.size());
-        model.addAttribute("myTopTags", extractTopTagNames(userTags, 5));
+        model.addAttribute("myTagCount", allTagNames.size());
+        model.addAttribute("myTopTags", previewTagNames);
+        model.addAttribute("myAllTags", allTagNames);
         model.addAttribute("categories", routeService.getAllTagCategories());
         model.addAttribute("preferenceCategories", routeService.getPreferenceCategories());
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
@@ -122,6 +127,13 @@ public class RouteController {
         }
         applySimilarityScores(routes, authentication);
         return routes;
+    }
+
+    @GetMapping("/preference-tags")
+    @ResponseBody
+    public List<TagMasterDTO> preferenceTagsByCategory(
+            @RequestParam(required = false) String category) {
+        return routeService.getPreferenceTagsByCategory(category);
     }
 
     /**
