@@ -264,6 +264,8 @@ public class RouteService {
         route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
         route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
         route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
+        route.setPlanStartDate(travelPlan.getPlanStartDate());
+        route.setPlanEndDate(travelPlan.getPlanEndDate());
         route.setLikeCount(defaultIfNull(travelPlan.getLikeCount(), 0));
         route.setSavedCount(defaultIfNull(travelPlan.getSavedCount(), 0));
         route.setMatchScore(defaultIfNull(travelPlan.getMatchScore(), 70));

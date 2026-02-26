@@ -550,7 +550,10 @@
         grid.innerHTML = routes.map(route => {
             const type = typeMap[route.typeId] || {};
             const sim = route.matchScore;
-            const barClr = sim >= 80 ? 'var(--green)' : 'var(--primary-blue)';
+            const hasSim = sim !== null && sim !== undefined;
+            const simValue = Number(sim);
+            const normalizedSim = Number.isFinite(simValue) ? simValue : 0;
+            const barClr = normalizedSim >= 80 ? 'var(--green)' : 'var(--primary-blue)';
             const representativeImageUrl = normalizeRepresentativeImageUrl(route.representativeImageUrl);
             const avatarInner = representativeImageUrl
                 ? `<img src="\${escapeHtml(representativeImageUrl)}" alt="대표 여행지 사진" loading="lazy">`
@@ -571,9 +574,9 @@
                     <div class="traveler-info">
                         <div class="t-name">\${safeUserName}</div>
                     </div>
-                    \${sim ? `<div class="match-pct"><div class="match-num" style="color:\${barClr}">\${sim}%</div><div class="match-label">취향 매칭</div></div>` : ''}
+                    \${hasSim ? `<div class="match-pct"><div class="match-num" style="color:\${barClr}">\${normalizedSim}%</div><div class="match-label">취향 매칭</div></div>` : ''}
                 </div>
-                \${sim ? `<div class="match-bar-wrap"><div class="match-bar-bg"><div class="match-bar-fill" style="width:\${sim}%;background:\${barClr}"></div></div></div>` : ''}
+                \${hasSim ? `<div class="match-bar-wrap"><div class="match-bar-bg"><div class="match-bar-fill" style="width:\${normalizedSim}%;background:\${barClr}"></div></div></div>` : ''}
                 <div class="route-body">
                     <div class="route-title">\${safeTitle}</div>
                     <div class="route-desc">\${safeDescription}</div>

@@ -1,5 +1,6 @@
 package com.app.dto;
 
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,8 @@ public class RouteDTO {
     private String typeId;
     private String title;
     private String description;
+    private Date planStartDate;
+    private Date planEndDate;
     private List<String> steps;
     /** 여행지별 이름·썸네일 (placeName, placeThumbnailUrl) */
     private List<Map<String, String>> stepDetails;
@@ -119,6 +122,22 @@ public class RouteDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Date getPlanStartDate() {
+        return planStartDate;
+    }
+
+    public void setPlanStartDate(Date planStartDate) {
+        this.planStartDate = planStartDate;
+    }
+
+    public Date getPlanEndDate() {
+        return planEndDate;
+    }
+
+    public void setPlanEndDate(Date planEndDate) {
+        this.planEndDate = planEndDate;
     }
 
     public List<String> getSteps() {

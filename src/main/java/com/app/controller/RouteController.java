@@ -2,6 +2,7 @@ package com.app.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -168,7 +169,10 @@ public class RouteController {
         }
 
         List<String> selectedTagNames = resolveTagNamesByCodes(placeTagCodes);
-        if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
+        String authId = resolveAuthenticatedAuthId(authentication);
+        if (authId == null) {
+            applyGuestRouteDefaults(routes);
+        } else if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
             routeService.applyPlaceTagScores(routes, selectedTagNames);
         } else {
             applySimilarityScores(routes, authentication);
@@ -471,7 +475,8 @@ public class RouteController {
 
         String authId = resolveAuthenticatedAuthId(authentication);
         if (authId == null) {
-            return null;
+            applyGuestRouteDefaults(routes);
+            return 0;
         }
 
         UsersDTO currentUser = usersService.getUserByAuthId(authId);
@@ -497,6 +502,29 @@ public class RouteController {
             }
         }
         return bestScore == 0 ? null : bestScore;
+    }
+
+    private void applyGuestRouteDefaults(List<RouteDTO> routes) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+
+        for (RouteDTO route : routes) {
+            if (route != null) {
+                route.setMatchScore(0);
+            }
+        }
+
+        routes.sort(
+                Comparator.comparing(
+                        (RouteDTO route) -> route == null ? null : route.getPlanStartDate(),
+                        Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(
+                                route -> route == null ? null : route.getPlanEndDate(),
+                                Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(
+                                route -> route == null ? null : route.getId(),
+                                Comparator.nullsLast(Comparator.reverseOrder())));
     }
 
     private List<RouteDTO> excludeCurrentUserRoutes(List<RouteDTO> routes, UsersDTO currentUser) {
