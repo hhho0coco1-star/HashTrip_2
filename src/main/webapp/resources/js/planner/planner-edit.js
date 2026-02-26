@@ -695,9 +695,12 @@
                 if (!exp) return;
                 var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
                 var urls = data.photoUrls || [];
-                var photosHtml = urls.length === 0
+                var validUrls = Array.isArray(urls)
+                    ? urls.filter(function (u) { return isValidImageUrl(u); })
+                    : [];
+                var photosHtml = validUrls.length === 0
                     ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
-                    : urls.slice(0, 10).map(function (url) {
+                    : validUrls.slice(0, 10).map(function (url) {
                         return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
                     }).join("");
                 var reviews = data.reviews || [];
@@ -728,13 +731,8 @@
                     }
 
                     // 2) 없으면 photoUrls 중 유효한 URL을 하나 선택
-                    if (!heroUrl && Array.isArray(urls) && urls.length > 0) {
-                        for (var i = 0; i < urls.length; i += 1) {
-                            if (isValidImageUrl(urls[i])) {
-                                heroUrl = urls[i].trim();
-                                break;
-                            }
-                        }
+                    if (!heroUrl && Array.isArray(validUrls) && validUrls.length > 0) {
+                        heroUrl = validUrls[0].trim();
                     }
 
                     if (!heroUrl) return;
@@ -750,7 +748,30 @@
                     }
                 })();
 
-                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                    detailLinkHtml +
+                    "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                    "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div>" +
+                    "<div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div>" +
+                    "</div>";
+
+                var selectBtn = exp.querySelector(".planner-expanded-select-btn");
+                if (selectBtn) {
+                    selectBtn.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        // 장소 추가 모달의 하단 "선택 완료" 버튼과 동일한 동작
+                        if (typeof confirmPlace === "function") {
+                            confirmPlace();
+                        } else {
+                            var footerBtn = typeof id === "function" ? id("confirmPlace") : document.getElementById("confirmPlace");
+                            if (footerBtn && !footerBtn.disabled) {
+                                footerBtn.click();
+                            }
+                        }
+                    });
+                }
             })
             .catch(function () {
                 var exp = cardEl.querySelector(".planner-replace-card-expanded");
