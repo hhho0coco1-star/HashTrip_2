@@ -6,22 +6,38 @@
 	<select id="getCommunityReviewsByPlanNo" parameterType="long"
 		resultType="CommunityDTO">
 		SELECT
-			c.review_no,
-			c.plan_no,
-			tp.plan_title,
-			c.user_no,
-			c.review_content,
-			c.review_rating AS rating,
-			NVL(u.user_nickname, u.user_name) AS created_by,
-			c.created_at AS created_at
-		FROM Community c
-		LEFT JOIN Travel_Plans tp
-			ON tp.plan_no = c.plan_no
-		LEFT JOIN Users u
-			ON u.user_no = c.user_no
-		WHERE c.plan_no = #{planNo}
-		  AND c.review_content IS NOT NULL
-		ORDER BY c.review_no DESC
+			r.review_no,
+			r.plan_no,
+			r.plan_title,
+			r.user_no,
+			r.review_content,
+			r.rating,
+			r.created_by,
+			r.created_at
+		FROM (
+			SELECT
+				c.review_no,
+				c.plan_no,
+				tp.plan_title,
+				c.user_no,
+				c.review_content,
+				c.review_rating AS rating,
+				NVL(u.user_nickname, u.user_name) AS created_by,
+				c.created_at AS created_at,
+				ROW_NUMBER() OVER (
+					PARTITION BY c.user_no
+					ORDER BY c.review_no DESC
+				) AS rn
+			FROM Community c
+			LEFT JOIN Travel_Plans tp
+				ON tp.plan_no = c.plan_no
+			LEFT JOIN Users u
+				ON u.user_no = c.user_no
+			WHERE c.plan_no = #{planNo}
+			  AND c.review_content IS NOT NULL
+		) r
+		WHERE r.rn = 1
+		ORDER BY r.review_no DESC
 	</select>
 
 	<select id="countCommunityReviewsByAuthId" parameterType="string" resultType="int">
@@ -81,21 +97,26 @@
 	</select>
 
 	<select id="getCommunityReviewByPlanNoAndUserNo" parameterType="map" resultType="CommunityDTO">
-		SELECT
-			c.review_no,
-			c.plan_no,
-			tp.plan_title,
-			c.user_no,
-			c.review_content,
-			c.review_rating AS rating,
-			NVL(u.user_nickname, u.user_name) AS created_by,
-			c.created_at AS created_at
-		FROM Community c
-		LEFT JOIN Travel_Plans tp ON tp.plan_no = c.plan_no
-		LEFT JOIN Users u ON u.user_no = c.user_no
-		WHERE c.plan_no = #{planNo}
-		  AND c.user_no = #{userNo}
-		  AND c.review_content IS NOT NULL
+		SELECT *
+		FROM (
+			SELECT
+				c.review_no,
+				c.plan_no,
+				tp.plan_title,
+				c.user_no,
+				c.review_content,
+				c.review_rating AS rating,
+				NVL(u.user_nickname, u.user_name) AS created_by,
+				c.created_at AS created_at
+			FROM Community c
+			LEFT JOIN Travel_Plans tp ON tp.plan_no = c.plan_no
+			LEFT JOIN Users u ON u.user_no = c.user_no
+			WHERE c.plan_no = #{planNo}
+			  AND c.user_no = #{userNo}
+			  AND c.review_content IS NOT NULL
+			ORDER BY c.review_no DESC
+		)
+		WHERE ROWNUM = 1
 	</select>
 
 	<update id="updateCommunityReview" parameterType="CommunityDTO">
@@ -116,6 +137,12 @@
 			#{reviewNo}, #{planNo}, #{userNo}, #{reviewContent}, #{rating,jdbcType=NUMERIC}, SYSDATE
 		)
 	</insert>
+
+	<delete id="deleteCommunityReview" parameterType="map">
+		DELETE FROM Community
+		WHERE review_no = #{reviewNo}
+		  AND user_no = #{userNo}
+	</delete>
 
     <delete id="deleteCommunityReviewsByPlanNo" parameterType="long">
         DELETE FROM Community

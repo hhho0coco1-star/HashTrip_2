@@ -96,6 +96,16 @@
     <section class="review-container">
         <h3 style="font-family:'Gmarket Sans'; margin-bottom:24px;">여행자 리뷰 <span style="color:var(--primary-blue);" id="review-count">${fn:length(reviews)}</span></h3>
 
+        <c:if test="${not empty currentUserNo}">
+            <div id="my-review-section" class="my-review-section ${empty myReview ? 'is-hidden' : ''}">
+                <div class="my-review-title">내 리뷰가 등록되어 있어요</div>
+                <button type="button"
+                        id="review-delete-btn"
+                        class="btn-detail-action btn-review-delete"
+                        onclick="deleteMyReview(${route.id})">내 리뷰 삭제</button>
+            </div>
+        </c:if>
+
         <form id="review-form" class="review-form" onsubmit="submitReview(event, ${route.id})">
             <textarea id="review-content" class="review-input" placeholder="코스 경험을 공유해 주세요." maxlength="2000" required></textarea>
             <div class="review-form-row">
@@ -110,7 +120,14 @@
                         <button type="button" class="star-picker-btn is-active" data-value="5" aria-label="5점">★</button>
                     </div>
                 </div>
-                <button type="submit" class="btn-detail-action btn-review-main">리뷰 등록</button>
+                <div class="review-form-actions">
+                    <button type="submit" id="review-submit-btn" class="btn-detail-action btn-review-main">
+                        <c:choose>
+                            <c:when test="${not empty myReview}">리뷰 수정</c:when>
+                            <c:otherwise>리뷰 등록</c:otherwise>
+                        </c:choose>
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -121,7 +138,7 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="review" items="${reviews}">
-                        <div class="review-item">
+                        <div class="review-item" data-review-no="${review.reviewNo}">
                             <div class="review-head">
                                 <strong><c:out value="${not empty review.createdBy ? review.createdBy : '익명'}"/></strong>
                                 <span class="review-stars" aria-label="별점 ${empty review.rating ? 0 : review.rating}점">
@@ -165,9 +182,11 @@
     const csrfHeader = '${_csrf.headerName}';
     const csrfToken = '${_csrf.token}';
     const REVIEW_MAX_STAR = 5;
+    let myReviewNo = <c:choose><c:when test="${not empty myReview and not empty myReview.reviewNo}">${myReview.reviewNo}</c:when><c:otherwise>null</c:otherwise></c:choose>;
 
     document.addEventListener('DOMContentLoaded', function () {
         initReviewStarPicker();
+        updateReviewFormMode(myReviewNo != null);
     });
 
     function toAbsolutePath(path) {
@@ -245,13 +264,47 @@
             }
 
             prependReview(data.review);
+            if (data.review && data.review.reviewNo != null) {
+                myReviewNo = data.review.reviewNo;
+            }
+            updateReviewFormMode(true);
             document.getElementById('review-count').textContent = data.reviewCount;
             contentInput.value = '';
             ratingInput.value = '5';
             applyReviewStarPicker(5);
-            showToast('리뷰가 등록되었습니다.');
+            showToast(data && data.message ? data.message : (data.updated ? '리뷰가 수정되었습니다.' : '리뷰가 등록되었습니다.'));
         } catch (e) {
             showToast('리뷰 저장 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function deleteMyReview(routeId) {
+        if (!myReviewNo) {
+            showToast('삭제할 내 리뷰가 없습니다.');
+            return;
+        }
+
+        if (!confirm('내 리뷰를 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const result = await postForm(contextPath + '/routes/' + routeId + '/reviews/delete', '');
+            const data = result.data;
+
+            if (handleLoginRedirect(data)) return;
+            if (!result.response.ok || !data.success) {
+                showToast(data && data.message ? data.message : '리뷰 삭제 중 오류가 발생했습니다.');
+                return;
+            }
+
+            removeReviewByNo(data.deletedReviewNo || myReviewNo);
+            myReviewNo = null;
+            updateReviewFormMode(false);
+            document.getElementById('review-count').textContent = data.reviewCount;
+            showToast(data && data.message ? data.message : '내 리뷰를 삭제했습니다.');
+        } catch (e) {
+            showToast('리뷰 삭제 중 오류가 발생했습니다.');
         }
     }
 
@@ -346,6 +399,14 @@
         const empty = list.querySelector('.review-empty');
         if (empty) empty.remove();
 
+        const reviewNo = review && review.reviewNo != null ? String(review.reviewNo) : '';
+        if (reviewNo) {
+            const existing = list.querySelector('.review-item[data-review-no="' + reviewNo + '"]');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
         const name = review && review.createdBy ? review.createdBy : '익명';
         const rating = normalizeStarRating(review && review.rating ? review.rating : 0);
         const content = review && review.reviewContent ? review.reviewContent : '';
@@ -353,6 +414,9 @@
 
         const item = document.createElement('div');
         item.className = 'review-item';
+        if (reviewNo) {
+            item.setAttribute('data-review-no', reviewNo);
+        }
         item.innerHTML = ''
             + '<div class="review-head">'
             + '<strong>' + escapeHtml(name) + '</strong>'
@@ -362,6 +426,38 @@
             + '<div class="review-content">' + escapeHtml(content) + '</div>';
 
         list.prepend(item);
+    }
+
+    function removeReviewByNo(reviewNo) {
+        const list = document.getElementById('review-list');
+        if (!list) return;
+
+        const safeReviewNo = reviewNo != null ? String(reviewNo) : '';
+        if (safeReviewNo) {
+            const item = list.querySelector('.review-item[data-review-no="' + safeReviewNo + '"]');
+            if (item) {
+                item.remove();
+            }
+        }
+
+        if (!list.querySelector('.review-item')) {
+            list.innerHTML = '<div class="review-empty">첫 리뷰를 작성해보세요.</div>';
+        }
+    }
+
+    function updateReviewFormMode(hasReview) {
+        const submitBtn = document.getElementById('review-submit-btn');
+        const deleteBtn = document.getElementById('review-delete-btn');
+        const myReviewSection = document.getElementById('my-review-section');
+        if (submitBtn) {
+            submitBtn.textContent = hasReview ? '리뷰 수정' : '리뷰 등록';
+        }
+        if (myReviewSection) {
+            myReviewSection.classList.toggle('is-hidden', !hasReview);
+        }
+        if (deleteBtn) {
+            deleteBtn.disabled = !hasReview;
+        }
     }
 
     function initReviewStarPicker() {

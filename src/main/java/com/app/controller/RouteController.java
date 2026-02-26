@@ -92,11 +92,17 @@ public class RouteController {
         }
 
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        Long currentUserNo = currentUser == null ? null : currentUser.getUserNo();
+        CommunityDTO myReview = currentUserNo == null
+                ? null
+                : communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUserNo);
         model.addAttribute("route", route);
         model.addAttribute("reviews", communityService.getCommunityReviewsByPlanNo(routeId));
         model.addAttribute("routePlanDetails", planDetailService.findPlanDetails(routeId));
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         model.addAttribute("categories", routeService.getAllTagCategories());
+        model.addAttribute("currentUserNo", currentUserNo);
+        model.addAttribute("myReview", myReview);
         model.addAttribute("currentAuthId", currentUser == null ? null : resolveAuthenticatedAuthId(authentication));
         model.addAttribute("myPlans", currentUser == null
                 ? Collections.emptyList()
@@ -237,12 +243,58 @@ public class RouteController {
         }
 
         try {
-            CommunityDTO savedReview = communityService.addCommunityReview(routeId, currentUser.getUserNo(), reviewContent, rating);
+            CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            boolean updated = existingReview != null && existingReview.getReviewNo() != null;
+
+            CommunityDTO savedReview;
+            if (updated) {
+                communityService.updateCommunityReview(existingReview.getReviewNo(), currentUser.getUserNo(), reviewContent, rating);
+                savedReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            } else {
+                savedReview = communityService.addCommunityReview(routeId, currentUser.getUserNo(), reviewContent, rating);
+            }
+
             List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(routeId);
 
             response.put("success", true);
             response.put("review", savedReview);
-            response.put("reviewCount", reviews.size());
+            response.put("reviewCount", reviews == null ? 0 : reviews.size());
+            response.put("updated", updated);
+            response.put("message", updated ? "리뷰를 수정했습니다." : "리뷰를 등록했습니다.");
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/{routeId}/reviews/delete")
+    @ResponseBody
+    public Map<String, Object> deleteMyReview(
+            @PathVariable Long routeId,
+            Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        if (currentUser == null || currentUser.getUserNo() == null) {
+            return loginRequiredResponse();
+        }
+
+        try {
+            CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            if (existingReview == null || existingReview.getReviewNo() == null) {
+                response.put("success", false);
+                response.put("message", "삭제할 내 리뷰가 없습니다.");
+                return response;
+            }
+
+            Long deletedReviewNo = existingReview.getReviewNo();
+            communityService.deleteCommunityReview(deletedReviewNo, currentUser.getUserNo());
+            List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(routeId);
+
+            response.put("success", true);
+            response.put("deletedReviewNo", deletedReviewNo);
+            response.put("reviewCount", reviews == null ? 0 : reviews.size());
+            response.put("message", "내 리뷰를 삭제했습니다.");
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", e.getMessage());
