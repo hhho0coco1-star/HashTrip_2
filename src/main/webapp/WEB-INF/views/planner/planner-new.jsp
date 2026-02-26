@@ -66,10 +66,9 @@
                                     <input type="radio" name="tagMode" value="myTags" checked />
                                     <span class="planner-option-card-inner">나의 태그로 검색</span>
                                 </label>
-                                <label class="planner-option-card planner-option-disabled" title="준비 중입니다. 곧 이용하실 수 있어요.">
-                                    <input type="radio" name="tagMode" value="newTags" disabled />
-                                    <span class="planner-option-card-inner">새로운 태그로 검색 <span class="planner-option-badge">준비 중</span></span>
-                                </label>
+                                <a href="${pageContext.request.contextPath}/hashTrip/analysis" class="planner-option-card planner-option-card-link" title="성향테스트로 이동">
+                                    <span class="planner-option-card-inner">새로운 태그 만들기 <span class="planner-option-badge">성향테스트 →</span></span>
+                                </a>
                             </div>
                             <p class="planner-tooltip-hint">나의 태그는 마이페이지에서 설정한 취향 태그로, 맞는 루트를 추천받을 수 있어요.</p>
                             <div class="planner-wizard-nav">

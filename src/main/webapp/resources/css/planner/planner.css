@@ -321,7 +321,7 @@
 
 .planner-option-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 12px;
 }
 
@@ -366,6 +366,29 @@
 .planner-option-card.planner-option-disabled:hover .planner-option-card-inner {
     border-color: #e2e8f0;
     background: #f8fafc;
+}
+
+.planner-option-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.planner-option-card-link .planner-option-card-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.planner-option-card-link .planner-option-badge {
+    flex-shrink: 0;
+}
+
+.planner-option-card-link:hover .planner-option-card-inner {
+    border-color: var(--primary-blue);
+    background: rgba(91, 141, 238, .1);
+    color: var(--accent-blue);
 }
 
 .planner-step {
