@@ -364,7 +364,34 @@
 		INQUIRY_EMAIL AS inquiryEmail,
 		STATUS AS status
 		FROM PLACE_INQUIRY
-		WHERE INQUIRY_NO = #{inquiryNo}
+		WHERE
+		INQUIRY_NO = #{inquiryNo}
+	</select>
+
+	<!-- 성향 분석 결과 전달 -->
+	<select id="getTravelAnalysisResult" parameterType="string"
+		resultType="map">
+		SELECT
+		ts.USER_NO,
+		am_energy.RESULT_TEXT AS ENERGY_TEXT,
+		am_plan.RESULT_TEXT AS PLAN_TEXT,
+		am_place.RESULT_TEXT AS PLACE_TEXT,
+		am_plan.RESULT_TEXT, ' ', am_place.RESULT_TEXT)
+		(am_energy.RESULT_TEXT || ' ' || am_plan.RESULT_TEXT || ' ' || am_place.RESULT_TEXT) AS
+		FINAL_FULL_SENTENCE
+		FROM
+		TRAVEL_STYLES ts
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_energy
+		ON am_energy.CATEGORY = 'ENERGY'
+		AND am_energy.COMBINATION_KEY = ts.Q9_ENERGY
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_plan
+		ON am_plan.CATEGORY = 'PLAN'
+		AND am_plan.COMBINATION_KEY = ts.Q2_PLAN
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_place
+		ON am_place.CATEGORY = 'PLACE'
+		AND am_place.COMBINATION_KEY = ts.Q1_PLACE
+		WHERE
+		ts.USER_NO = #{user_no}
 	</select>
 
 </mapper>
