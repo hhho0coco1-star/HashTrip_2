@@ -55,7 +55,7 @@ http://www.springframework.org/schema/context/spring-context.xsd">
 
 	<tx:annotation-driven transaction-manager="transactionManager" />
 	
-	<context:property-placeholder location="classpath:oauth2.properties" ignore-resource-not-found="true"/>
+	<context:property-placeholder location="classpath:oauth2.properties,classpath:mail.properties,classpath:mail-local.properties" ignore-resource-not-found="true"/>
 	
 	<context:component-scan	base-package="com.app.service"/>
 	<context:component-scan	base-package="com.app.dao"/>

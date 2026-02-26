@@ -78,6 +78,7 @@ public class AuthController {
     public String signupProcess(@RequestParam("userId") String userId,
                                 @RequestParam("email") String email,
                                 @RequestParam("password") String password,
+                                @RequestParam("confirmPassword") String confirmPassword,
                                 @RequestParam("userName") String userName,
                                 @RequestParam("userNickName") String userNickName,
                                 @RequestParam("userPhoneNumber") String userPhoneNumber,
@@ -89,6 +90,10 @@ public class AuthController {
                                 @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
                                 RedirectAttributes redirectAttributes) {
         try {
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("비밀번호와 비밀번호 확인 값이 일치하지 않습니다.");
+            }
+
             String savedProfileImagePath = saveProfileImage(profileImage);
 
             loginService.register(userId, email, password, userName, userNickName, userGender, userPhoneNumber,
@@ -130,12 +135,20 @@ public class AuthController {
     public String findPasswordProcess(@RequestParam("userId") String userId,
                                       @RequestParam("email") String email,
                                       Model model) {
-        String temporaryPassword = loginService.resetPassword(userId, email);
-        if (temporaryPassword == null) {
-            model.addAttribute("message", "입력한 정보와 일치하는 활성 계정을 찾을 수 없습니다.");
-        } else {
-            model.addAttribute("message", "임시 비밀번호가 발급되었습니다.");
-            model.addAttribute("temporaryPassword", temporaryPassword);
+        try {
+            boolean issued = loginService.resetPassword(userId, email);
+            if (!issued) {
+                model.addAttribute("message", "입력한 정보와 일치하는 계정을 찾을 수 없습니다.");
+            } else {
+                model.addAttribute("message", "임시 비밀번호를 가입한 이메일로 전송했습니다.");
+            }
+        } catch (Exception e) {
+            log.error("비밀번호 찾기 실패 userId={}, email={}", userId, email, e);
+            String reason = e.getMessage();
+            if (!StringUtils.hasText(reason)) {
+                reason = "잠시 후 다시 시도해 주세요.";
+            }
+            model.addAttribute("message", "임시 비밀번호 메일 전송 실패: " + reason);
         }
         return "auth/findPasswordResult";
     }

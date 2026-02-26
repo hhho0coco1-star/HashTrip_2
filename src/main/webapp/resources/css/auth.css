@@ -69,6 +69,15 @@ body {
     box-shadow: 0 0 0 2px rgba(0, 100, 255, 0.12);
 }
 
+.field-message {
+    margin: 6px 0 0;
+    font-size: 12px;
+}
+
+.field-message.error {
+    color: #c1272d;
+}
+
 .checkbox-group {
     margin-top: 4px;
     display: flex;
@@ -94,6 +103,11 @@ body {
 
 .auth-btn:hover {
     background-color: #004ecb;
+}
+
+.auth-btn:disabled {
+    background-color: #8daeea;
+    cursor: not-allowed;
 }
 
 .auth-links {

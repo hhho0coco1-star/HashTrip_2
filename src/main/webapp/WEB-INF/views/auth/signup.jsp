@@ -14,14 +14,14 @@
     <div class="auth-container">
         <div class="auth-logo">
             <h1>회원가입</h1>
-            <p>필수값을 입력하고 가입을 완료해 주세요.</p>
+            <p>필수 정보를 입력하고 가입을 완료해 주세요.</p>
         </div>
 
         <c:if test="${not empty errorMessage}">
             <p class="auth-message error">${errorMessage}</p>
         </c:if>
 
-        <form action="${pageContext.request.contextPath}/auth/signup" method="post" enctype="multipart/form-data">
+        <form id="signupForm" action="${pageContext.request.contextPath}/auth/signup" method="post" enctype="multipart/form-data">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
             <div class="input-group">
@@ -36,7 +36,15 @@
 
             <div class="input-group">
                 <label>비밀번호 (필수)</label>
-                <input type="password" name="password" minlength="8" maxlength="100" required>
+                <input id="password" type="password" name="password" minlength="8" maxlength="100" required>
+            </div>
+
+            <div class="input-group">
+                <label>비밀번호 확인 (필수)</label>
+                <input id="confirmPassword" type="password" name="confirmPassword" minlength="8" maxlength="100" required>
+                <p id="passwordMismatchMessage" class="field-message error" style="display:none;">
+                    비밀번호가 일치하지 않습니다.
+                </p>
             </div>
 
             <div class="input-group">
@@ -84,7 +92,7 @@
                 <input type="text" name="userDetailAddress" maxlength="255">
             </div>
 
-            <button type="submit" class="auth-btn">가입하기</button>
+            <button id="signupSubmitBtn" type="submit" class="auth-btn">가입하기</button>
         </form>
 
         <div class="auth-links">
@@ -93,5 +101,35 @@
     </div>
     </main>
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
+
+    <script>
+        (function() {
+            var passwordInput = document.getElementById("password");
+            var confirmInput = document.getElementById("confirmPassword");
+            var mismatchMessage = document.getElementById("passwordMismatchMessage");
+            var submitButton = document.getElementById("signupSubmitBtn");
+            var signupForm = document.getElementById("signupForm");
+
+            function validatePasswordMatch() {
+                var password = passwordInput.value;
+                var confirmPassword = confirmInput.value;
+                var isMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
+                mismatchMessage.style.display = isMismatch ? "block" : "none";
+                confirmInput.setCustomValidity(isMismatch ? "비밀번호가 일치하지 않습니다." : "");
+                submitButton.disabled = isMismatch;
+            }
+
+            passwordInput.addEventListener("input", validatePasswordMatch);
+            confirmInput.addEventListener("input", validatePasswordMatch);
+
+            signupForm.addEventListener("submit", function(event) {
+                validatePasswordMatch();
+                if (!signupForm.checkValidity()) {
+                    event.preventDefault();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

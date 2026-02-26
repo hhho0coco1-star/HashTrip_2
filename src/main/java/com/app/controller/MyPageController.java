@@ -25,7 +25,7 @@ import com.app.service.UsersService;
 import com.app.service.WishListService;
 
 @Controller
-public class MypageController {
+public class MyPageController {
 
 	private static final int REVIEW_PAGE_SIZE = 10;
 
