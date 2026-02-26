@@ -364,7 +364,16 @@
 		INQUIRY_EMAIL AS inquiryEmail,
 		STATUS AS status
 		FROM PLACE_INQUIRY
-		WHERE INQUIRY_NO = #{inquiryNo}
+		WHERE
+		INQUIRY_NO = #{inquiryNo}
+	</select>
+
+	<!-- 1:1 문의 email 기본값 넣기 -->
+	<select id="getUserEmail" parameterType="string"
+		resultType="string">
+		SELECT user_auth_email
+		FROM User_Authentication
+		WHERE user_auth_id = #{userAuthId}
 	</select>
 
 </mapper>

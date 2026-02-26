@@ -19,6 +19,7 @@ import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.PlaceService;
+import com.app.service.UserAuthenticationService;
 import com.app.service.UsersService;
 import com.app.util.ApiResponse;
 
@@ -30,6 +31,9 @@ public class MainPageController {
 	
 	@Autowired
 	private UsersService usersService;
+	
+	@Autowired
+	private UserAuthenticationService userAuthenticationService;
 	
 	@GetMapping({"/", "/main", "/hashTrip"}) // 메인 페이지
 	public String hashTag(Model model, Authentication authentication) {
@@ -80,7 +84,20 @@ public class MainPageController {
 	}
 	
 	@GetMapping("/hashTrip/contact") // 메인 페이지 1:1문의
-	public String hashTrip_contact() {
+	public String hashTrip_contact(Authentication authentication, Model model) {
+		
+		String defaultEmail = "";
+		
+		// 1. 로그인이 되어 있는지 확인 (null 체크)
+	    if (authentication != null && authentication.isAuthenticated()) {
+	        String userAuthId = authentication.getName();
+	        // 2. 로그인된 경우에만 이메일 가져오기
+	        defaultEmail = userAuthenticationService.getUserEmailByAuthId(userAuthId);
+	    }
+		
+	    
+	    model.addAttribute("defaultEmail", defaultEmail);
+		
 	    return "mainPage/mainPage-contact"; 
 	}
 	
