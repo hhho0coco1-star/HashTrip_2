@@ -540,9 +540,12 @@
                 if (!exp) return;
                 var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
                 var urls = data.photoUrls || [];
-                var photosHtml = urls.length === 0
+                var validUrls = Array.isArray(urls)
+                    ? urls.filter(function (u) { return isValidImageUrl(u); })
+                    : [];
+                var photosHtml = validUrls.length === 0
                     ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
-                    : urls.slice(0, 10).map(function (url) {
+                    : validUrls.slice(0, 10).map(function (url) {
                         return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
                     }).join("");
                 var reviews = data.reviews || [];
@@ -557,9 +560,32 @@
                         if ((r.commentContent || "").length > 120) content += "…";
                         return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
                     }).join("");
-                // 카드 썸네일도 상세 페이지와 동일하게, 가능하면 첫 번째 사진으로 교체
-                if (urls.length > 0) {
-                    var heroUrl = urls[0];
+                // 카드 썸네일도 상세 페이지와 동일하게, 가능하면 대표 이미지로 교체
+                (function () {
+                    var heroUrl = "";
+
+                    // 1) mapSearchEnriched 에서 placeThumbnailUrl 우선 사용
+                    var idxAttr = cardEl.getAttribute("data-idx");
+                    if (typeof idxAttr === "string" && idxAttr !== "" && mapSearchEnriched) {
+                        var idx = parseInt(idxAttr, 10);
+                        var enriched = mapSearchEnriched[idx];
+                        if (enriched && isValidImageUrl(enriched.placeThumbnailUrl)) {
+                            heroUrl = enriched.placeThumbnailUrl.trim();
+                        }
+                    }
+
+                    // 2) 없으면 photoUrls 중 유효한 URL을 하나 선택
+                    if (!heroUrl && Array.isArray(urls) && urls.length > 0) {
+                        for (var i = 0; i < urls.length; i += 1) {
+                            if (isValidImageUrl(urls[i])) {
+                                heroUrl = urls[i].trim();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!heroUrl) return;
+
                     var thumbImg = cardEl.querySelector(".planner-replace-thumb");
                     if (thumbImg) {
                         thumbImg.src = escapeHtml(heroUrl);
@@ -569,7 +595,7 @@
                             placeholder.outerHTML = "<img class=\"planner-replace-thumb\" src=\"" + escapeHtml(heroUrl) + "\" alt=\"\" />";
                         }
                     }
-                }
+                })();
 
                 exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
                     "<div class=\"planner-replace-expanded-header\">" +
@@ -775,6 +801,25 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
     }
+
+    function isValidImageUrl(url) {
+        if (!url) return false;
+        var s = String(url).trim();
+        return /^https?:\/\//.test(s) || s.charAt(0) === "/";
+    }
+
+    // 썸네일/프리뷰 이미지 로딩 실패 시 깨진 이미지를 숨김
+    document.addEventListener("error", function (e) {
+        var target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.tagName || target.tagName.toLowerCase() !== "img") return;
+        if (!target.classList) return;
+
+        if (target.classList.contains("planner-replace-thumb")
+            || target.classList.contains("planner-replace-preview-photo")) {
+            target.style.display = "none";
+        }
+    }, true);
 
     document.addEventListener("DOMContentLoaded", function () {
         init();
