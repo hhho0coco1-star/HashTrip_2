@@ -557,6 +557,20 @@
                         if ((r.commentContent || "").length > 120) content += "…";
                         return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
                     }).join("");
+                // 카드 썸네일도 상세 페이지와 동일하게, 가능하면 첫 번째 사진으로 교체
+                if (urls.length > 0) {
+                    var heroUrl = urls[0];
+                    var thumbImg = cardEl.querySelector(".planner-replace-thumb");
+                    if (thumbImg) {
+                        thumbImg.src = escapeHtml(heroUrl);
+                    } else {
+                        var placeholder = cardEl.querySelector(".planner-replace-thumb.placeholder");
+                        if (placeholder) {
+                            placeholder.outerHTML = "<img class=\"planner-replace-thumb\" src=\"" + escapeHtml(heroUrl) + "\" alt=\"\" />";
+                        }
+                    }
+                }
+
                 exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
                     "<div class=\"planner-replace-expanded-header\">" +
                     detailLinkHtml +
