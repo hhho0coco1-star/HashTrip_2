@@ -14,7 +14,13 @@ public interface TravelPlanDAO {
 
 	int insertTravelPlan(TravelPlanDTO travelPlan);
 
-	int updateTravelPlan(TravelPlanDTO travelPlan);
+    int updateTravelPlan(TravelPlanDTO travelPlan);
 
     int deleteTravelPlanByOwner(Long planNo, Long userNo);
+
+    int registerRouteSave(Long sourcePlanNo, Long savedUserNo);
+
+    int countSavedUsersBySourcePlan(Long sourcePlanNo);
+
+    int deleteRouteSaveHistoryBySourcePlan(Long sourcePlanNo);
 }

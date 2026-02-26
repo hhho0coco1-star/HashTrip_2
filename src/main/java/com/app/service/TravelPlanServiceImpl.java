@@ -1,14 +1,22 @@
 package com.app.service;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dao.PlanDetailDAO;
 import com.app.dao.TravelPlanDAO;
+import com.app.dao.CommunityDAO;
 import com.app.dto.PlanDetailDTO;
+import com.app.dto.RouteSaveResultDTO;
 import com.app.dto.TravelPlanDTO;
 
 @Service
@@ -19,6 +27,9 @@ public class TravelPlanServiceImpl implements TravelPlanService {
 
     @Autowired
     private PlanDetailDAO planDetailDAO;
+
+    @Autowired
+    private CommunityDAO communityDAO;
 
     @Override
     public List<TravelPlanDTO> findPublicTravelPlans() {
@@ -62,6 +73,14 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     }
 
     @Override
+    public int updateTravelPlan(TravelPlanDTO travelPlan) {
+        if (travelPlan == null || travelPlan.getPlanNo() == null) {
+            throw new IllegalArgumentException("일정 번호가 필요합니다.");
+        }
+        return travelPlanDAO.updateTravelPlan(travelPlan);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Long updateTravelPlanWithDetails(TravelPlanDTO travelPlan, List<PlanDetailDTO> planDetails, Long ownerUserNo) {
         if (travelPlan == null || travelPlan.getPlanNo() == null) {
@@ -101,39 +120,30 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long copyTravelPlanWithDetails(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
-        TravelPlanDTO sourcePlan = requireTravelPlan(sourcePlanNo);
+        return copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RouteSaveResultDTO saveRouteForUser(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
         if (targetUserNo == null || targetUserNo <= 0L) {
             throw new IllegalArgumentException("대상 사용자 정보가 필요합니다.");
         }
+        requireTravelPlan(sourcePlanNo);
 
-        TravelPlanDTO copiedPlan = new TravelPlanDTO();
-        copiedPlan.setUserNo(targetUserNo);
-        copiedPlan.setPlanTitle(resolveCopiedPlanTitle(sourcePlan.getPlanTitle(), copiedPlanTitle));
-        copiedPlan.setPlanIsPublic("N");
-        copiedPlan.setPlanStatus("PLANNING");
-        copiedPlan.setPlanStartDate(sourcePlan.getPlanStartDate());
-        copiedPlan.setPlanEndDate(sourcePlan.getPlanEndDate());
-
-        int inserted = travelPlanDAO.insertTravelPlan(copiedPlan);
-        if (inserted != 1 || copiedPlan.getPlanNo() == null) {
-            throw new IllegalStateException("일정 복사에 실패했습니다.");
+        int insertedSaveHistory = 0;
+        try {
+            insertedSaveHistory = travelPlanDAO.registerRouteSave(sourcePlanNo, targetUserNo);
+        } catch (DuplicateKeyException e) {
+            // 이미 저장 이력 있음 → 이력은 유지, 복사는 매번 수행
         }
+        Long copiedPlanNo = copyTravelPlanWithDetailsInternal(sourcePlanNo, targetUserNo, copiedPlanTitle);
 
-        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
-        if (sourceDetails == null || sourceDetails.isEmpty()) {
-            return copiedPlan.getPlanNo();
-        }
-
-        int visitOrder = 1;
-        for (PlanDetailDTO sourceDetail : sourceDetails) {
-            PlanDetailDTO copiedDetail = copyPlanDetail(sourceDetail);
-            copiedDetail.setPlanNo(copiedPlan.getPlanNo());
-            copiedDetail.setUserNo(targetUserNo);
-            copiedDetail.setPlanVisitOrder(visitOrder++);
-            planDetailDAO.insertPlanDetail(copiedDetail);
-        }
-
-        return copiedPlan.getPlanNo();
+        RouteSaveResultDTO result = new RouteSaveResultDTO();
+        result.setSaveRegistered(insertedSaveHistory > 0);
+        result.setCopiedPlanNo(copiedPlanNo);
+        result.setSavedUserCount(travelPlanDAO.countSavedUsersBySourcePlan(sourcePlanNo));
+        return result;
     }
 
     @Override
@@ -209,7 +219,10 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             throw new IllegalArgumentException("본인 일정만 삭제할 수 있습니다.");
         }
 
+        // 일정 상세 및 관련 부가 데이터 삭제
         planDetailDAO.deletePlanDetailsByPlanNo(planNo);
+        communityDAO.deleteCommunityReviewsByPlanNo(planNo);
+        travelPlanDAO.deleteRouteSaveHistoryBySourcePlan(planNo);
 
         int deleted = travelPlanDAO.deleteTravelPlanByOwner(planNo, ownerUserNo);
         if (deleted != 1) {
@@ -240,6 +253,62 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         return truncate(baseTitle + " (복사본)", 200);
     }
 
+    private Long copyTravelPlanWithDetailsInternal(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle) {
+        TravelPlanDTO sourcePlan = requireTravelPlan(sourcePlanNo);
+        if (targetUserNo == null || targetUserNo <= 0L) {
+            throw new IllegalArgumentException("대상 사용자 정보가 필요합니다.");
+        }
+
+        TravelPlanDTO copiedPlan = new TravelPlanDTO();
+        copiedPlan.setUserNo(targetUserNo);
+        copiedPlan.setPlanTitle(resolveCopiedPlanTitle(sourcePlan.getPlanTitle(), copiedPlanTitle));
+        copiedPlan.setPlanIsPublic("N");
+        copiedPlan.setPlanStatus("PLANNING");
+
+        List<PlanDetailDTO> sourceDetails = planDetailDAO.getPlanDetailsByPlanNo(sourcePlanNo);
+        LocalDate refStart = sourcePlan.getPlanStartDate() != null ? sourcePlan.getPlanStartDate().toLocalDate() : null;
+        long daySpan = 1L;
+        if (sourceDetails != null && !sourceDetails.isEmpty()) {
+            LocalDate minDate = null;
+            LocalDate maxDate = null;
+            for (PlanDetailDTO d : sourceDetails) {
+                if (d.getDetailStartDate() == null) continue;
+                LocalDate dDate = d.getDetailStartDate().toLocalDateTime().toLocalDate();
+                if (minDate == null || dDate.isBefore(minDate)) minDate = dDate;
+                if (maxDate == null || dDate.isAfter(maxDate)) maxDate = dDate;
+            }
+            if (refStart == null && minDate != null) refStart = minDate;
+            if (minDate != null && maxDate != null) {
+                daySpan = ChronoUnit.DAYS.between(minDate, maxDate) + 1;
+                if (daySpan < 1) daySpan = 1;
+            }
+        }
+        LocalDate copyStart = LocalDate.now();
+        LocalDate copyEnd = copyStart.plusDays(daySpan - 1);
+        copiedPlan.setPlanStartDate(Date.valueOf(copyStart));
+        copiedPlan.setPlanEndDate(Date.valueOf(copyEnd));
+
+        int inserted = travelPlanDAO.insertTravelPlan(copiedPlan);
+        if (inserted != 1 || copiedPlan.getPlanNo() == null) {
+            throw new IllegalStateException("일정 복사에 실패했습니다.");
+        }
+
+        if (sourceDetails == null || sourceDetails.isEmpty()) {
+            return copiedPlan.getPlanNo();
+        }
+
+        int visitOrder = 1;
+        for (PlanDetailDTO sourceDetail : sourceDetails) {
+            PlanDetailDTO copiedDetail = copyPlanDetailWithNewDates(sourceDetail, refStart != null ? refStart : copyStart, copyStart);
+            copiedDetail.setPlanNo(copiedPlan.getPlanNo());
+            copiedDetail.setUserNo(targetUserNo);
+            copiedDetail.setPlanVisitOrder(visitOrder++);
+            planDetailDAO.insertPlanDetail(copiedDetail);
+        }
+
+        return copiedPlan.getPlanNo();
+    }
+
     private String normalizeTitle(String planTitle) {
         if (planTitle == null || planTitle.trim().isEmpty()) {
             return null;
@@ -257,9 +326,25 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     private PlanDetailDTO copyPlanDetail(PlanDetailDTO sourceDetail) {
         PlanDetailDTO copiedDetail = new PlanDetailDTO();
         copiedDetail.setPlaceNo(sourceDetail.getPlaceNo());
-        copiedDetail.setPlanMeno(sourceDetail.getPlanMeno());
+        // 메모는 개인 정보이므로 복사하지 않는다.
         copiedDetail.setDetailStartDate(sourceDetail.getDetailStartDate());
         copiedDetail.setDetailEndDate(sourceDetail.getDetailEndDate());
+        return copiedDetail;
+    }
+
+    private PlanDetailDTO copyPlanDetailWithNewDates(PlanDetailDTO sourceDetail, LocalDate sourceRefStart, LocalDate copyRefStart) {
+        PlanDetailDTO copiedDetail = new PlanDetailDTO();
+        copiedDetail.setPlaceNo(sourceDetail.getPlaceNo());
+        // 메모는 개인 정보이므로 복사하지 않는다.
+        long dayOffset = 0;
+        if (sourceDetail.getDetailStartDate() != null) {
+            LocalDate dDate = sourceDetail.getDetailStartDate().toLocalDateTime().toLocalDate();
+            dayOffset = ChronoUnit.DAYS.between(sourceRefStart, dDate);
+            if (dayOffset < 0) dayOffset = 0;
+        }
+        LocalDate newDate = copyRefStart.plusDays(dayOffset);
+        copiedDetail.setDetailStartDate(Timestamp.valueOf(newDate.atTime(9, 0)));
+        copiedDetail.setDetailEndDate(Timestamp.valueOf(newDate.atTime(18, 0)));
         return copiedDetail;
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import com.app.dao.AreaBasedList2Repository;
 import com.app.dao.PlaceDAO;
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -318,12 +319,18 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize) throws Exception {
+		return getMyPlaceReviews(createdBy, page, pageSize, "latest");
+	}
+
+	@Override
+	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize, String sortType) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		int safePage = Math.max(1, page);
 		int safePageSize = Math.max(1, pageSize);
 		int startRow = ((safePage - 1) * safePageSize) + 1;
 		int endRow = safePage * safePageSize;
-		return placeDAO.selectPlaceReviewsByCreatedByPaged(safeCreatedBy, startRow, endRow);
+		String safeSortType = normalizeReviewSort(sortType);
+		return placeDAO.selectPlaceReviewsByCreatedByPaged(safeCreatedBy, startRow, endRow, safeSortType);
 	}
 
 	@Override
@@ -333,9 +340,16 @@ public class PlaceServiceImpl implements PlaceService {
 
 	@Override
 	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		return createPlaceReview(placeNo, commentContent, rating, createdBy, Collections.emptyList());
+	}
+
+	@Override
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy,
+			List<PhotoDataDTO> photoDataList) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		String safeContent = normalizeReviewContent(commentContent);
 		int safeRating = normalizeRating(rating);
+		List<PhotoDataDTO> safePhotoDataList = normalizePhotoData(photoDataList);
 
 		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
 		placeReviewDTO.setCommentNo(placeDAO.getNextPlaceReviewCommentNo());
@@ -349,15 +363,27 @@ public class PlaceServiceImpl implements PlaceService {
 		if (inserted <= 0) {
 			throw new IllegalStateException("Failed to insert place review.");
 		}
+
+		if (!safePhotoDataList.isEmpty()) {
+			placeDAO.insertReviewPhotos(placeReviewDTO.getCommentNo(), safePhotoDataList);
+		}
 		placeDAO.updatePlaceRatingByPlaceNo(placeNo);
 		return placeReviewDTO;
 	}
 
 	@Override
 	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception {
+		return updatePlaceReview(placeNo, commentNo, commentContent, rating, createdBy, Collections.emptyList(), Collections.emptyList());
+	}
+
+	@Override
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy,
+			List<Long> deletePhotoNoList, List<PhotoDataDTO> newPhotoDataList) throws Exception {
 		String safeCreatedBy = normalizeCreatedBy(createdBy);
 		String safeContent = normalizeReviewContent(commentContent);
 		int safeRating = normalizeRating(rating);
+		List<Long> safeDeletePhotoNoList = normalizePhotoNoList(deletePhotoNoList);
+		List<PhotoDataDTO> safeNewPhotoDataList = normalizePhotoData(newPhotoDataList);
 
 		PlaceReviewDTO placeReviewDTO = new PlaceReviewDTO();
 		placeReviewDTO.setCommentNo(commentNo);
@@ -366,11 +392,20 @@ public class PlaceServiceImpl implements PlaceService {
 		placeReviewDTO.setRating(safeRating);
 		placeReviewDTO.setCreatedBy(safeCreatedBy);
 
-		boolean updated = placeDAO.updatePlaceReviewByOwner(placeReviewDTO) > 0;
-		if (updated) {
-			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		int updatedRows = placeDAO.updatePlaceReviewByOwner(placeReviewDTO);
+		boolean ownerMatched = updatedRows > 0 || placeDAO.existsPlaceReviewByOwner(commentNo, placeNo, safeCreatedBy);
+		if (!ownerMatched) {
+			return false;
 		}
-		return updated;
+
+		if (!safeDeletePhotoNoList.isEmpty()) {
+			placeDAO.deleteReviewPhotosByOwner(commentNo, placeNo, safeCreatedBy, safeDeletePhotoNoList);
+		}
+		if (!safeNewPhotoDataList.isEmpty()) {
+			placeDAO.insertReviewPhotos(commentNo, safeNewPhotoDataList);
+		}
+		placeDAO.updatePlaceRatingByPlaceNo(placeNo);
+		return true;
 	}
 
 	@Override
@@ -381,6 +416,14 @@ public class PlaceServiceImpl implements PlaceService {
 			placeDAO.updatePlaceRatingByPlaceNo(placeNo);
 		}
 		return deleted;
+	}
+
+	@Override
+	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception {
+		if (photoNo == null || photoNo <= 0) {
+			return null;
+		}
+		return placeDAO.selectPhotoDataByPhotoNo(photoNo);
 	}
 
 	private PlaceDTO toPlaceDTO(TourResponseDTO.PlaceDto item, Long placeNo, List<String> tagCodes) {
@@ -741,4 +784,63 @@ public class PlaceServiceImpl implements PlaceService {
 		}
 		return rating;
 	}
+
+	private List<PhotoDataDTO> normalizePhotoData(List<PhotoDataDTO> photoDataList) {
+		if (photoDataList == null || photoDataList.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		List<PhotoDataDTO> normalized = new ArrayList<>();
+		for (PhotoDataDTO photoData : photoDataList) {
+			if (photoData == null) {
+				continue;
+			}
+			if (photoData.getPhotoBinary() == null || photoData.getPhotoBinary().length == 0) {
+				continue;
+			}
+
+			PhotoDataDTO normalizedData = new PhotoDataDTO();
+			normalizedData.setPhotoBinary(photoData.getPhotoBinary());
+			normalizedData.setPhotoMimeType(truncate(normalizeText(photoData.getPhotoMimeType()), 100));
+			normalizedData.setPhotoFileName(truncate(normalizeText(photoData.getPhotoFileName()), 255));
+			normalized.add(normalizedData);
+		}
+		return normalized;
+	}
+
+	private List<Long> normalizePhotoNoList(List<Long> photoNoList) {
+		if (photoNoList == null || photoNoList.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Set<Long> unique = new LinkedHashSet<>();
+		for (Long photoNo : photoNoList) {
+			if (photoNo != null && photoNo > 0) {
+				unique.add(photoNo);
+			}
+		}
+		return unique.isEmpty() ? Collections.emptyList() : new ArrayList<>(unique);
+	}
+
+	private String normalizeReviewSort(String sortType) {
+		if (!StringUtils.hasText(sortType)) {
+			return "latest";
+		}
+		String normalized = sortType.trim().toLowerCase();
+		if ("oldest".equals(normalized) || "rating".equals(normalized)) {
+			return normalized;
+		}
+		return "latest";
+	}
+
+	// mainPage 추천 여행지 검색
+	@Override
+	public List<PlaceDTO> searchPlaces(String keyword) {
+		return placeDAO.searchPlaces(keyword);
+	}
+
+	@Override
+	public List<PlaceDTO> getPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo) {
+		return placeDAO.selectPlacesNearby(lat, lng, radiusKm, excludePlaceNo);
+	}
+
 }

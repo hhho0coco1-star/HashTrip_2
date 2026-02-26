@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.List;
 
 import com.app.dto.PlanDetailDTO;
+import com.app.dto.RouteSaveResultDTO;
 import com.app.dto.TravelPlanDTO;
 
 public interface TravelPlanService {
@@ -19,7 +20,11 @@ public interface TravelPlanService {
 
     Long updateTravelPlanWithDetails(TravelPlanDTO travelPlan, List<PlanDetailDTO> planDetails, Long ownerUserNo);
 
+    int updateTravelPlan(TravelPlanDTO travelPlan);
+
     Long copyTravelPlanWithDetails(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle);
+
+    RouteSaveResultDTO saveRouteForUser(Long sourcePlanNo, Long targetUserNo, String copiedPlanTitle);
 
     int appendPlanDetailsToExistingPlan(Long sourcePlanNo, Long targetPlanNo, Long targetUserNo);
 

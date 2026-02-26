@@ -1,34 +1,67 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>마이페이지</title>
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/mypage.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마이페이지</title>
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/mypage.css">
 </head>
 <body>
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 	<div id="mypage" class="page">
 		<div class="mypage-container">
-			<c:set var="displayName" value="${empty usersDTO.userNickName ? usersDTO.userName : usersDTO.userNickName}" />
+			<c:set var="displayName"
+				value="${empty usersDTO.userNickName ? usersDTO.userName : usersDTO.userNickName}" />
 			<c:if test="${empty displayName}">
 				<c:set var="displayName" value="${currentAuthId}" />
 			</c:if>
+			<c:set var="profileImageUrl" value="${usersDTO.userProfileImg}" />
+			<c:if
+				test="${not empty profileImageUrl and fn:startsWith(profileImageUrl, '/')}">
+				<c:choose>
+					<c:when
+						test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and !fn:startsWith(profileImageUrl, pageContext.request.contextPath)}">
+						<c:set var="profileImageUrl"
+							value="${pageContext.request.contextPath}${profileImageUrl}" />
+					</c:when>
+					<c:otherwise>
+						<c:set var="profileImageUrl" value="${profileImageUrl}" />
+					</c:otherwise>
+				</c:choose>
+			</c:if>
 
 			<section class="profile-card">
-				<div id="my-av" class="profile-avatar">${fn:substring(displayName, 0, 1)}</div>
-				<h2 class="profile-name"><c:out value="${displayName}" /></h2>
+				<div id="my-av" class="profile-avatar">
+					<c:choose>
+						<c:when test="${not empty profileImageUrl}">
+							<img class="profile-avatar-image"
+								src="${fn:escapeXml(profileImageUrl)}" alt="프로필 사진" />
+						</c:when>
+						<c:otherwise>${fn:substring(displayName, 0, 1)}</c:otherwise>
+					</c:choose>
+				</div>
+				<h2 class="profile-name">
+					<c:out value="${displayName}" />
+				</h2>
 				<div id="my-badge" class="profile-badge">🧭 나의 여행 성향</div>
-				<p id="my-desc" class="profile-desc">태그를 추가/삭제하면 여행 매칭 추천에 반영됩니다.</p>
-				<p class="profile-sub"><c:out value="${currentAuthId}" /></p>
+				<p id="my-desc" class="profile-desc">태그를 추가/삭제하면 여행 매칭 추천에
+					반영됩니다.</p>
+				<p class="profile-sub">
+					<c:out value="${currentAuthId}" />
+				</p>
 				<div class="profile-actions">
-					<button class="profile-action-btn" type="button">회원정보 수정</button>
-					<button class="profile-action-btn danger" type="button">회원 탈퇴</button>
+					<a class="profile-action-btn"
+						href="${pageContext.request.contextPath}/mypage/edit">회원정보 수정</a>
+					<button class="profile-action-btn danger" type="button">회원
+						탈퇴</button>
 				</div>
 			</section>
 
@@ -43,71 +76,269 @@
 				</div>
 			</section>
 
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 			<section class="dashboard-card">
-				<details class="tag-manage-details" open>
+				<details class="tag-manage-details">
 					<summary>성향 태그 관리</summary>
 					<div class="tag-manage-body">
 						<div id="tag-managers"></div>
 					</div>
 				</details>
 			</section>
+			<!-- 			성향 분석 -> 태그 연결 ========================= -->
 
 			<section class="dashboard-card">
-				<h3>내 리뷰</h3>
+				<div class="review-section-head">
+					<h3>내 여행지 리뷰 (${placeReviewCount})</h3>
+					<form class="review-sort-form" method="get"
+						action="${pageContext.request.contextPath}/mypage">
+						<input type="hidden" name="placePage" value="1"> <input
+							type="hidden" name="communityPage"
+							value="${communityCurrentPage}"> <input type="hidden"
+							name="communitySort" value="${communitySort}"> <input
+							type="hidden" name="placeExpanded"
+							value="${placeExpanded ? 'Y' : 'N'}"> <input
+							type="hidden" name="communityExpanded"
+							value="${communityExpanded ? 'Y' : 'N'}"> <select
+							name="placeSort" onchange="this.form.submit()">
+							<option value="latest" ${placeSort == 'latest' ? 'selected' : ''}>최신순</option>
+							<option value="oldest" ${placeSort == 'oldest' ? 'selected' : ''}>오래된순</option>
+							<option value="rating" ${placeSort == 'rating' ? 'selected' : ''}>별점순</option>
+						</select>
+					</form>
+				</div>
 				<c:choose>
-					<c:when test="${empty reviewList}">
-						<p class="empty-text">작성한 리뷰가 없습니다.</p>
+					<c:when test="${empty placeReviewList}">
+						<p class="empty-text">작성한 여행지 리뷰가 없습니다.</p>
 					</c:when>
 					<c:otherwise>
 						<div class="review-list">
-							<c:forEach var="review" items="${reviewList}">
-								<article class="review-item">
-									<div class="review-top">
-										<a class="review-place-link" href="${pageContext.request.contextPath}/place/detail?place_no=${review.placeNo}">
+							<c:forEach var="review" items="${placeReviewList}"
+								varStatus="status">
+								<c:if
+									test="${placeExpanded or status.count <= reviewPreviewSize}">
+									<article class="review-item">
+										<div class="review-top">
 											<c:choose>
-												<c:when test="${not empty review.placeName}">
-													<c:out value="${review.placeName}" />
+												<c:when test="${not empty review.placeNo}">
+													<a class="review-place-link"
+														href="${pageContext.request.contextPath}/place/detail?place_no=${review.placeNo}">
+														<c:choose>
+															<c:when test="${not empty review.placeName}">
+																<c:out value="${review.placeName}" />
+															</c:when>
+															<c:otherwise>
+																장소 #${review.placeNo}
+															</c:otherwise>
+														</c:choose>
+													</a>
 												</c:when>
 												<c:otherwise>
-													장소 #${review.placeNo}
+													<span class="review-place-link"> <c:out
+															value="${empty review.placeName ? '장소 정보 없음' : review.placeName}" />
+													</span>
 												</c:otherwise>
 											</c:choose>
-										</a>
-										<span class="review-rating">
-											<c:forEach var="i" begin="1" end="5">
-												<c:choose>
-													<c:when test="${i <= review.rating}">★</c:when>
-													<c:otherwise>☆</c:otherwise>
-												</c:choose>
-											</c:forEach>
-										</span>
-									</div>
-									<p class="review-content"><c:out value="${review.commentContent}" /></p>
-									<p class="review-date">
-										<fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
-									</p>
-								</article>
+											<span class="review-rating"> <c:forEach var="i"
+													begin="1" end="5">
+													<c:choose>
+														<c:when test="${i <= review.rating}">★</c:when>
+														<c:otherwise>☆</c:otherwise>
+													</c:choose>
+												</c:forEach>
+											</span>
+										</div>
+										<p class="review-content"><c:out value="${fn:trim(review.commentContent)}" /></p>
+										<c:if test="${not empty review.photoUrlList}">
+											<div class="review-photo-list">
+												<c:forEach var="photoUrl" items="${review.photoUrlList}">
+													<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+													<c:if
+														test="${not empty photoUrl and fn:startsWith(photoUrl, '../')}">
+														<c:set var="resolvedPhotoUrl"
+															value="${pageContext.request.contextPath}${fn:substringAfter(photoUrl, '..')}" />
+													</c:if>
+													<c:if
+														test="${not empty photoUrl and fn:startsWith(photoUrl, '/')}">
+														<c:choose>
+															<c:when
+																test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and fn:startsWith(photoUrl, pageContext.request.contextPath)}">
+																<c:set var="resolvedPhotoUrl" value="${photoUrl}" />
+															</c:when>
+															<c:otherwise>
+																<c:set var="resolvedPhotoUrl"
+																	value="${pageContext.request.contextPath}${photoUrl}" />
+															</c:otherwise>
+														</c:choose>
+													</c:if>
+													<a class="review-photo-item"
+														href="${fn:escapeXml(resolvedPhotoUrl)}" target="_blank"
+														rel="noopener noreferrer"> <img
+														class="review-photo-thumb"
+														src="${fn:escapeXml(resolvedPhotoUrl)}" alt="리뷰 사진"
+														loading="lazy">
+													</a>
+												</c:forEach>
+											</div>
+										</c:if>
+										<p class="review-date">
+											<fmt:formatDate value="${review.createdAt}"
+												pattern="yyyy-MM-dd HH:mm" />
+										</p>
+									</article>
+								</c:if>
 							</c:forEach>
 						</div>
-						<c:if test="${totalPages > 1}">
+
+						<c:if
+							test="${!placeExpanded and (fn:length(placeReviewList) > reviewPreviewSize or placeTotalPages > 1)}">
+							<a class="review-more-toggle"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">
+								펼쳐서 더보기 </a>
+						</c:if>
+
+						<c:if test="${placeExpanded and placeTotalPages > 1}">
 							<nav class="pagination">
-								<c:if test="${currentPage > 1}">
-									<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${currentPage - 1}">이전</a>
+								<c:if test="${placeCurrentPage > 1}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage - 1}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">이전</a>
 								</c:if>
-								<c:forEach var="pageNo" begin="1" end="${totalPages}">
+								<c:forEach var="pageNo" begin="1" end="${placeTotalPages}">
 									<c:choose>
-										<c:when test="${pageNo == currentPage}">
+										<c:when test="${pageNo == placeCurrentPage}">
 											<span class="page-link is-active">${pageNo}</span>
 										</c:when>
 										<c:otherwise>
-											<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${pageNo}">${pageNo}</a>
+											<a class="page-link"
+												href="${pageContext.request.contextPath}/mypage?placePage=${pageNo}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">${pageNo}</a>
 										</c:otherwise>
 									</c:choose>
 								</c:forEach>
-								<c:if test="${currentPage < totalPages}">
-									<a class="page-link" href="${pageContext.request.contextPath}/mypage?page=${currentPage + 1}">다음</a>
+								<c:if test="${placeCurrentPage < placeTotalPages}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage + 1}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=Y&communityExpanded=${communityExpanded ? 'Y' : 'N'}">다음</a>
 								</c:if>
 							</nav>
+						</c:if>
+
+						<c:if test="${placeExpanded}">
+							<a class="review-more-toggle is-collapse"
+								href="${pageContext.request.contextPath}/mypage?placePage=1&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=N&communityExpanded=${communityExpanded ? 'Y' : 'N'}">
+								접기 </a>
+						</c:if>
+					</c:otherwise>
+				</c:choose>
+			</section>
+
+			<section class="dashboard-card">
+				<div class="review-section-head">
+					<h3>내 일정 리뷰 (${communityReviewCount})</h3>
+					<form class="review-sort-form" method="get"
+						action="${pageContext.request.contextPath}/mypage">
+						<input type="hidden" name="placePage" value="${placeCurrentPage}">
+						<input type="hidden" name="communityPage" value="1"> <input
+							type="hidden" name="placeSort" value="${placeSort}"> <input
+							type="hidden" name="placeExpanded"
+							value="${placeExpanded ? 'Y' : 'N'}"> <input
+							type="hidden" name="communityExpanded"
+							value="${communityExpanded ? 'Y' : 'N'}"> <select
+							name="communitySort" onchange="this.form.submit()">
+							<option value="latest"
+								${communitySort == 'latest' ? 'selected' : ''}>최신순</option>
+							<option value="oldest"
+								${communitySort == 'oldest' ? 'selected' : ''}>오래된순</option>
+							<option value="rating"
+								${communitySort == 'rating' ? 'selected' : ''}>별점순</option>
+						</select>
+					</form>
+				</div>
+
+				<c:choose>
+					<c:when test="${empty communityReviewList}">
+						<p class="empty-text">작성한 일정 리뷰가 없습니다.</p>
+					</c:when>
+					<c:otherwise>
+						<div class="review-list">
+							<c:forEach var="review" items="${communityReviewList}"
+								varStatus="status">
+								<c:if
+									test="${communityExpanded or status.count <= reviewPreviewSize}">
+									<article class="review-item">
+										<div class="review-top">
+											<c:choose>
+												<c:when test="${not empty review.planNo}">
+													<a class="review-place-link"
+														href="${pageContext.request.contextPath}/routes/${review.planNo}">
+														<c:choose>
+															<c:when test="${not empty review.planTitle}">
+																<c:out value="${review.planTitle}" />
+															</c:when>
+															<c:otherwise>
+																일정 #${review.planNo}
+															</c:otherwise>
+														</c:choose>
+													</a>
+												</c:when>
+												<c:otherwise>
+													<span class="review-place-link"> <c:out
+															value="${empty review.planTitle ? '일정 정보 없음' : review.planTitle}" />
+													</span>
+												</c:otherwise>
+											</c:choose>
+											<span class="review-rating"> <c:forEach var="i"
+													begin="1" end="5">
+													<c:choose>
+														<c:when test="${i <= review.rating}">★</c:when>
+														<c:otherwise>☆</c:otherwise>
+													</c:choose>
+												</c:forEach>
+											</span>
+										</div>
+										<p class="review-content"><c:out value="${fn:trim(review.reviewContent)}" /></p>
+										<p class="review-date">
+											<fmt:formatDate value="${review.createdAt}"
+												pattern="yyyy-MM-dd HH:mm" />
+										</p>
+									</article>
+								</c:if>
+							</c:forEach>
+						</div>
+
+						<c:if
+							test="${!communityExpanded and (fn:length(communityReviewList) > reviewPreviewSize or communityTotalPages > 1)}">
+							<a class="review-more-toggle"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">
+								펼쳐서 더보기 </a>
+						</c:if>
+
+						<c:if test="${communityExpanded and communityTotalPages > 1}">
+							<nav class="pagination">
+								<c:if test="${communityCurrentPage > 1}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage - 1}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">이전</a>
+								</c:if>
+								<c:forEach var="pageNo" begin="1" end="${communityTotalPages}">
+									<c:choose>
+										<c:when test="${pageNo == communityCurrentPage}">
+											<span class="page-link is-active">${pageNo}</span>
+										</c:when>
+										<c:otherwise>
+											<a class="page-link"
+												href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${pageNo}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">${pageNo}</a>
+										</c:otherwise>
+									</c:choose>
+								</c:forEach>
+								<c:if test="${communityCurrentPage < communityTotalPages}">
+									<a class="page-link"
+										href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=${communityCurrentPage + 1}&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=Y">다음</a>
+								</c:if>
+							</nav>
+						</c:if>
+
+						<c:if test="${communityExpanded}">
+							<a class="review-more-toggle is-collapse"
+								href="${pageContext.request.contextPath}/mypage?placePage=${placeCurrentPage}&communityPage=1&placeSort=${placeSort}&communitySort=${communitySort}&placeExpanded=${placeExpanded ? 'Y' : 'N'}&communityExpanded=N">
+								접기 </a>
 						</c:if>
 					</c:otherwise>
 				</c:choose>
@@ -121,8 +352,8 @@
 					</c:when>
 					<c:otherwise>
 						<div class="wish-filter-row">
-							<label class="wish-filter-label" for="wish-category-filter">카테고리 선택</label>
-							<select id="wish-category-filter" class="wish-filter-select">
+							<label class="wish-filter-label" for="wish-category-filter">카테고리
+								선택</label> <select id="wish-category-filter" class="wish-filter-select">
 								<option value="ALL">전체</option>
 							</select>
 						</div>
@@ -131,9 +362,11 @@
 						<div id="wish-map" class="wish-map"></div>
 						<ul id="wish-place-list" class="wish-place-list">
 							<c:forEach var="wish" items="${wishEntryList}">
-								<li data-category="${fn:escapeXml(empty wish.categoryType ? '기타' : wish.categoryType)}">
+								<li
+									data-category="${fn:escapeXml(empty wish.categoryType ? '기타' : wish.categoryType)}">
 									<div class="wish-place-top">
-										<a href="${pageContext.request.contextPath}/place/detail?place_no=${wish.placeNo}">
+										<a
+											href="${pageContext.request.contextPath}/place/detail?place_no=${wish.placeNo}">
 											<c:choose>
 												<c:when test="${not empty wish.placeName}">
 													<c:out value="${wish.placeName}" />
@@ -142,15 +375,84 @@
 													장소 #${wish.placeNo}
 												</c:otherwise>
 											</c:choose>
-										</a>
-										<span class="wish-category-badge">
-											<c:out value="${empty wish.categoryType ? '기타' : wish.categoryType}" />
+										</a> <span class="wish-category-badge"> <c:out
+												value="${empty wish.categoryType ? '기타' : wish.categoryType}" />
 										</span>
 									</div>
-									<p><c:out value="${wish.placeAddress}" /></p>
+									<p>
+										<c:out value="${wish.placeAddress}" />
+									</p>
 								</li>
 							</c:forEach>
 						</ul>
+					</c:otherwise>
+				</c:choose>
+			</section>
+
+			<!-- 1:1 문의 ========================================================================== -->
+			<section class="dashboard-card">
+				<div class="review-section-head">
+					<h3>나의 1:1 문의 내역</h3>
+					<a href="${pageContext.request.contextPath}/hashTrip/contact"
+						class="profile-action-btn"
+						style="font-size: 12px; padding: 5px 10px;">새 문의하기</a>
+				</div>
+
+				<c:choose>
+					<c:when test="${empty inquiryList}">
+						<p class="empty-text">작성한 문의 내역이 없습니다.</p>
+					</c:when>
+					<c:otherwise>
+						<div class="inquiry-accordion">
+							<c:forEach var="inquiry" items="${inquiryList}">
+								<div class="inquiry-item" style="border-bottom: 1px solid #eee;">
+									<div class="inquiry-header" onclick="toggleInquiry(this)"
+										style="display: flex; justify-content: space-between; padding: 15px; cursor: pointer; align-items: center;">
+										<div style="flex: 1;">
+											<span class="category-badge"
+												style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-right: 10px;">${inquiry.inquiryType}</span>
+											<span style="font-weight: 500;">${inquiry.inquiryTitle}</span>
+										</div>
+										<div style="font-size: 13px; color: #999; margin-right: 20px;">${inquiry.inquiryDate}</div>
+										<div style="width: 80px; text-align: right;">
+											<c:choose>
+												<c:when test="${inquiry.status eq 'Y'}">
+													<span style="color: #007bff; font-weight: bold;">답변완료</span>
+												</c:when>
+												<c:otherwise>
+													<span style="color: #ccc;">답변대기</span>
+												</c:otherwise>
+											</c:choose>
+										</div>
+									</div>
+
+									<div class="inquiry-content"
+										style="display: none; background: #fcfcfc; padding: 20px; border-top: 1px solid #f0f0f0; position: relative;">
+										<div style="margin-bottom: 20px;">
+											<strong
+												style="display: block; margin-bottom: 10px; color: #555;">[문의
+												내용]</strong>
+											<p
+												style="white-space: pre-wrap; line-height: 1.6; color: #333;">${inquiry.inquiryContent}</p>
+										</div>
+
+										<div class="inquiry-actions"
+											style="text-align: right; margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 15px;">
+											<c:if test="${inquiry.status eq 'N'}">
+												<button type="button"
+													onclick="editInquiry(${inquiry.inquiryNo})"
+													style="padding: 6px 12px; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 5px;">
+													수정</button>
+											</c:if>
+											<button type="button"
+												onclick="deleteInquiry(${inquiry.inquiryNo})"
+												style="padding: 6px 12px; background: #fff; border: 1px solid #dc3545; color: #dc3545; border-radius: 4px; cursor: pointer; font-size: 13px;">
+												삭제</button>
+										</div>
+									</div>
+								</div>
+							</c:forEach>
+						</div>
 					</c:otherwise>
 				</c:choose>
 			</section>
@@ -162,6 +464,60 @@
 	<div id="mypage-toast" class="mypage-toast"></div>
 
 	<script>
+	
+	// 1:1 문의
+	function toggleInquiry(element) {
+	    // 클릭된 헤더의 다음 요소(content)를 찾음
+	    const content = element.nextElementSibling;
+	    
+	    // 현재 열려있는 상태인지 확인
+	    const isOpen = content.style.display === "block";
+	    
+	    // 모든 문의 내용을 닫음 (하나만 열리게 하고 싶을 때)
+	    document.querySelectorAll('.inquiry-content').forEach(el => {
+	        el.style.display = "none";
+	    });
+	    
+	    // 클릭한 것만 토글
+	    if (!isOpen) {
+	        content.style.display = "block";
+	        // 클릭 시 부드럽게 해당 위치로 스크롤 이동 (선택 사항)
+	        content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	    }
+	}
+	
+	// 문의 삭제
+	function deleteInquiry(inquiryNo) {
+	    if (confirm("정말로 이 문의를 삭제하시겠습니까?")) {
+	        // 보안을 위해 폼을 동적으로 생성해서 POST로 전송 (CSRF 토큰 포함)
+	        const form = document.createElement('form');
+	        form.method = 'POST';
+	        form.action = '${pageContext.request.contextPath}/contact/inquiry/delete';
+	        
+	        const inputNo = document.createElement('input');
+	        inputNo.type = 'hidden';
+	        inputNo.name = 'inquiryNo';
+	        inputNo.value = inquiryNo;
+	        
+	        const inputCsrf = document.createElement('input');
+	        inputCsrf.type = 'hidden';
+	        inputCsrf.name = '${_csrf.parameterName}';
+	        inputCsrf.value = '${_csrf.token}';
+	        
+	        form.appendChild(inputNo);
+	        form.appendChild(inputCsrf);
+	        document.body.appendChild(form);
+	        form.submit();
+	    }
+	}
+
+	// 문의 수정 (수정 페이지로 이동)
+	function editInquiry(inquiryNo) {
+	    location.href = '${pageContext.request.contextPath}/contact/inquiry/edit/' + inquiryNo;
+	}
+	
+	// 1:1 문의 
+	
 		(function() {
 			const contextPath = "${pageContext.request.contextPath}";
 			const csrfParamName = "${_csrf.parameterName}";
@@ -326,7 +682,7 @@
 					const avatar = document.getElementById("my-av");
 					const badge = document.getElementById("my-badge");
 					const desc = document.getElementById("my-desc");
-					if (avatar) {
+					if (avatar && !avatar.querySelector("img")) {
 						avatar.textContent = myType.emoji;
 						avatar.style.background = "rgba(255,255,255,0.2)";
 					}
@@ -338,6 +694,7 @@
 					}
 				}
 
+				// ==================== 태그 관리 ====================
 				const container = document.getElementById("tag-managers");
 				if (!container) {
 					return;
@@ -421,6 +778,7 @@
 				showToast((tagName || tagCode) + " 태그 제거됐어요");
 			}
 
+			// JS 태그 연결
 			const container = document.getElementById("tag-managers");
 			if (container) {
 				container.addEventListener("click", function(event) {

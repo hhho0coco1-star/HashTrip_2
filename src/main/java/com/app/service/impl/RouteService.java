@@ -2,20 +2,30 @@ package com.app.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.app.dto.CommunityDTO;
+import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteDTO;
+import com.app.dto.TagMasterDTO;
 import com.app.dto.TagCategoryDTO;
 import com.app.dto.TravelPlanDTO;
 import com.app.dto.TravelerTypeDTO;
+import com.app.dto.UserTagMapDTO;
 import com.app.service.PlanDetailService;
 import com.app.service.TravelPlanService;
+import com.app.service.UsersService;
 
 @Service
 public class RouteService {
@@ -25,6 +35,12 @@ public class RouteService {
 
     @Autowired
     private TravelPlanService travelPlanService;
+
+    @Autowired
+    private UsersService usersService;
+
+    @Autowired
+    private CommunityService communityService;
 
     public RouteDTO getRouteById(Long routeId) {
         TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
@@ -38,15 +54,35 @@ public class RouteService {
     }
 
     public List<RouteDTO> getAllRoutes() {
-        return getRoutesByCategory(null);
+        return getRoutesByFilters(null, null, null);
     }
 
     public List<RouteDTO> getRoutesByCategory(String categoryKey) {
+        return getRoutesByFilters(categoryKey, null, null);
+    }
+
+    public List<RouteDTO> getRoutesByFilters(
+            String categoryKey,
+            String preferenceCategoryKey,
+            String preferenceTagCode) {
         String normalizedCategory = normalizeCategoryKey(categoryKey);
+        String normalizedPreferenceCategory = normalizeCategoryKey(preferenceCategoryKey);
+        String normalizedPreferenceTagCode = normalizeTagCode(preferenceTagCode);
+        boolean hasPreferenceFilter = normalizedPreferenceCategory != null || normalizedPreferenceTagCode != null;
+
         List<TravelPlanDTO> travelPlans = travelPlanService.findPublicTravelPlans();
         List<RouteDTO> routes = new ArrayList<>();
+        Map<Long, Boolean> preferenceMatchCache = new HashMap<>();
         for (TravelPlanDTO travelPlan : travelPlans) {
             if (normalizedCategory != null && !hasCategory(travelPlan.getPlanNo(), normalizedCategory)) {
+                continue;
+            }
+            if (hasPreferenceFilter
+                    && !matchesPreferenceFilter(
+                            travelPlan.getUserNo(),
+                            normalizedPreferenceCategory,
+                            normalizedPreferenceTagCode,
+                            preferenceMatchCache)) {
                 continue;
             }
 
@@ -73,6 +109,53 @@ public class RouteService {
         );
     }
 
+    public List<TagCategoryDTO> getPreferenceCategories() {
+        return getAllTagCategories();
+    }
+
+    public List<TagMasterDTO> getPreferenceTagsByCategory(String categoryKey) {
+        String normalizedCategory = normalizeCategoryKey(categoryKey);
+        if (normalizedCategory == null) {
+            return Collections.emptyList();
+        }
+
+        List<TagMasterDTO> allTagMaster = usersService.getTagMasterList();
+        if (allTagMaster == null || allTagMaster.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<TagMasterDTO> filteredTags = new ArrayList<>();
+        Set<String> addedTagCodes = new LinkedHashSet<>();
+        for (TagMasterDTO tagMaster : allTagMaster) {
+            if (tagMaster == null) {
+                continue;
+            }
+
+            String tagCategory = normalizeCategoryKey(tagMaster.getTagCategory());
+            if (!normalizedCategory.equals(tagCategory)) {
+                continue;
+            }
+
+            String tagCode = normalizeTagCode(tagMaster.getTagCode());
+            if (tagCode == null || addedTagCodes.contains(tagCode)) {
+                continue;
+            }
+
+            TagMasterDTO item = new TagMasterDTO();
+            item.setTagCode(tagCode);
+            item.setTagCategory(tagCategory);
+            item.setTagName(defaultIfBlank(tagMaster.getTagName(), tagCode));
+            filteredTags.add(item);
+            addedTagCodes.add(tagCode);
+
+            if (filteredTags.size() >= 4) {
+                break;
+            }
+        }
+
+        return filteredTags;
+    }
+
     public List<TravelerTypeDTO> getAllTravelerTypes() {
         List<TravelerTypeDTO> types = new ArrayList<>();
         types.add(new TravelerTypeDTO("adventurer", "\uD83E\uDD20", "\uD504\uB85C \uBAA8\uD5D8\uAC00", "#5B8DEE", "#E8F0FE", "\uB3C4\uC804\uC801\uC778 \uC5EC\uD589", null));
@@ -83,16 +166,61 @@ public class RouteService {
         return types;
     }
 
+    public Integer applySimilarityScores(
+            List<RouteDTO> routes,
+            List<UserTagMapDTO> userTags,
+            Long currentUserNo) {
+        if (routes == null || routes.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Integer> currentUserTagWeights = buildUserTagWeights(
+                userTags == null ? Collections.emptyList() : userTags);
+        boolean hasCurrentUserTags = !currentUserTagWeights.isEmpty();
+
+        Map<Long, Map<String, Integer>> authorTagWeightCache = new HashMap<>();
+        int bestScore = 0;
+        for (RouteDTO route : routes) {
+            int similarityScore = hasCurrentUserTags
+                    ? calculateSimilarityScore(route, currentUserTagWeights, authorTagWeightCache, currentUserNo)
+                    : calculateFallbackScore(route, currentUserNo);
+            route.setMatchScore(similarityScore);
+            if (similarityScore > bestScore) {
+                bestScore = similarityScore;
+            }
+        }
+
+        routes.sort(
+                Comparator.comparing(RouteDTO::getMatchScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(RouteDTO::getSavedCount, Comparator.reverseOrder())
+                        .thenComparing(RouteDTO::getId, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        return bestScore == 0 ? null : bestScore;
+    }
+
     private void enrichRoute(RouteDTO route) {
         String normalizedTypeId = normalizeTypeId(route.getTypeId());
         route.setTypeId(normalizedTypeId);
         route.setEmoji(resolveEmoji(normalizedTypeId));
+        route.setRepresentativeImageUrl(defaultIfBlank(planDetailService.findRepresentativeImageUrl(route.getId()), null));
 
         List<String> steps = planDetailService.findStepNames(route.getId());
         if (steps == null || steps.isEmpty()) {
             steps = List.of("\uB4F1\uB85D\uB41C \uCF54\uC2A4 \uC815\uBCF4 \uC5C6\uC74C");
         }
         route.setSteps(steps);
+
+        List<PlanDetailDTO> details = planDetailService.findPlanDetails(route.getId());
+        if (details != null && !details.isEmpty()) {
+            List<Map<String, String>> stepDetails = new ArrayList<>();
+            for (PlanDetailDTO d : details) {
+                Map<String, String> m = new LinkedHashMap<>();
+                m.put("placeName", defaultIfBlank(d.getPlaceName(), ""));
+                m.put("placeThumbnailUrl", defaultIfBlank(d.getPlaceThumbnailUrl(), ""));
+                stepDetails.add(m);
+            }
+            route.setStepDetails(stepDetails);
+        }
 
         route.setTags(buildTagMap(planDetailService.findTagNames(route.getId())));
 
@@ -104,12 +232,35 @@ public class RouteService {
         if (route.getDescription() == null || route.getDescription().trim().isEmpty()) {
             route.setDescription("\uC124\uBA85 \uC815\uBCF4 \uC5C6\uC74C");
         }
+
+        List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(route.getId());
+        if (reviews != null && !reviews.isEmpty()) {
+            route.setReviewCount(reviews.size());
+            double sum = 0;
+            int rated = 0;
+            for (CommunityDTO r : reviews) {
+                if (r.getRating() != null) {
+                    sum += r.getRating();
+                    rated++;
+                }
+            }
+            route.setAvgRating(rated > 0 ? sum / rated : null);
+            String content = reviews.get(0).getReviewContent();
+            if (content != null && !content.trim().isEmpty()) {
+                String snippet = content.trim();
+                if (snippet.length() > 80) {
+                    snippet = snippet.substring(0, 80) + "\u2026";
+                }
+                route.setRepresentativeReviewSnippet(snippet);
+            }
+        }
     }
 
     private RouteDTO mapTravelPlanToRoute(TravelPlanDTO travelPlan) {
         RouteDTO route = new RouteDTO();
 
         route.setId(travelPlan.getPlanNo());
+        route.setUserNo(travelPlan.getUserNo());
         route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
         route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
         route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
@@ -119,6 +270,135 @@ public class RouteService {
         route.setUserName(defaultIfBlank(travelPlan.getUserName(), "Traveler"));
 
         return route;
+    }
+
+    private int calculateSimilarityScore(
+            RouteDTO route,
+            Map<String, Integer> currentUserTagWeights,
+            Map<Long, Map<String, Integer>> authorTagWeightCache,
+            Long currentUserNo) {
+        if (route == null) {
+            return 40;
+        }
+
+        Long authorUserNo = route.getUserNo();
+        if (authorUserNo == null) {
+            return clampScore(defaultIfNull(route.getMatchScore(), 65));
+        }
+        if (currentUserNo != null && currentUserNo.equals(authorUserNo)) {
+            return 100;
+        }
+
+        Map<String, Integer> authorTagWeights = authorTagWeightCache.get(authorUserNo);
+        if (authorTagWeights == null) {
+            List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
+            authorTagWeights = buildUserTagWeights(authorTags == null ? Collections.emptyList() : authorTags);
+            authorTagWeightCache.put(authorUserNo, authorTagWeights);
+        }
+
+        if (authorTagWeights.isEmpty()) {
+            return clampScore(defaultIfNull(route.getMatchScore(), 65));
+        }
+
+        return calculateTagSimilarityScore(currentUserTagWeights, authorTagWeights, route.getSavedCount());
+    }
+
+    private int calculateFallbackScore(RouteDTO route, Long currentUserNo) {
+        if (route == null) {
+            return 40;
+        }
+
+        Long authorUserNo = route.getUserNo();
+        if (currentUserNo != null && currentUserNo.equals(authorUserNo)) {
+            return 100;
+        }
+        return clampScore(defaultIfNull(route.getMatchScore(), 65));
+    }
+
+    private int calculateTagSimilarityScore(
+            Map<String, Integer> currentUserTagWeights,
+            Map<String, Integer> authorTagWeights,
+            int savedCount) {
+        Set<String> allTags = new LinkedHashSet<>();
+        allTags.addAll(currentUserTagWeights.keySet());
+        allTags.addAll(authorTagWeights.keySet());
+
+        int intersectionWeight = 0;
+        int unionWeight = 0;
+        int authorTotalWeight = 0;
+        for (String tag : allTags) {
+            int mine = positiveWeight(currentUserTagWeights.get(tag));
+            int author = positiveWeight(authorTagWeights.get(tag));
+            intersectionWeight += Math.min(mine, author);
+            unionWeight += Math.max(mine, author);
+            authorTotalWeight += author;
+        }
+
+        if (unionWeight == 0 || authorTotalWeight == 0) {
+            return 40;
+        }
+
+        double jaccardSimilarity = (double) intersectionWeight / unionWeight;
+        double authorCoverage = (double) intersectionWeight / authorTotalWeight;
+        int popularityBonus = Math.min(6, Math.max(0, savedCount / 7));
+
+        int score = 44
+                + (int) Math.round(jaccardSimilarity * 38D)
+                + (int) Math.round(authorCoverage * 10D)
+                + popularityBonus;
+
+        if (intersectionWeight == 0) {
+            score = Math.max(40, score - 10);
+        }
+
+        return clampScore(score);
+    }
+
+    private Map<String, Integer> buildUserTagWeights(List<UserTagMapDTO> userTags) {
+        Map<String, Integer> tagWeights = new HashMap<>();
+        for (UserTagMapDTO userTag : userTags) {
+            if (userTag == null) {
+                continue;
+            }
+
+            String normalizedTagName = normalizeTagToken(userTag.getTagName());
+            if (normalizedTagName == null) {
+                normalizedTagName = normalizeTagToken(userTag.getTagCode());
+            }
+            if (normalizedTagName == null) {
+                continue;
+            }
+
+            Integer currentWeight = tagWeights.get(normalizedTagName);
+            tagWeights.put(normalizedTagName, currentWeight == null ? 1 : currentWeight + 1);
+        }
+        return tagWeights;
+    }
+
+    private int positiveWeight(Integer weight) {
+        return weight == null || weight < 0 ? 0 : weight;
+    }
+
+    private String normalizeTagToken(String tagValue) {
+        if (tagValue == null) {
+            return null;
+        }
+
+        String normalized = tagValue.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        if (normalized.startsWith("#")) {
+            normalized = normalized.substring(1).trim();
+        }
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private int clampScore(int score) {
+        if (score < 40) {
+            return 40;
+        }
+        return Math.min(score, 98);
     }
 
     private String buildDescription(TravelPlanDTO travelPlan) {
@@ -140,11 +420,64 @@ public class RouteService {
         return value == null ? defaultValue : value;
     }
 
+    private boolean matchesPreferenceFilter(
+            Long authorUserNo,
+            String preferenceCategoryKey,
+            String preferenceTagCode,
+            Map<Long, Boolean> preferenceMatchCache) {
+        if (authorUserNo == null) {
+            return false;
+        }
+
+        Boolean cachedResult = preferenceMatchCache.get(authorUserNo);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
+        List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
+        boolean matched = hasMatchingPreferenceTag(authorTags, preferenceCategoryKey, preferenceTagCode);
+        preferenceMatchCache.put(authorUserNo, matched);
+        return matched;
+    }
+
+    private boolean hasMatchingPreferenceTag(
+            List<UserTagMapDTO> authorTags,
+            String preferenceCategoryKey,
+            String preferenceTagCode) {
+        if (authorTags == null || authorTags.isEmpty()) {
+            return false;
+        }
+
+        for (UserTagMapDTO authorTag : authorTags) {
+            if (authorTag == null) {
+                continue;
+            }
+
+            String tagCode = normalizeTagCode(authorTag.getTagCode());
+            String tagCategory = normalizeCategoryKey(authorTag.getTagCategory());
+            if (preferenceTagCode != null && !preferenceTagCode.equals(tagCode)) {
+                continue;
+            }
+            if (preferenceCategoryKey != null && !preferenceCategoryKey.equals(tagCategory)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     private String normalizeCategoryKey(String categoryKey) {
         if (categoryKey == null || categoryKey.trim().isEmpty()) {
             return null;
         }
         return categoryKey.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeTagCode(String tagCode) {
+        if (tagCode == null || tagCode.trim().isEmpty()) {
+            return null;
+        }
+        return tagCode.trim().toUpperCase(Locale.ROOT);
     }
 
     private boolean hasCategory(Long planNo, String categoryKey) {
@@ -246,5 +579,49 @@ public class RouteService {
         }
 
         return map;
+    }
+
+    /**
+     * 선택한 장소 태그(이름)와 루트의 장소 태그 일치도로 점수 부여 후 적합도 순 정렬.
+     * (어디로 갈까요에서 선택한 태그를 임시로 사용해 검색할 때 사용)
+     */
+    public void applyPlaceTagScores(List<RouteDTO> routes, List<String> selectedTagNames) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+        if (selectedTagNames == null) {
+            selectedTagNames = Collections.emptyList();
+        }
+        Set<String> selectedNormalized = new LinkedHashSet<>();
+        for (String name : selectedTagNames) {
+            if (name != null && !name.trim().isEmpty()) {
+                selectedNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        for (RouteDTO route : routes) {
+            List<String> routeTagNames = planDetailService.findTagNames(route.getId());
+            Set<String> routeNormalized = new LinkedHashSet<>();
+            if (routeTagNames != null) {
+                for (String name : routeTagNames) {
+                    if (name != null && !name.trim().isEmpty()) {
+                        routeNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+                    }
+                }
+            }
+            int matchCount = 0;
+            for (String s : selectedNormalized) {
+                if (routeNormalized.contains(s)) {
+                    matchCount++;
+                }
+            }
+            int score = selectedNormalized.isEmpty()
+                    ? 50
+                    : Math.min(98, 40 + (matchCount * 60 / selectedNormalized.size()));
+            route.setMatchScore(score);
+        }
+        routes.sort(
+                Comparator.comparing(RouteDTO::getMatchScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(RouteDTO::getSavedCount, Comparator.reverseOrder())
+                        .thenComparing(RouteDTO::getId, Comparator.nullsLast(Comparator.reverseOrder())));
     }
 }

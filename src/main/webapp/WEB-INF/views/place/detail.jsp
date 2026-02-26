@@ -39,11 +39,19 @@
 				<c:if test="${empty heroImageUrl}">
 					<c:set var="photoHeroClass" value="photo-hero photo-hero-fallback" />
 				</c:if>
+				<c:set var="photoHeroClassWithTrigger" value="${photoHeroClass}" />
+				<c:if test="${not empty heroImageUrl}">
+					<c:set var="photoHeroClassWithTrigger" value="${photoHeroClass} place-photo-trigger" />
+				</c:if>
 
 				<main class="layout">
 					<section class="photo-section">
-						<div class="${photoHeroClass}"
+						<div class="${photoHeroClassWithTrigger}"
 							 <c:if test="${not empty heroImageUrl}">
+								role="button"
+								tabindex="0"
+								data-photo-url="${fn:escapeXml(heroImageUrl)}"
+								aria-label="Open photo viewer"
 								style="background-image:
 									radial-gradient(circle at 10% 18%, rgba(255, 255, 255, 0.25), transparent 40%),
 									radial-gradient(circle at 88% 84%, rgba(255, 255, 255, 0.2), transparent 30%),
@@ -54,19 +62,36 @@
 							<h2><c:out value="${place.placeName}" /></h2>
 						</div>
 
+						<div id="place-photo-source-list" hidden>
+							<c:if test="${not empty heroImageUrl}">
+								<span class="place-photo-source-item" data-photo-url="${fn:escapeXml(heroImageUrl)}"></span>
+							</c:if>
+							<c:forEach var="photoUrl" items="${photoUrlList}">
+								<span class="place-photo-source-item" data-photo-url="${fn:escapeXml(photoUrl)}"></span>
+							</c:forEach>
+						</div>
+
 						<div class="thumb-row">
 							<c:choose>
 								<c:when test="${not empty photoUrlList}">
 									<c:forEach var="photoUrl" items="${photoUrlList}" varStatus="status">
 										<c:if test="${status.count <= 8}">
-											<div class="thumb-card thumb-card-image">
+											<div class="thumb-card thumb-card-image place-photo-trigger"
+												 role="button"
+												 tabindex="0"
+												 data-photo-url="${fn:escapeXml(photoUrl)}"
+												 aria-label="Open photo viewer">
 												<img src="${photoUrl}" alt="여행지 사진 ${status.count}">
 											</div>
 										</c:if>
 									</c:forEach>
 								</c:when>
 								<c:when test="${not empty place.placeThumbnailUrl}">
-									<div class="thumb-card thumb-card-image">
+									<div class="thumb-card thumb-card-image place-photo-trigger"
+										 role="button"
+										 tabindex="0"
+										 data-photo-url="${fn:escapeXml(place.placeThumbnailUrl)}"
+										 aria-label="Open photo viewer">
 										<img src="${place.placeThumbnailUrl}" alt="대표 썸네일">
 									</div>
 								</c:when>
@@ -80,27 +105,39 @@
 					<section class="place-head">
 						<div>
 							<p class="place-kind">
-								<c:choose>
-									<c:when test="${not empty tagNameList}">
-										<c:out value="${tagNameList[0]}" />
-									</c:when>
-									<c:when test="${not empty place.placeCategory}">
-										<c:out value="${place.placeCategory}" />
-									</c:when>
-									<c:otherwise>여행지</c:otherwise>
-								</c:choose>
+								<c:out value="${placeTypeLabel}" />
 							</p>
 							<h3><c:out value="${place.placeName}" /></h3>
 							<p class="place-meta"><c:out value="${place.placeAddress}" /></p>
+							<c:if test="${not empty representativeTagList}">
+								<div class="tag-row">
+									<c:forEach var="tagLabel" items="${representativeTagList}">
+										<span class="tag-chip"><c:out value="${tagLabel}" /></span>
+									</c:forEach>
+								</div>
+							</c:if>
 						</div>
 						<c:set var="isWishedByMe" value="${not empty currentAuthId and not empty wishlistList}" />
 						<div class="place-head-actions">
 							<c:choose>
 								<c:when test="${not empty currentAuthId}">
-									<button type="button" class="wish-trigger-btn" id="wishlist-open-btn" aria-label="찜하기">
-										<span class="wish-label">찜</span>
-										<span class="wish-icon ${isWishedByMe ? 'is-active' : ''}">${isWishedByMe ? '♥' : '♡'}</span>
-									</button>
+									<c:choose>
+										<c:when test="${isWishedByMe}">
+											<form class="wish-trigger-form" method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/delete">
+												<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+												<button type="submit" class="wish-trigger-btn" aria-label="찜 취소">
+													<span class="wish-label">찜 취소</span>
+													<span class="wish-icon is-active">♥</span>
+												</button>
+											</form>
+										</c:when>
+										<c:otherwise>
+											<button type="button" class="wish-trigger-btn" id="wishlist-open-btn" aria-label="찜하기">
+												<span class="wish-label">찜</span>
+												<span class="wish-icon">♡</span>
+											</button>
+										</c:otherwise>
+									</c:choose>
 								</c:when>
 								<c:otherwise>
 									<a class="wish-trigger-btn wish-login-link" href="${pageContext.request.contextPath}/auth/login" aria-label="로그인 후 찜하기">
@@ -244,7 +281,7 @@
 							<p class="review-alert review-alert-error"><c:out value="${reviewActionError}" /></p>
 						</c:if>
 
-						<form class="review-write-form" method="post" action="${pageContext.request.contextPath}/place/${placeNo}/reviews">
+						<form class="review-write-form" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/place/${placeNo}/reviews">
 							<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 							<input type="hidden" id="review-rating-value" name="rating" value="5" />
 							<div class="rating-row">
@@ -256,6 +293,16 @@
 								</div>
 							</div>
 							<textarea name="commentContent" class="review-write-input" maxlength="2000" placeholder="이 여행지에 대한 리뷰를 남겨주세요." required></textarea>
+							<div class="review-upload-row">
+								<label for="reviewImages">리뷰 사진 (최대 10장)</label>
+								<input id="reviewImages"
+									   class="review-image-input"
+									   type="file"
+									   name="reviewImages"
+									   accept="image/*"
+									   multiple />
+								<p class="review-file-hint">JPG/PNG/WebP, each file up to 5MB.</p>
+							</div>
 							<button type="submit" class="review-submit-btn">리뷰 등록</button>
 						</form>
 
@@ -300,6 +347,21 @@
 												</c:choose>
 											</p>
 
+											<c:if test="${not empty review.photoUrlList}">
+												<div class="review-photo-strip">
+													<c:forEach var="reviewPhotoUrl" items="${review.photoUrlList}" varStatus="photoStatus">
+														<button type="button"
+																class="review-photo-thumb-btn review-photo-trigger"
+																data-review-photo-group="review-${review.commentNo}"
+																data-photo-url="${fn:escapeXml(reviewPhotoUrl)}"
+																data-photo-index="${photoStatus.index}"
+																aria-label="Open review photo">
+															<img src="${reviewPhotoUrl}" alt="Review photo ${photoStatus.count}">
+														</button>
+													</c:forEach>
+												</div>
+											</c:if>
+
 											<c:if test="${not empty currentAuthId and review.createdByAuthId eq currentAuthId}">
 												<div class="review-owner-actions">
 													<div class="review-owner-buttons">
@@ -314,6 +376,7 @@
 													<form id="review-edit-form-${review.commentNo}"
 														  class="review-edit-form review-edit-form-hidden"
 														  method="post"
+														  enctype="multipart/form-data"
 														  action="${pageContext.request.contextPath}/place/${placeNo}/reviews/${review.commentNo}/update">
 														<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 														<c:set var="editRatingValue" value="${empty review.rating ? 5 : review.rating}" />
@@ -328,6 +391,36 @@
 																			aria-label="${star}점">&#9733;</button>
 																</c:forEach>
 															</div>
+														</div>
+														<c:if test="${not empty review.photoUrlList}">
+															<div class="review-upload-row">
+																<label>기존 리뷰 사진</label>
+																<div class="review-photo-strip review-photo-strip-edit">
+																	<c:forEach var="editPhotoUrl" items="${review.photoUrlList}" varStatus="editPhotoStatus">
+																		<div class="review-edit-photo-item">
+																			<img src="${editPhotoUrl}" alt="Review photo ${editPhotoStatus.count}" />
+																			<c:if test="${fn:contains(editPhotoUrl, '/place/review-photo/')}">
+																				<label class="review-edit-photo-delete">
+																					<input type="checkbox"
+																						   name="deletePhotoNoList"
+																						   value="${fn:substringAfter(editPhotoUrl, '/place/review-photo/')}" />
+																					삭제
+																				</label>
+																			</c:if>
+																		</div>
+																	</c:forEach>
+																</div>
+															</div>
+														</c:if>
+														<div class="review-upload-row">
+															<label for="reviewEditImages-${review.commentNo}">추가 리뷰 사진</label>
+															<input id="reviewEditImages-${review.commentNo}"
+																   class="review-image-input"
+																   type="file"
+																   name="reviewImages"
+																   accept="image/*"
+																   multiple />
+															<p class="review-file-hint">선택한 파일은 저장 시 추가됩니다.</p>
 														</div>
 														<textarea name="commentContent" class="review-edit-input" maxlength="2000" required><c:out value="${review.commentContent}" /></textarea>
 														<div class="review-edit-buttons">
@@ -438,7 +531,7 @@
 								<c:forEach var="wish" items="${wishlistList}">
 									<div class="wishlist-card">
 										<p class="wishlist-name"><c:out value="${wish.categoryType}" /></p>
-										<form method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/${wish.wishNo}/delete" onsubmit="return confirm('찜을 삭제하시겠습니까?');">
+										<form method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/${wish.wishNo}/delete">
 											<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 											<button type="submit" class="review-action-btn review-delete-btn">삭제</button>
 										</form>
@@ -454,6 +547,31 @@
 			</div>
 		</div>
 	</c:if>
+
+	<div class="review-photo-modal" id="place-photo-modal" aria-hidden="true">
+		<div class="review-photo-modal-dim" data-modal-close="true"></div>
+		<div class="review-photo-modal-panel" role="dialog" aria-modal="true" aria-label="Place photos">
+			<button type="button" class="review-photo-modal-close" id="place-photo-modal-close" aria-label="Close">&times;</button>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-prev" id="place-photo-modal-prev" aria-label="Previous">&#8249;</button>
+			<figure class="review-photo-modal-figure">
+				<img id="place-photo-modal-image" alt="Place photo">
+				<figcaption class="review-photo-modal-counter" id="place-photo-modal-counter"></figcaption>
+			</figure>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-next" id="place-photo-modal-next" aria-label="Next">&#8250;</button>
+		</div>
+	</div>
+	<div class="review-photo-modal" id="review-photo-modal" aria-hidden="true">
+		<div class="review-photo-modal-dim" data-modal-close="true"></div>
+		<div class="review-photo-modal-panel" role="dialog" aria-modal="true" aria-label="Review photos">
+			<button type="button" class="review-photo-modal-close" id="review-photo-modal-close" aria-label="Close">&times;</button>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-prev" id="review-photo-modal-prev" aria-label="Previous">&#8249;</button>
+			<figure class="review-photo-modal-figure">
+				<img id="review-photo-modal-image" alt="Review photo">
+				<figcaption class="review-photo-modal-counter" id="review-photo-modal-counter"></figcaption>
+			</figure>
+			<button type="button" class="review-photo-modal-nav review-photo-modal-next" id="review-photo-modal-next" aria-label="Next">&#8250;</button>
+		</div>
+	</div>
 
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
 
@@ -595,13 +713,291 @@
 			const modalOpenButton = document.getElementById("wishlist-open-btn");
 			const modalCloseButton = document.getElementById("wishlist-close-btn");
 			const openWishlistOnLoad = ${openWishlist or not empty wishlistActionMessage or not empty wishlistActionError};
+			const placePhotoModal = document.getElementById("place-photo-modal");
+			const placePhotoModalImage = document.getElementById("place-photo-modal-image");
+			const placePhotoModalCounter = document.getElementById("place-photo-modal-counter");
+			const placePhotoModalClose = document.getElementById("place-photo-modal-close");
+			const placePhotoModalPrev = document.getElementById("place-photo-modal-prev");
+			const placePhotoModalNext = document.getElementById("place-photo-modal-next");
+			const placePhotoTriggers = Array.from(document.querySelectorAll(".place-photo-trigger"));
+			const placePhotoSourceItems = Array.from(document.querySelectorAll(".place-photo-source-item"));
+			const reviewPhotoModal = document.getElementById("review-photo-modal");
+			const reviewPhotoModalImage = document.getElementById("review-photo-modal-image");
+			const reviewPhotoModalCounter = document.getElementById("review-photo-modal-counter");
+			const reviewPhotoModalClose = document.getElementById("review-photo-modal-close");
+			const reviewPhotoModalPrev = document.getElementById("review-photo-modal-prev");
+			const reviewPhotoModalNext = document.getElementById("review-photo-modal-next");
+			const reviewPhotoTriggers = Array.from(document.querySelectorAll(".review-photo-trigger"));
+			const placePhotoList = [];
+			const seenPlacePhotoUrl = {};
+			const reviewPhotoGroups = {};
+			let currentPlacePhotoIndex = 0;
+			let currentReviewPhotoGroup = "";
+			let currentReviewPhotoIndex = 0;
+
+			function pushPlacePhoto(urlValue) {
+				const normalized = (urlValue || "").trim();
+				if (!normalized || seenPlacePhotoUrl[normalized]) {
+					return;
+				}
+				seenPlacePhotoUrl[normalized] = true;
+				placePhotoList.push(normalized);
+			}
+
+			placePhotoSourceItems.forEach(function(sourceItem) {
+				pushPlacePhoto(sourceItem.dataset.photoUrl);
+			});
+
+			placePhotoTriggers.forEach(function(trigger) {
+				const directUrl = trigger.dataset ? trigger.dataset.photoUrl : "";
+				if (directUrl) {
+					pushPlacePhoto(directUrl);
+					return;
+				}
+				const imageElement = trigger.querySelector("img");
+				if (imageElement && imageElement.getAttribute("src")) {
+					pushPlacePhoto(imageElement.getAttribute("src"));
+				}
+			});
+
+			reviewPhotoTriggers.forEach(function(trigger) {
+				const group = trigger.dataset ? (trigger.dataset.reviewPhotoGroup || "") : "";
+				const url = trigger.dataset ? (trigger.dataset.photoUrl || "").trim() : "";
+				if (!group || !url) {
+					return;
+				}
+				if (!reviewPhotoGroups[group]) {
+					reviewPhotoGroups[group] = [];
+				}
+				if (reviewPhotoGroups[group].indexOf(url) < 0) {
+					reviewPhotoGroups[group].push(url);
+				}
+			});
+
+			function syncBodyModalOpenState() {
+				const wishlistOpen = modalOverlay && modalOverlay.classList.contains("is-open");
+				const photoOpen = placePhotoModal && placePhotoModal.classList.contains("is-open");
+				const reviewPhotoOpen = reviewPhotoModal && reviewPhotoModal.classList.contains("is-open");
+				if (wishlistOpen || photoOpen || reviewPhotoOpen) {
+					document.body.classList.add("modal-open");
+				} else {
+					document.body.classList.remove("modal-open");
+				}
+			}
+
+			function renderPlacePhotoModal() {
+				if (!placePhotoModalImage || !placePhotoModalCounter || placePhotoList.length === 0) {
+					return;
+				}
+				if (currentPlacePhotoIndex < 0) {
+					currentPlacePhotoIndex = placePhotoList.length - 1;
+				}
+				if (currentPlacePhotoIndex >= placePhotoList.length) {
+					currentPlacePhotoIndex = 0;
+				}
+				placePhotoModalImage.src = placePhotoList[currentPlacePhotoIndex];
+				placePhotoModalCounter.textContent = (currentPlacePhotoIndex + 1) + " / " + placePhotoList.length;
+			}
+
+			function openPlacePhotoModal(index) {
+				if (!placePhotoModal || placePhotoList.length === 0) {
+					return;
+				}
+				currentPlacePhotoIndex = Number.isFinite(index) ? index : 0;
+				renderPlacePhotoModal();
+				placePhotoModal.classList.add("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function closePlacePhotoModal() {
+				if (!placePhotoModal) {
+					return;
+				}
+				placePhotoModal.classList.remove("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function movePlacePhoto(step) {
+				if (placePhotoList.length === 0) {
+					return;
+				}
+				currentPlacePhotoIndex += step;
+				renderPlacePhotoModal();
+			}
+
+			function currentReviewPhotoList() {
+				return reviewPhotoGroups[currentReviewPhotoGroup] || [];
+			}
+
+			function renderReviewPhotoModal() {
+				const photoList = currentReviewPhotoList();
+				if (!reviewPhotoModalImage || !reviewPhotoModalCounter || photoList.length === 0) {
+					return;
+				}
+				if (currentReviewPhotoIndex < 0) {
+					currentReviewPhotoIndex = photoList.length - 1;
+				}
+				if (currentReviewPhotoIndex >= photoList.length) {
+					currentReviewPhotoIndex = 0;
+				}
+				reviewPhotoModalImage.src = photoList[currentReviewPhotoIndex];
+				reviewPhotoModalCounter.textContent = (currentReviewPhotoIndex + 1) + " / " + photoList.length;
+			}
+
+			function openReviewPhotoModal(groupKey, index) {
+				const photoList = reviewPhotoGroups[groupKey] || [];
+				if (!reviewPhotoModal || photoList.length === 0) {
+					return;
+				}
+				currentReviewPhotoGroup = groupKey;
+				currentReviewPhotoIndex = Number.isFinite(index) ? index : 0;
+				renderReviewPhotoModal();
+				reviewPhotoModal.classList.add("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function closeReviewPhotoModal() {
+				if (!reviewPhotoModal) {
+					return;
+				}
+				reviewPhotoModal.classList.remove("is-open");
+				syncBodyModalOpenState();
+			}
+
+			function moveReviewPhoto(step) {
+				const photoList = currentReviewPhotoList();
+				if (photoList.length === 0) {
+					return;
+				}
+				currentReviewPhotoIndex += step;
+				renderReviewPhotoModal();
+			}
+
+			function resolvePlacePhotoIndex(trigger) {
+				if (!trigger || placePhotoList.length === 0) {
+					return 0;
+				}
+				const directUrl = trigger.dataset ? trigger.dataset.photoUrl : "";
+				if (directUrl) {
+					const directIndex = placePhotoList.indexOf(directUrl);
+					return directIndex >= 0 ? directIndex : 0;
+				}
+				const imageElement = trigger.querySelector("img");
+				const imageUrl = imageElement ? imageElement.getAttribute("src") : "";
+				const imageIndex = placePhotoList.indexOf(imageUrl || "");
+				return imageIndex >= 0 ? imageIndex : 0;
+			}
+
+			placePhotoTriggers.forEach(function(trigger) {
+				function openForTrigger() {
+					openPlacePhotoModal(resolvePlacePhotoIndex(trigger));
+				}
+				trigger.addEventListener("click", openForTrigger);
+				trigger.addEventListener("keydown", function(event) {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						openForTrigger();
+					}
+				});
+			});
+
+			reviewPhotoTriggers.forEach(function(trigger) {
+				function openForReviewTrigger() {
+					const group = trigger.dataset ? (trigger.dataset.reviewPhotoGroup || "") : "";
+					const index = Number(trigger.dataset ? trigger.dataset.photoIndex : "0");
+					openReviewPhotoModal(group, Number.isFinite(index) ? index : 0);
+				}
+				trigger.addEventListener("click", openForReviewTrigger);
+				trigger.addEventListener("keydown", function(event) {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						openForReviewTrigger();
+					}
+				});
+			});
+
+			if (placePhotoModal) {
+				placePhotoModal.addEventListener("click", function(event) {
+					if (event.target && event.target.dataset && event.target.dataset.modalClose === "true") {
+						closePlacePhotoModal();
+					}
+				});
+			}
+			if (reviewPhotoModal) {
+				reviewPhotoModal.addEventListener("click", function(event) {
+					if (event.target && event.target.dataset && event.target.dataset.modalClose === "true") {
+						closeReviewPhotoModal();
+					}
+				});
+			}
+
+			if (placePhotoModalClose) {
+				placePhotoModalClose.addEventListener("click", closePlacePhotoModal);
+			}
+
+			if (placePhotoModalPrev) {
+				placePhotoModalPrev.addEventListener("click", function() {
+					movePlacePhoto(-1);
+				});
+			}
+
+			if (placePhotoModalNext) {
+				placePhotoModalNext.addEventListener("click", function() {
+					movePlacePhoto(1);
+				});
+			}
+			if (reviewPhotoModalClose) {
+				reviewPhotoModalClose.addEventListener("click", closeReviewPhotoModal);
+			}
+			if (reviewPhotoModalPrev) {
+				reviewPhotoModalPrev.addEventListener("click", function() {
+					moveReviewPhoto(-1);
+				});
+			}
+			if (reviewPhotoModalNext) {
+				reviewPhotoModalNext.addEventListener("click", function() {
+					moveReviewPhoto(1);
+				});
+			}
+
+			document.addEventListener("keydown", function(event) {
+				const isPlacePhotoOpen = placePhotoModal && placePhotoModal.classList.contains("is-open");
+				const isReviewPhotoOpen = reviewPhotoModal && reviewPhotoModal.classList.contains("is-open");
+				if (!isPlacePhotoOpen && !isReviewPhotoOpen) {
+					return;
+				}
+				if (event.key === "Escape") {
+					if (isPlacePhotoOpen) {
+						closePlacePhotoModal();
+					}
+					if (isReviewPhotoOpen) {
+						closeReviewPhotoModal();
+					}
+					return;
+				}
+				if (event.key === "ArrowLeft") {
+					if (isPlacePhotoOpen) {
+						movePlacePhoto(-1);
+					}
+					if (isReviewPhotoOpen) {
+						moveReviewPhoto(-1);
+					}
+				} else if (event.key === "ArrowRight") {
+					if (isPlacePhotoOpen) {
+						movePlacePhoto(1);
+					}
+					if (isReviewPhotoOpen) {
+						moveReviewPhoto(1);
+					}
+				}
+			});
 
 			function openWishlistModal() {
 				if (!modalOverlay) {
 					return;
 				}
 				modalOverlay.classList.add("is-open");
-				document.body.classList.add("modal-open");
+				syncBodyModalOpenState();
 			}
 
 			function closeWishlistModal() {
@@ -609,7 +1005,7 @@
 					return;
 				}
 				modalOverlay.classList.remove("is-open");
-				document.body.classList.remove("modal-open");
+				syncBodyModalOpenState();
 			}
 
 			if (modalOpenButton) {

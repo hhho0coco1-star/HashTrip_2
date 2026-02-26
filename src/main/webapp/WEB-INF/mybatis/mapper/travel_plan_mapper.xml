@@ -26,13 +26,9 @@
 			0 AS like_count,
 			NVL(
 				(
-					SELECT COUNT(DISTINCT w.wish_no)
-					FROM wishlist w
-					WHERE w.place_no IN (
-						SELECT pd2.place_no
-						FROM Plan_Details pd2
-						WHERE pd2.plan_no = tp.plan_no
-					)
+					SELECT COUNT(DISTINCT rsh.saved_user_no)
+					FROM route_save_history rsh
+					WHERE rsh.source_plan_no = tp.plan_no
 				),
 				0
 			) AS saved_count,
@@ -81,13 +77,9 @@
 			0 AS like_count,
 			NVL(
 				(
-					SELECT COUNT(DISTINCT w.wish_no)
-					FROM wishlist w
-					WHERE w.place_no IN (
-						SELECT pd2.place_no
-						FROM Plan_Details pd2
-						WHERE pd2.plan_no = tp.plan_no
-					)
+					SELECT COUNT(DISTINCT rsh.saved_user_no)
+					FROM route_save_history rsh
+					WHERE rsh.source_plan_no = tp.plan_no
 				),
 				0
 			) AS saved_count,
@@ -135,13 +127,9 @@
 			0 AS like_count,
 			NVL(
 				(
-					SELECT COUNT(DISTINCT w.wish_no)
-					FROM wishlist w
-					WHERE w.place_no IN (
-						SELECT pd2.place_no
-						FROM Plan_Details pd2
-						WHERE pd2.plan_no = tp.plan_no
-					)
+					SELECT COUNT(DISTINCT rsh.saved_user_no)
+					FROM route_save_history rsh
+					WHERE rsh.source_plan_no = tp.plan_no
 				),
 				0
 			) AS saved_count,
@@ -194,6 +182,38 @@
 		DELETE FROM TRAVEL_PLANS
 		WHERE PLAN_NO = #{planNo}
 		  AND USER_NO = #{userNo}
+	</delete>
+
+	<insert id="registerRouteSave" parameterType="map">
+		INSERT INTO ROUTE_SAVE_HISTORY (
+			SAVE_NO,
+			SOURCE_PLAN_NO,
+			SAVED_USER_NO,
+			SAVED_AT
+		)
+		SELECT
+			SEQ_ROUTE_SAVE_NO.NEXTVAL,
+			#{sourcePlanNo},
+			#{savedUserNo},
+			SYSTIMESTAMP
+		FROM DUAL
+		WHERE NOT EXISTS (
+			SELECT 1
+			FROM ROUTE_SAVE_HISTORY rsh
+			WHERE rsh.SOURCE_PLAN_NO = #{sourcePlanNo}
+			  AND rsh.SAVED_USER_NO = #{savedUserNo}
+		)
+	</insert>
+
+	<select id="countSavedUsersBySourcePlan" parameterType="long" resultType="int">
+		SELECT COUNT(DISTINCT rsh.SAVED_USER_NO)
+		FROM ROUTE_SAVE_HISTORY rsh
+		WHERE rsh.SOURCE_PLAN_NO = #{value}
+	</select>
+
+	<delete id="deleteRouteSaveHistoryBySourcePlan" parameterType="long">
+		DELETE FROM ROUTE_SAVE_HISTORY
+		WHERE SOURCE_PLAN_NO = #{value}
 	</delete>
 
 </mapper>

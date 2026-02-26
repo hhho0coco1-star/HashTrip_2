@@ -1,0 +1,217 @@
+@charset "UTF-8";
+
+/* routes.css 기반 Planner 리스트 스타일 */
+
+.planner-list-wrap {
+    margin: 0 auto;
+}
+
+/* 필터 바 */
+.planner-filter-bar {
+    margin-bottom: 1.5rem;
+}
+
+.planner-filter-bar .filter-chip {
+    text-decoration: none;
+}
+
+/* 일정 순서 + 썸네일 */
+.planner-plan-steps {
+    padding: 0 1.2rem 1rem;
+}
+
+.planner-step-thumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.planner-step-thumb {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-gray-100);
+}
+
+.planner-step-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.planner-step-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+
+.planner-step-thumb .planner-step-order {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(0,0,0,.6);
+    color: #fff;
+    border-radius: 4px;
+}
+
+.planner-step-arrow {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.planner-step-names {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+}
+
+.planner-step-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.planner-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+
+.planner-plan-card {
+    position: relative;
+}
+
+.planner-plan-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.planner-plan-head {
+    padding: 1.2rem 1.2rem 0.6rem;
+}
+
+.planner-plan-card .traveler-info {
+    min-width: 0;
+}
+
+.planner-plan-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.planner-plan-dates {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.planner-plan-status {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.planner-status-PLANNING {
+    background: rgba(91, 141, 238, .15);
+    color: var(--primary-blue);
+}
+
+.planner-status-RECORDING {
+    background: rgba(34, 197, 94, .15);
+    color: var(--green);
+}
+
+.planner-status-COMPLETED {
+    background: var(--bg-gray-100);
+    color: var(--text-secondary);
+}
+
+.planner-plan-delete-form {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    margin: 0;
+}
+
+.planner-btn-delete {
+    padding: 6px 12px;
+    border: 1px solid #fecaca;
+    background: #fff;
+    color: var(--red);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.planner-btn-delete:hover {
+    background: #fef2f2;
+}
+
+.planner-msg {
+    margin: 12px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+.planner-msg-ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.planner-msg-err {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.planner-empty {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.planner-empty .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.planner-empty p {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .planner-plan-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,46 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:util="http://www.springframework.org/schema/util"
-xmlns:task="http://www.springframework.org/schema/task"
-xmlns:tx="http://www.springframework.org/schema/tx"
-xmlns:context="http://www.springframework.org/schema/context"
-xsi:schemaLocation="http://www.springframework.org/schema/beans
-http://www.springframework.org/schema/beans/spring-beans.xsd
-http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
-http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
-http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
-http://www.springframework.org/schema/context
-http://www.springframework.org/schema/context/spring-context.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-<!-- 	RoomDAO roomDAO = new RoomDAOImpl(); -->
-<!-- 	<bean id="roomDAO" class="com.app.dao.room.impl.RoomDAOImpl"></bean> -->
-	
-<!-- 	roomService 빈 등록 -->
-<!-- 	RoomService roomService = new RoomServiceImpl(); -->
-<!-- 	<bean id="roomService" class="com.app.service.room.impl.RoomServiceImpl"> -->
-<!-- 		생성자를 통한 의존성 주입 -->
-<!-- 	RoomService roomService = new RoomServiceImpl(roomDAO); -->
-<!-- 		<constructor-arg ref="roomDAO"></constructor-arg> -->
-		
-<!-- 		setter 메소드를 통한 의존성 주입 -->
-		<!--
-			 RoomService roomService = new RoomServiceImpl();
-			 roomService.setRoomDAO(roomDAO);
-		 -->
-<!-- 		<property name="roomDAO" ref="roomDAO"></property> -->
-<!-- 	</bean> -->
-	
 	<bean class="org.apache.commons.dbcp2.BasicDataSource" id="data_source">
 		<property name="driverClassName" value="oracle.jdbc.OracleDriver" />
-		<property name="url" value="jdbc:oracle:thin:@192.168.0.105:1521:orcl" />
+		<property name="url" value="jdbc:oracle:thin:@localhost:1521:orcl" />
 		<property name="username" value="scott" />
 		<property name="password" value="tiger" />
 	</bean>
 
 	<bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
 		<property name="dataSource" ref="data_source"></property>
-	<!-- <property name="mapperLocations" value="/WEB-INF/mybatis/mapper/*.xml"></property> -->
 		<property name="mapperLocations" value="/WEB-INF/mybatis/mapper/*_mapper.xml"></property>
 		<property name="configLocation" value="/WEB-INF/mybatis/mybatis-config.xml"></property>
 	</bean>
@@ -52,14 +34,16 @@ http://www.springframework.org/schema/context/spring-context.xsd">
 	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="data_source" />
 	</bean>
-
 	<tx:annotation-driven transaction-manager="transactionManager" />
-	
-	<context:property-placeholder location="classpath:oauth2.properties,classpath:mail.properties,classpath:mail-local.properties" ignore-resource-not-found="true"/>
-	
-	<context:component-scan	base-package="com.app.service"/>
-	<context:component-scan	base-package="com.app.dao"/>
-	<context:component-scan base-package="com.app.config"/>
-	
+
+	<context:property-placeholder location="classpath:oauth2.properties" ignore-resource-not-found="true" />
+
+	<context:component-scan base-package="com.app.service" />
+	<context:component-scan base-package="com.app.dao" />
+	<context:component-scan base-package="com.app.config" />
+
+	<mvc:annotation-driven />
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	<mvc:resources mapping="/img/**" location="/resources/img/" />
 
 </beans>

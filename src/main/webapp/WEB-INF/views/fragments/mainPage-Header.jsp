@@ -11,7 +11,7 @@
             <ul class="nav-menu">
                 <li><a href="<c:url value='/hashTrip' />">홈</a></li>
                 <li><a href="<c:url value='/routes' />">추천 루트</a></li>
-                <li><a href="<c:url value='/plan' />">여행 일정</a></li>
+                <li><a href="<c:url value='/planner' />">여행 일정</a></li>
                 <li><a href="<c:url value='/mypage' />">마이페이지</a></li>
             </ul>
 

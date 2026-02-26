@@ -1,7 +1,9 @@
 package com.app.dao;
 
 import java.util.List;
+import java.util.Map;
 
+import com.app.dto.InquiryDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
@@ -11,7 +13,7 @@ public interface UsersDAO {
 
 	String getUserNickname(int userNo);
 
-	List<UserTagMapDTO> getUserTagsByAuthId(String authId);
+	List<UserTagMapDTO> getUserTagsByUserNo(Long userNo);
 
 	List<TagMasterDTO> getTagMasterList();
 
@@ -20,4 +22,40 @@ public interface UsersDAO {
 	int insertUserTagByAuthId(String authId, String tagCode, String questionId);
 
 	int deleteUserTagByAuthId(String authId, String tagCode);
+
+	int updateUserProfileByAuthId(String authId, UsersDTO usersDTO);
+
+	int upsertUserAddressByAuthId(String authId, UsersDTO usersDTO);
+
+	String findAuthPasswordByAuthId(String authId);
+
+	int updateAuthPasswordByAuthId(String authId, String encodedPassword);
+	
+	// 1. 유저 고유 번호 조회
+    int getUserNoByAuthId(String authId);
+
+    // 2. 기존 성향 태그 전체 삭제
+    int deleteUserTagsByUserNo(Long userNo);
+
+    // 3. 분석 결과 태그들 일괄 삽입
+    int insertUserAnalysisTags(Map<String, Object> params);
+
+    // 4. (기존 기능) 마이페이지용 태그 리스트 조회
+    List<UserTagMapDTO> getUserTagsByAuthId(String authId);
+    
+    // 1:1 문의
+    int insertInquiry(InquiryDTO dto);
+    
+    // 1:1 문의내용 조회
+    List<InquiryDTO> selectInquiryList(Long userNo);
+    
+    // 1:1 문의 삭제
+    int deleteInquiry(Long inquiryNo);
+
+    // 1:1 문의 수정
+    int updateInquiry(InquiryDTO dto);
+    
+    // 1:1 문의 조회
+    InquiryDTO getInquiryDetail(Long inquiryNo);
+
 }

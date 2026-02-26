@@ -2,6 +2,7 @@ package com.app.service;
 
 import java.util.List;
 
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -27,6 +28,8 @@ public interface PlaceService {
 
 	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize) throws Exception;
 
+	public List<PlaceReviewDTO> getMyPlaceReviews(String createdBy, int page, int pageSize, String sortType) throws Exception;
+
 	public List<PlaceHoursDTO> getPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 
 	public int updatePlaceHours() throws Exception;
@@ -37,7 +40,21 @@ public interface PlaceService {
 
 	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy) throws Exception;
 
+	public PlaceReviewDTO createPlaceReview(Long placeNo, String commentContent, Integer rating, String createdBy,
+			List<PhotoDataDTO> photoDataList) throws Exception;
+
 	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy) throws Exception;
 
+	public boolean updatePlaceReview(Long placeNo, Long commentNo, String commentContent, Integer rating, String createdBy,
+			List<Long> deletePhotoNoList, List<PhotoDataDTO> newPhotoDataList) throws Exception;
+
 	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
+
+	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception;
+	
+	public List<PlaceDTO> searchPlaces(String keyword);
+
+	/** 위경도 기준 반경(km) 내 근처 장소 목록 (교체용) */
+	List<PlaceDTO> getPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo);
+
 }

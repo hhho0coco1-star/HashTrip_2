@@ -2,6 +2,9 @@ package com.app.dao;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -40,13 +43,24 @@ public interface PlaceDAO {
 
 	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow) throws Exception;
 
+	public List<PlaceReviewDTO> selectPlaceReviewsByCreatedByPaged(String createdBy, int startRow, int endRow, String sortType)
+			throws Exception;
+
 	public List<PlaceHoursDTO> selectPlaceHoursByPlaceNo(Long placeNo) throws Exception;
 
 	public Long getNextPlaceReviewCommentNo() throws Exception;
 
 	public int insertPlaceReview(PlaceReviewDTO placeReviewDTO) throws Exception;
 
+	public int insertReviewPhotos(Long commentNo, List<PhotoDataDTO> photoDataList) throws Exception;
+
+	public PhotoDataDTO selectPhotoDataByPhotoNo(Long photoNo) throws Exception;
+
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception;
+
+	public boolean existsPlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
+
+	public int deleteReviewPhotosByOwner(Long commentNo, Long placeNo, String createdBy, List<Long> photoNoList) throws Exception;
 
 	public int deletePlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception;
 
@@ -55,4 +69,10 @@ public interface PlaceDAO {
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
 
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
+	
+	public List<PlaceDTO> searchPlaces(String keyword);
+
+	/** 위경도 기준 반경(km) 내 장소 목록 (현재 장소 제외 가능) */
+	List<PlaceDTO> selectPlacesNearby(@Param("lat") double lat, @Param("lng") double lng, @Param("radiusKm") int radiusKm, @Param("excludePlaceNo") Long excludePlaceNo);
+
 }

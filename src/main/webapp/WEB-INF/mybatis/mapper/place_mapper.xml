@@ -38,466 +38,896 @@
 
 	<update id="dropSeqPlaceNo" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'DROP SEQUENCE SEQ_PLACE_NO';
+		EXECUTE IMMEDIATE
+		'DROP SEQUENCE SEQ_PLACE_NO';
 		EXCEPTION
-			WHEN OTHERS THEN
-				IF SQLCODE != -2289 THEN
-					RAISE;
-				END IF;
+		WHEN OTHERS THEN
+		IF SQLCODE !=
+		-2289 THEN
+		RAISE;
+		END IF;
 		END;
 	</update>
 
 	<update id="createSeqPlaceNo" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_PLACE_NO START WITH 1 INCREMENT BY 1';
+		EXECUTE
+		IMMEDIATE 'CREATE SEQUENCE SEQ_PLACE_NO START WITH 1 INCREMENT BY 1';
 		END;
 	</update>
 
 	<update id="dropSeqPlaceTagMapNo" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'DROP SEQUENCE SEQ_PLACE_TAG_MAP_NO';
+		EXECUTE
+		IMMEDIATE 'DROP SEQUENCE SEQ_PLACE_TAG_MAP_NO';
 		EXCEPTION
-			WHEN OTHERS THEN
-				IF SQLCODE != -2289 THEN
-					RAISE;
-				END IF;
+		WHEN OTHERS
+		THEN
+		IF SQLCODE != -2289 THEN
+		RAISE;
+		END IF;
 		END;
 	</update>
 
 	<update id="createSeqPlaceTagMapNo" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_PLACE_TAG_MAP_NO START WITH 1 INCREMENT BY 1';
+		EXECUTE
+		IMMEDIATE 'CREATE SEQUENCE SEQ_PLACE_TAG_MAP_NO START WITH 1
+		INCREMENT
+		BY 1';
 		END;
 	</update>
 
 	<update id="dropSeqHoursId" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'DROP SEQUENCE SEQ_HOURS_ID';
+		EXECUTE IMMEDIATE
+		'DROP SEQUENCE SEQ_HOURS_ID';
 		EXCEPTION
-			WHEN OTHERS THEN
-				IF SQLCODE != -2289 THEN
-					RAISE;
-				END IF;
+		WHEN OTHERS THEN
+		IF SQLCODE !=
+		-2289 THEN
+		RAISE;
+		END IF;
 		END;
 	</update>
 
 	<update id="createSeqHoursId" statementType="STATEMENT">
 		BEGIN
-			EXECUTE IMMEDIATE 'CREATE SEQUENCE SEQ_HOURS_ID START WITH 1 INCREMENT BY 1';
+		EXECUTE
+		IMMEDIATE 'CREATE SEQUENCE SEQ_HOURS_ID START WITH 1 INCREMENT BY 1';
 		END;
 	</update>
 
 	<select id="getNextPlaceNo" resultType="long">
-		SELECT SEQ_PLACE_NO.NEXTVAL FROM DUAL
+		SELECT
+		SEQ_PLACE_NO.NEXTVAL FROM DUAL
 	</select>
 
 	<select id="getNextPlaceReviewCommentNo" resultType="long">
-		SELECT SEQ_COMMENT_NO.NEXTVAL FROM DUAL
+		SELECT
+		SEQ_COMMENT_NO.NEXTVAL FROM DUAL
 	</select>
 
 	<select id="getNextCategoryNo" resultType="long">
-		SELECT SEQ_CATEGORY_NO.NEXTVAL FROM DUAL
+		SELECT
+		SEQ_CATEGORY_NO.NEXTVAL FROM DUAL
 	</select>
 
 	<select id="getNextWishNo" resultType="long">
-		SELECT SEQ_WISH_NO.NEXTVAL FROM DUAL
+		SELECT SEQ_WISH_NO.NEXTVAL
+		FROM DUAL
 	</select>
 
-	<select id="selectUserNoByAuthId" parameterType="string" resultType="long">
+	<select id="selectUserNoByAuthId" parameterType="string"
+		resultType="long">
 		SELECT ua.USER_NO
 		FROM USER_AUTHENTICATION ua
-		WHERE ua.USER_AUTH_ID = #{value}
+		WHERE
+		ua.USER_AUTH_ID = #{value}
 	</select>
 
 	<insert id="updateAreaBasedListPlaces" parameterType="PlaceDTO">
-		INSERT INTO PLACE (
-			PLACE_NO, PLACE_CONTENT_ID, PLACE_NAME, PLACE_CATEGORY, PLACE_ADDRESS,
-			PLACE_LATITUDE, PLACE_LONGITUDE, PLACE_RATING,
-			PLACE_NUMBER, PLACE_THUMBNAIL_URL
+		INSERT INTO
+		PLACE (
+		PLACE_NO, PLACE_CONTENT_ID, PLACE_NAME, PLACE_CATEGORY,
+		PLACE_ADDRESS,
+		PLACE_LATITUDE, PLACE_LONGITUDE, PLACE_RATING,
+		PLACE_NUMBER, PLACE_THUMBNAIL_URL
 		) VALUES (
-			#{placeNo}, #{placeContentId}, #{placeName}, #{placeCategory}, #{placeAddress},
-			#{placeLatitude}, #{placeLongitude}, 0,
-			#{placeNumber}, #{placeThumbnailUrl}
+		#{placeNo},
+		#{placeContentId}, #{placeName}, #{placeCategory}, #{placeAddress},
+		#{placeLatitude}, #{placeLongitude}, 0,
+		#{placeNumber},
+		#{placeThumbnailUrl}
 		)
 	</insert>
 
 	<insert id="insertPlaceTagMap" parameterType="PlaceTagMapDTO">
-		INSERT INTO PLACE_TAG_MAP (
-			PLACE_TAG_NO, PLACE_NO, TAG_CODE, TAG_WEIGHT, TAG_SOURCE, TAG_CONFIDENCE
+		INSERT INTO
+		PLACE_TAG_MAP (
+		PLACE_TAG_NO, PLACE_NO, TAG_CODE, TAG_WEIGHT,
+		TAG_SOURCE, TAG_CONFIDENCE
 		) VALUES (
-			SEQ_PLACE_TAG_MAP_NO.NEXTVAL, #{placeNo}, #{tagCode}, #{tagWeight}, #{tagSource}, #{tagConfidence}
+		SEQ_PLACE_TAG_MAP_NO.NEXTVAL,
+		#{placeNo}, #{tagCode}, #{tagWeight},
+		#{tagSource}, #{tagConfidence}
 		)
 	</insert>
 
 	<insert id="insertPlaceHours" parameterType="PlaceHoursDTO">
-		INSERT INTO PLACE_HOURS (
-			HOURS_ID, PLACE_NO, DAY_OF_WEEK, OPEN_TIME, CLOSE_TIME,
-			BREAK_STRAT_TIME, BREAK_END_TIME, LAST_ORDER, IS_CLOSED
+		INSERT INTO
+		PLACE_HOURS (
+		HOURS_ID, PLACE_NO, DAY_OF_WEEK, OPEN_TIME, CLOSE_TIME,
+		BREAK_STRAT_TIME, BREAK_END_TIME, LAST_ORDER, IS_CLOSED
 		) VALUES (
-			SEQ_HOURS_ID.NEXTVAL, #{placeNo}, #{dayOfWeek}, #{openTime}, #{closeTime},
-			#{breakStratTime}, #{breakEndTime}, #{lastOrder}, #{isClosed}
+		SEQ_HOURS_ID.NEXTVAL, #{placeNo}, #{dayOfWeek}, #{openTime},
+		#{closeTime},
+		#{breakStratTime}, #{breakEndTime}, #{lastOrder},
+		#{isClosed}
 		)
 	</insert>
 
 	<insert id="insertPlaceReview" parameterType="PlaceReviewDTO">
-		INSERT INTO PLACE_REVIEW (
-			COMMENT_NO, LOG_NO, PLACE_NO, COMMENT_CONTENT, RATING, CREATED_BY, CREATED_AT
-		) VALUES (
-			#{commentNo}, #{logNo}, #{placeNo}, #{commentContent}, #{rating}, #{createdBy}, SYSDATE
+		INSERT INTO
+		PLACE_REVIEW (
+		COMMENT_NO, LOG_NO, PLACE_NO, COMMENT_CONTENT, RATING,
+		CREATED_BY, CREATED_AT
+		)
+		VALUES (
+		#{commentNo}, #{logNo}, #{placeNo},
+		#{commentContent}, #{rating}, #{createdBy},
+		SYSDATE
 		)
 	</insert>
 
-	<update id="updatePlaceReviewByOwner" parameterType="PlaceReviewDTO">
+	<insert id="insertReviewPhoto" parameterType="PhotoDataDTO">
+		INSERT INTO
+		PHOTO_DATA (
+		PHOTO_NO, COMMENT_NO, LOG_PHOTO_URL, PHOTO_BINARY,
+		PHOTO_MIME_TYPE,
+		PHOTO_FILE_NAME
+		) VALUES (
+		SEQ_PHOTO_NO.NEXTVAL,
+		#{commentNo}, #{logPhotoUrl}, #{photoBinary,jdbcType=BLOB},
+		#{photoMimeType}, #{photoFileName}
+		)
+	</insert>
+
+	<update id="updatePlaceReviewByOwner"
+		parameterType="PlaceReviewDTO">
 		UPDATE PLACE_REVIEW
-		SET COMMENT_CONTENT = #{commentContent},
-		    RATING = #{rating}
+		SET COMMENT_CONTENT =
+		#{commentContent},
+		RATING = #{rating}
 		WHERE COMMENT_NO = #{commentNo}
-		  AND PLACE_NO = #{placeNo}
-		  AND CREATED_BY = #{createdBy}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
 	</update>
 
+	<select id="existsPlaceReviewByOwner" parameterType="map"
+		resultType="int">
+		SELECT COUNT(1)
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO =
+		#{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+	</select>
+
+	<delete id="deleteReviewPhotosByOwner" parameterType="map">
+		DELETE FROM PHOTO_DATA
+		WHERE PHOTO_NO IN
+		<foreach collection="photoNoList" item="photoNo" open="("
+			separator="," close=")">
+			#{photoNo}
+		</foreach>
+		AND COMMENT_NO IN (
+		SELECT COMMENT_NO
+		FROM PLACE_REVIEW
+		WHERE COMMENT_NO
+		= #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
+		)
+	</delete>
+
 	<insert id="insertWishlistCategory" parameterType="CategoryDTO">
-		INSERT INTO CATEGORY (
-			CATEGORY_NO, USER_NO, CATEGORY_TYPE, CATEGORY_IS_USED
-		) VALUES (
-			#{categoryNo}, #{userNo}, #{categoryType}, #{categoryIsUsed}
+		INSERT INTO
+		CATEGORY (
+		CATEGORY_NO, USER_NO, CATEGORY_TYPE, CATEGORY_IS_USED
+		)
+		VALUES (
+		#{categoryNo}, #{userNo}, #{categoryType}, #{categoryIsUsed}
 		)
 	</insert>
 
-	<update id="updateWishlistCategoryUsageByOwner" parameterType="map">
+	<update id="updateWishlistCategoryUsageByOwner"
+		parameterType="map">
 		UPDATE CATEGORY
 		SET CATEGORY_IS_USED = #{categoryIsUsed}
 		WHERE CATEGORY_NO = #{categoryNo}
-		  AND USER_NO = #{userNo}
+		AND USER_NO = #{userNo}
 	</update>
 
 	<insert id="insertWishlist" parameterType="WishListDTO">
 		INSERT INTO WISHLIST (
-			WISH_NO, PLACE_NO, CATEGORY_NO, USER_NO, WISH_DATE
+		WISH_NO, PLACE_NO, CATEGORY_NO, USER_NO, WISH_DATE
 		) VALUES (
-			#{wishNo}, #{placeNo}, #{categoryNo}, #{userNo}, SYSDATE
+		#{wishNo}, #{placeNo}, #{categoryNo}, #{userNo}, SYSDATE
 		)
 	</insert>
 
 	<delete id="deleteWishlistByOwner" parameterType="map">
-		DELETE FROM WISHLIST
+		DELETE FROM
+		WISHLIST
 		WHERE WISH_NO = #{wishNo}
-		  AND USER_NO = #{userNo}
+		AND USER_NO = #{userNo}
+	</delete>
+
+	<delete id="deleteWishlistByUserAndPlace" parameterType="map">
+		DELETE FROM WISHLIST
+		WHERE USER_NO = #{userNo}
+		AND PLACE_NO = #{placeNo}
 	</delete>
 
 	<delete id="deletePlaceReviewPhotosByOwner" parameterType="map">
 		DELETE FROM PHOTO_DATA
 		WHERE COMMENT_NO IN (
-			SELECT COMMENT_NO
-			FROM PLACE_REVIEW
-			WHERE COMMENT_NO = #{commentNo}
-			  AND PLACE_NO = #{placeNo}
-			  AND CREATED_BY = #{createdBy}
+		SELECT COMMENT_NO
+		FROM
+		PLACE_REVIEW
+		WHERE COMMENT_NO = #{commentNo}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
 		)
 	</delete>
 
 	<delete id="deletePlaceReviewByOwner" parameterType="map">
-		DELETE FROM PLACE_REVIEW
+		DELETE FROM
+		PLACE_REVIEW
 		WHERE COMMENT_NO = #{commentNo}
-		  AND PLACE_NO = #{placeNo}
-		  AND CREATED_BY = #{createdBy}
+		AND PLACE_NO = #{placeNo}
+		AND CREATED_BY = #{createdBy}
 	</delete>
 
 	<update id="updatePlaceRatingByPlaceNo" parameterType="long">
-		UPDATE PLACE p
+		UPDATE
+		PLACE p
 		SET p.PLACE_RATING = (
-			SELECT NVL(ROUND(AVG(pr.RATING), 1), 0)
-			FROM PLACE_REVIEW pr
-			WHERE pr.PLACE_NO = p.PLACE_NO
+		SELECT NVL(ROUND(AVG(pr.RATING), 1), 0)
+		FROM PLACE_REVIEW pr
+		WHERE pr.PLACE_NO = p.PLACE_NO
 		)
-		WHERE p.PLACE_NO = #{placeNo}
+		WHERE p.PLACE_NO =
+		#{placeNo}
 	</update>
 
-	<select id="selectPlaceByPlaceNo" parameterType="long" resultType="PlaceDTO">
+	<select id="selectPlaceByPlaceNo" parameterType="long"
+		resultType="PlaceDTO">
 		SELECT
-			PLACE_NO,
-			PLACE_CONTENT_ID,
-			PLACE_NAME,
-			PLACE_CATEGORY,
-			PLACE_ADDRESS,
-			PLACE_LATITUDE,
-			PLACE_LONGITUDE,
-			PLACE_RATING,
-			PLACE_NUMBER,
-			PLACE_THUMBNAIL_URL
+		PLACE_NO,
+		PLACE_CONTENT_ID,
+		PLACE_NAME,
+		PLACE_CATEGORY,
+		PLACE_ADDRESS,
+		PLACE_LATITUDE,
+		PLACE_LONGITUDE,
+		PLACE_RATING,
+		PLACE_NUMBER,
+		PLACE_THUMBNAIL_URL
 		FROM PLACE
 		WHERE PLACE_NO = #{placeNo}
 	</select>
 
-	<select id="selectPlaceByContentId" parameterType="string" resultType="PlaceDTO">
+	<select id="selectPlaceByContentId" parameterType="string"
+		resultType="PlaceDTO">
 		SELECT
-			PLACE_NO,
-			PLACE_CONTENT_ID,
-			PLACE_NAME,
-			PLACE_CATEGORY,
-			PLACE_ADDRESS,
-			PLACE_LATITUDE,
-			PLACE_LONGITUDE,
-			PLACE_RATING,
-			PLACE_NUMBER,
-			PLACE_THUMBNAIL_URL
+		PLACE_NO,
+		PLACE_CONTENT_ID,
+		PLACE_NAME,
+		PLACE_CATEGORY,
+		PLACE_ADDRESS,
+		PLACE_LATITUDE,
+		PLACE_LONGITUDE,
+		PLACE_RATING,
+		PLACE_NUMBER,
+		PLACE_THUMBNAIL_URL
 		FROM PLACE
-		WHERE PLACE_CONTENT_ID = #{value}
-		  AND PLACE_CONTENT_ID IS NOT NULL
-		  AND ROWNUM = 1
+		WHERE PLACE_CONTENT_ID =
+		#{value}
+		AND PLACE_CONTENT_ID IS NOT NULL
+		AND ROWNUM = 1
 	</select>
 
-	<select id="selectPlaceByNameAddress" parameterType="map" resultType="PlaceDTO">
+	<select id="selectPlaceByNameAddress" parameterType="map"
+		resultType="PlaceDTO">
 		SELECT *
 		FROM (
-			SELECT
-				PLACE_NO,
-				PLACE_CONTENT_ID,
-				PLACE_NAME,
-				PLACE_CATEGORY,
-				PLACE_ADDRESS,
-				PLACE_LATITUDE,
-				PLACE_LONGITUDE,
-				PLACE_RATING,
-				PLACE_NUMBER,
-				PLACE_THUMBNAIL_URL
-			FROM PLACE
-			WHERE PLACE_NAME = #{placeName}
-			  AND (
-					(#{placeAddress} IS NOT NULL AND PLACE_ADDRESS = #{placeAddress})
-				 OR (#{placeAddress} IS NULL AND (PLACE_ADDRESS IS NULL OR TRIM(PLACE_ADDRESS) = ''))
-			  )
-			ORDER BY PLACE_NO
+		SELECT
+		PLACE_NO,
+		PLACE_CONTENT_ID,
+		PLACE_NAME,
+		PLACE_CATEGORY,
+		PLACE_ADDRESS,
+		PLACE_LATITUDE,
+		PLACE_LONGITUDE,
+		PLACE_RATING,
+		PLACE_NUMBER,
+		PLACE_THUMBNAIL_URL
+		FROM PLACE
+		WHERE
+		PLACE_NAME = #{placeName}
+		AND (
+		(#{placeAddress} IS NOT NULL AND
+		PLACE_ADDRESS = #{placeAddress})
+		OR (#{placeAddress} IS NULL AND
+		(PLACE_ADDRESS IS NULL OR
+		TRIM(PLACE_ADDRESS) = ''))
+		)
+		ORDER BY PLACE_NO
 		)
 		WHERE ROWNUM = 1
 	</select>
 
-	<select id="selectPlaceByNameNearLatLng" parameterType="map" resultType="PlaceDTO">
+	<select id="selectPlaceByNameNearLatLng" parameterType="map"
+		resultType="PlaceDTO">
 		SELECT *
 		FROM (
-			SELECT
-				PLACE_NO,
-				PLACE_CONTENT_ID,
-				PLACE_NAME,
-				PLACE_CATEGORY,
-				PLACE_ADDRESS,
-				PLACE_LATITUDE,
-				PLACE_LONGITUDE,
-				PLACE_RATING,
-				PLACE_NUMBER,
-				PLACE_THUMBNAIL_URL
-			FROM PLACE
-			WHERE PLACE_NAME = #{placeName}
-			  AND PLACE_LATITUDE IS NOT NULL
-			  AND PLACE_LONGITUDE IS NOT NULL
-			  AND ABS(PLACE_LATITUDE - #{placeLatitude}) &lt;= 0.0001
-			  AND ABS(PLACE_LONGITUDE - #{placeLongitude}) &lt;= 0.0001
-			ORDER BY PLACE_NO
+		SELECT
+		PLACE_NO,
+		PLACE_CONTENT_ID,
+		PLACE_NAME,
+		PLACE_CATEGORY,
+		PLACE_ADDRESS,
+		PLACE_LATITUDE,
+		PLACE_LONGITUDE,
+		PLACE_RATING,
+		PLACE_NUMBER,
+		PLACE_THUMBNAIL_URL
+		FROM PLACE
+		WHERE
+		PLACE_NAME = #{placeName}
+		AND PLACE_LATITUDE IS NOT NULL
+		AND
+		PLACE_LONGITUDE IS NOT NULL
+		AND ABS(PLACE_LATITUDE - #{placeLatitude})
+		&lt;= 0.0001
+		AND ABS(PLACE_LONGITUDE - #{placeLongitude}) &lt;= 0.0001
+		ORDER BY PLACE_NO
 		)
 		WHERE ROWNUM = 1
 	</select>
 
-	<select id="selectPlaceTagNamesByPlaceNo" parameterType="long" resultType="string">
+	<select id="selectPlaceTagNamesByPlaceNo" parameterType="long"
+		resultType="string">
 		SELECT TM.TAG_NAME
 		FROM PLACE_TAG_MAP PTM
 		JOIN TAG_MASTER TM
-			ON TM.TAG_CODE = PTM.TAG_CODE
+		ON TM.TAG_CODE = PTM.TAG_CODE
 		WHERE PTM.PLACE_NO = #{placeNo}
-		ORDER BY PTM.TAG_WEIGHT DESC, TM.TAG_NAME ASC
+		ORDER BY
+		PTM.TAG_WEIGHT DESC, TM.TAG_NAME ASC
 	</select>
 
-	<select id="selectPlacePhotoUrlsByPlaceNo" parameterType="long" resultType="string">
-		SELECT PD.LOG_PHOTO_URL
-		FROM PLACE_REVIEW PR
-		JOIN PHOTO_DATA PD
-			ON PD.COMMENT_NO = PR.COMMENT_NO
-		WHERE PR.PLACE_NO = #{placeNo}
-		  AND PD.LOG_PHOTO_URL IS NOT NULL
-		ORDER BY PD.PHOTO_NO DESC
-	</select>
-
-	<select id="selectPlaceReviewsByPlaceNo" parameterType="long" resultType="PlaceReviewDTO">
+	<select id="selectPlacePhotoUrlsByPlaceNo" parameterType="long"
+		resultType="string">
 		SELECT
-			pr.COMMENT_NO,
-			pr.LOG_NO,
-			pr.PLACE_NO,
-			pr.COMMENT_CONTENT,
-			pr.RATING,
-			pr.CREATED_BY AS CREATED_BY_AUTH_ID,
-			NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
-			pr.CREATED_AT
+		CASE
+		WHEN PD.LOG_PHOTO_URL LIKE '/resources/%' THEN
+		'..' || PD.LOG_PHOTO_URL
+		WHEN PD.LOG_PHOTO_URL LIKE '/place/%' THEN
+		'..' || PD.LOG_PHOTO_URL
+		WHEN PD.LOG_PHOTO_URL IS NOT NULL THEN
+		PD.LOG_PHOTO_URL
+		WHEN PD.PHOTO_BINARY IS NOT NULL THEN
+		'../place/review-photo/' ||
+		TO_CHAR(PD.PHOTO_NO)
+		ELSE NULL
+		END AS
+		PHOTO_URL
+		FROM PLACE_REVIEW PR
+		JOIN PHOTO_DATA
+		PD
+		ON PD.COMMENT_NO =
+		PR.COMMENT_NO
+		WHERE PR.PLACE_NO = #{placeNo}
+		AND (PD.LOG_PHOTO_URL IS
+		NOT NULL OR PD.PHOTO_BINARY IS NOT NULL)
+		ORDER BY
+		PD.PHOTO_NO DESC
+	</select>
+
+	<select id="selectReviewPhotoUrlsByCommentNo"
+		parameterType="long" resultType="string">
+		SELECT
+		CASE
+		WHEN PD.LOG_PHOTO_URL LIKE
+		'/resources/%' THEN '..' || PD.LOG_PHOTO_URL
+		WHEN PD.LOG_PHOTO_URL LIKE
+		'/place/%' THEN '..' || PD.LOG_PHOTO_URL
+		WHEN PD.LOG_PHOTO_URL IS NOT
+		NULL THEN PD.LOG_PHOTO_URL
+		WHEN PD.PHOTO_BINARY IS NOT NULL THEN
+		'../place/review-photo/' ||
+		TO_CHAR(PD.PHOTO_NO)
+		ELSE NULL
+		END AS
+		PHOTO_URL
+		FROM PHOTO_DATA PD
+		WHERE PD.COMMENT_NO = #{value}
+		AND
+		(PD.LOG_PHOTO_URL IS NOT NULL OR PD.PHOTO_BINARY IS NOT NULL)
+		ORDER BY
+		PD.PHOTO_NO ASC
+	</select>
+
+	<select id="selectPhotoDataByPhotoNo" parameterType="long"
+		resultType="PhotoDataDTO">
+		SELECT
+		PHOTO_NO,
+		COMMENT_NO,
+		LOG_PHOTO_URL,
+		PHOTO_BINARY,
+		PHOTO_MIME_TYPE,
+		PHOTO_FILE_NAME
+		FROM PHOTO_DATA
+		WHERE PHOTO_NO =
+		#{value}
+	</select>
+
+	<resultMap id="placeReviewWithPhotosResultMap"
+		type="PlaceReviewDTO">
+		<id property="commentNo" column="COMMENT_NO" />
+		<result property="logNo" column="LOG_NO" />
+		<result property="placeNo" column="PLACE_NO" />
+		<result property="placeName" column="PLACE_NAME" />
+		<result property="commentContent" column="COMMENT_CONTENT" />
+		<result property="rating" column="RATING" />
+		<result property="createdByAuthId" column="CREATED_BY_AUTH_ID" />
+		<result property="createdBy" column="CREATED_BY" />
+		<result property="createdAt" column="CREATED_AT" />
+		<collection property="photoUrlList" ofType="string"
+			column="COMMENT_NO" select="selectReviewPhotoUrlsByCommentNo" />
+	</resultMap>
+
+	<select id="selectPlaceReviewsByPlaceNo" parameterType="long"
+		resultMap="placeReviewWithPhotosResultMap">
+		SELECT
+		pr.COMMENT_NO,
+		pr.LOG_NO,
+		pr.PLACE_NO,
+		pr.COMMENT_CONTENT,
+		pr.RATING,
+		pr.CREATED_BY AS CREATED_BY_AUTH_ID,
+		NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
+		pr.CREATED_AT
 		FROM PLACE_REVIEW pr
 		LEFT JOIN USER_AUTHENTICATION ua
-			ON ua.USER_AUTH_ID = pr.CREATED_BY
+		ON
+		ua.USER_AUTH_ID = pr.CREATED_BY
 		LEFT JOIN USERS u
-			ON u.USER_NO = ua.USER_NO
+		ON u.USER_NO =
+		ua.USER_NO
 		WHERE pr.PLACE_NO = #{placeNo}
-		ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC
+		ORDER BY
+		pr.CREATED_AT DESC,
+		pr.COMMENT_NO DESC
 	</select>
 
-	<select id="countPlaceReviewsByCreatedBy" parameterType="string" resultType="int">
+	<select id="countPlaceReviewsByCreatedBy" parameterType="string"
+		resultType="int">
 		SELECT COUNT(1)
 		FROM PLACE_REVIEW
 		WHERE CREATED_BY = #{value}
 	</select>
 
-	<select id="selectPlaceReviewsByCreatedByPaged" parameterType="map" resultType="PlaceReviewDTO">
+	<select id="selectPlaceReviewsByCreatedByPaged"
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
 		SELECT
-			r.COMMENT_NO,
-			r.LOG_NO,
-			r.PLACE_NO,
-			r.PLACE_NAME,
-			r.COMMENT_CONTENT,
-			r.RATING,
-			r.CREATED_BY_AUTH_ID,
-			r.CREATED_BY,
-			r.CREATED_AT
+		r.COMMENT_NO,
+		r.LOG_NO,
+		r.PLACE_NO,
+		r.PLACE_NAME,
+		r.COMMENT_CONTENT,
+		r.RATING,
+		r.CREATED_BY_AUTH_ID,
+		r.CREATED_BY,
+		r.CREATED_AT
 		FROM (
-			SELECT
-				pr.COMMENT_NO,
-				pr.LOG_NO,
-				pr.PLACE_NO,
-				p.PLACE_NAME,
-				pr.COMMENT_CONTENT,
-				pr.RATING,
-				pr.CREATED_BY AS CREATED_BY_AUTH_ID,
-				NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY, 'anonymous')) AS CREATED_BY,
-				pr.CREATED_AT,
-				ROW_NUMBER() OVER (ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC) AS rn
-			FROM PLACE_REVIEW pr
-			LEFT JOIN PLACE p
-				ON p.PLACE_NO = pr.PLACE_NO
-			LEFT JOIN USER_AUTHENTICATION ua
-				ON ua.USER_AUTH_ID = pr.CREATED_BY
-			LEFT JOIN USERS u
-				ON u.USER_NO = ua.USER_NO
-			WHERE pr.CREATED_BY = #{createdBy}
+		SELECT
+		pr.COMMENT_NO,
+		pr.LOG_NO,
+		pr.PLACE_NO,
+		p.PLACE_NAME,
+		pr.COMMENT_CONTENT,
+		pr.RATING,
+		pr.CREATED_BY AS
+		CREATED_BY_AUTH_ID,
+		NVL(u.USER_NICKNAME,
+		NVL(pr.CREATED_BY,
+		'anonymous')) AS CREATED_BY,
+		pr.CREATED_AT,
+		ROW_NUMBER() OVER (ORDER BY
+		pr.CREATED_AT DESC, pr.COMMENT_NO DESC) AS
+		rn
+		FROM PLACE_REVIEW pr
+		LEFT
+		JOIN PLACE p
+		ON p.PLACE_NO = pr.PLACE_NO
+		LEFT JOIN USER_AUTHENTICATION
+		ua
+		ON ua.USER_AUTH_ID = pr.CREATED_BY
+		LEFT JOIN USERS u
+		ON u.USER_NO =
+		ua.USER_NO
+		WHERE pr.CREATED_BY =
+		#{createdBy}
 		) r
-		WHERE r.rn BETWEEN #{startRow} AND #{endRow}
+		WHERE r.rn BETWEEN
+		#{startRow} AND
+		#{endRow}
+		ORDER BY
+		r.rn
+	</select>
+
+	<select id="selectPlaceReviewsByCreatedByPagedSorted"
+		parameterType="map" resultMap="placeReviewWithPhotosResultMap">
+		SELECT
+		r.COMMENT_NO,
+		r.LOG_NO,
+		r.PLACE_NO,
+		r.PLACE_NAME,
+		r.COMMENT_CONTENT,
+		r.RATING,
+		r.CREATED_BY_AUTH_ID,
+		r.CREATED_BY,
+		r.CREATED_AT
+		FROM (
+		SELECT
+		pr.COMMENT_NO,
+		pr.LOG_NO,
+		pr.PLACE_NO,
+		p.PLACE_NAME,
+		pr.COMMENT_CONTENT,
+		pr.RATING,
+		pr.CREATED_BY AS
+		CREATED_BY_AUTH_ID,
+		NVL(u.USER_NICKNAME, NVL(pr.CREATED_BY,
+		'anonymous')) AS CREATED_BY,
+		pr.CREATED_AT,
+		ROW_NUMBER() OVER (
+		<choose>
+			<when test="sortType == 'oldest'">
+				ORDER BY pr.CREATED_AT ASC, pr.COMMENT_NO ASC
+			</when>
+			<when test="sortType == 'rating'">
+				ORDER BY NVL(pr.RATING, 0) DESC, pr.CREATED_AT DESC,
+				pr.COMMENT_NO DESC
+			</when>
+			<otherwise>
+				ORDER BY pr.CREATED_AT DESC, pr.COMMENT_NO DESC
+			</otherwise>
+		</choose>
+		) AS rn
+		FROM PLACE_REVIEW pr
+		LEFT JOIN PLACE p
+		ON p.PLACE_NO =
+		pr.PLACE_NO
+		LEFT JOIN USER_AUTHENTICATION ua
+		ON ua.USER_AUTH_ID =
+		pr.CREATED_BY
+		LEFT JOIN USERS u
+		ON u.USER_NO = ua.USER_NO
+		WHERE
+		pr.CREATED_BY = #{createdBy}
+		) r
+		WHERE r.rn BETWEEN #{startRow} AND
+		#{endRow}
 		ORDER BY r.rn
 	</select>
 
-	<select id="selectWishlistCategoriesByUserNo" parameterType="long" resultType="CategoryDTO">
+	<select id="selectWishlistCategoriesByUserNo"
+		parameterType="long" resultType="CategoryDTO">
 		SELECT
-			CATEGORY_NO,
-			USER_NO,
-			CATEGORY_TYPE,
-			CATEGORY_IS_USED
+		CATEGORY_NO,
+		USER_NO,
+		CATEGORY_TYPE,
+		CATEGORY_IS_USED
 		FROM CATEGORY
 		WHERE USER_NO = #{userNo}
 		ORDER BY CATEGORY_NO DESC
 	</select>
 
-	<select id="selectWishlistByUserAndPlace" parameterType="map" resultType="WishListDTO">
+	<select id="selectWishlistByUserAndPlace" parameterType="map"
+		resultType="WishListDTO">
 		SELECT
-			w.WISH_NO,
-			w.PLACE_NO,
-			w.CATEGORY_NO,
-			w.USER_NO,
-			w.WISH_DATE,
-			c.CATEGORY_TYPE,
-			c.CATEGORY_IS_USED
+		w.WISH_NO,
+		w.PLACE_NO,
+		w.CATEGORY_NO,
+		w.USER_NO,
+		w.WISH_DATE,
+		c.CATEGORY_TYPE,
+		c.CATEGORY_IS_USED
 		FROM WISHLIST w
-		JOIN CATEGORY c
-		  ON c.CATEGORY_NO = w.CATEGORY_NO
-		 AND c.USER_NO = w.USER_NO
+		JOIN
+		CATEGORY c
+		ON c.CATEGORY_NO = w.CATEGORY_NO
+		AND c.USER_NO = w.USER_NO
 		WHERE w.USER_NO = #{userNo}
-		  AND w.PLACE_NO = #{placeNo}
-		ORDER BY w.WISH_NO DESC
+		AND w.PLACE_NO = #{placeNo}
+		ORDER BY
+		w.WISH_NO DESC
 	</select>
 
-	<select id="countWishlistByUserAndPlaceAndCategory" parameterType="map" resultType="int">
+	<select id="countWishlistByUserAndPlaceAndCategory"
+		parameterType="map" resultType="int">
 		SELECT COUNT(1)
 		FROM WISHLIST
-		WHERE USER_NO = #{userNo}
-		  AND PLACE_NO = #{placeNo}
-		  AND CATEGORY_NO = #{categoryNo}
+		WHERE
+		USER_NO = #{userNo}
+		AND PLACE_NO = #{placeNo}
+		AND CATEGORY_NO =
+		#{categoryNo}
 	</select>
 
-	<select id="countWishUsersByPlaceNo" parameterType="long" resultType="int">
+	<select id="countWishUsersByPlaceNo" parameterType="long"
+		resultType="int">
 		SELECT COUNT(DISTINCT USER_NO)
 		FROM WISHLIST
-		WHERE PLACE_NO = #{placeNo}
+		WHERE PLACE_NO =
+		#{placeNo}
 	</select>
 
-	<select id="countWishPlacesByAuthId" parameterType="string" resultType="int">
+	<select id="countWishPlacesByAuthId" parameterType="string"
+		resultType="int">
 		SELECT COUNT(DISTINCT w.PLACE_NO)
 		FROM WISHLIST w
-		JOIN USER_AUTHENTICATION ua
-			ON ua.USER_NO = w.USER_NO
-		WHERE ua.USER_AUTH_ID = #{value}
+		JOIN
+		USER_AUTHENTICATION ua
+		ON ua.USER_NO = w.USER_NO
+		WHERE ua.USER_AUTH_ID =
+		#{value}
 	</select>
 
-	<select id="selectWishPlacesByAuthId" parameterType="string" resultType="PlaceDTO">
+	<select id="selectWishPlacesByAuthId" parameterType="string"
+		resultType="PlaceDTO">
 		SELECT DISTINCT
-			p.PLACE_NO,
-			p.PLACE_CONTENT_ID,
-			p.PLACE_NAME,
-			p.PLACE_CATEGORY,
-			p.PLACE_ADDRESS,
-			p.PLACE_LATITUDE,
-			p.PLACE_LONGITUDE,
-			p.PLACE_RATING,
-			p.PLACE_NUMBER,
-			p.PLACE_THUMBNAIL_URL
+		p.PLACE_NO,
+		p.PLACE_CONTENT_ID,
+		p.PLACE_NAME,
+		p.PLACE_CATEGORY,
+		p.PLACE_ADDRESS,
+		p.PLACE_LATITUDE,
+		p.PLACE_LONGITUDE,
+		p.PLACE_RATING,
+		p.PLACE_NUMBER,
+		p.PLACE_THUMBNAIL_URL
 		FROM WISHLIST w
 		JOIN USER_AUTHENTICATION ua
-			ON ua.USER_NO = w.USER_NO
+		ON ua.USER_NO = w.USER_NO
 		JOIN PLACE p
-			ON p.PLACE_NO = w.PLACE_NO
+		ON
+		p.PLACE_NO = w.PLACE_NO
 		WHERE ua.USER_AUTH_ID = #{value}
-		ORDER BY p.PLACE_NAME ASC
+		ORDER BY
+		p.PLACE_NAME ASC
 	</select>
 
-	<select id="selectWishListWithPlaceByAuthId" parameterType="string" resultType="WishListDTO">
+	<select id="selectWishListWithPlaceByAuthId"
+		parameterType="string" resultType="WishListDTO">
 		SELECT
-			w.WISH_NO,
-			w.PLACE_NO,
-			w.CATEGORY_NO,
-			w.USER_NO,
-			w.WISH_DATE,
-			c.CATEGORY_TYPE,
-			c.CATEGORY_IS_USED,
-			p.PLACE_NAME,
-			p.PLACE_ADDRESS,
-			p.PLACE_LATITUDE,
-			p.PLACE_LONGITUDE,
-			p.PLACE_THUMBNAIL_URL
+		w.WISH_NO,
+		w.PLACE_NO,
+		w.CATEGORY_NO,
+		w.USER_NO,
+		w.WISH_DATE,
+		c.CATEGORY_TYPE,
+		c.CATEGORY_IS_USED,
+		p.PLACE_NAME,
+		p.PLACE_ADDRESS,
+		p.PLACE_LATITUDE,
+		p.PLACE_LONGITUDE,
+		p.PLACE_THUMBNAIL_URL
 		FROM WISHLIST w
-		JOIN USER_AUTHENTICATION ua
-			ON ua.USER_NO = w.USER_NO
+		JOIN
+		USER_AUTHENTICATION ua
+		ON ua.USER_NO = w.USER_NO
 		JOIN CATEGORY c
-			ON c.CATEGORY_NO = w.CATEGORY_NO
-		   AND c.USER_NO = w.USER_NO
+		ON
+		c.CATEGORY_NO = w.CATEGORY_NO
+		AND c.USER_NO = w.USER_NO
 		JOIN PLACE p
-			ON p.PLACE_NO = w.PLACE_NO
+		ON
+		p.PLACE_NO = w.PLACE_NO
 		WHERE ua.USER_AUTH_ID = #{value}
-		ORDER BY c.CATEGORY_TYPE ASC, p.PLACE_NAME ASC, w.WISH_NO DESC
+		ORDER BY
+		c.CATEGORY_TYPE ASC, p.PLACE_NAME ASC, w.WISH_NO DESC
 	</select>
 
-	<select id="selectPlaceHoursByPlaceNo" parameterType="long" resultType="PlaceHoursDTO">
+	<select id="selectPlaceHoursByPlaceNo" parameterType="long"
+		resultType="PlaceHoursDTO">
 		SELECT
-			HOURS_ID,
-			PLACE_NO,
-			DAY_OF_WEEK,
-			OPEN_TIME,
-			CLOSE_TIME,
-			BREAK_STRAT_TIME,
-			BREAK_END_TIME,
-			LAST_ORDER,
-			IS_CLOSED
+		HOURS_ID,
+		PLACE_NO,
+		DAY_OF_WEEK,
+		OPEN_TIME,
+		CLOSE_TIME,
+		BREAK_STRAT_TIME,
+		BREAK_END_TIME,
+		LAST_ORDER,
+		IS_CLOSED
 		FROM PLACE_HOURS
 		WHERE PLACE_NO = #{placeNo}
 		ORDER BY DAY_OF_WEEK ASC
-	</select>	
-	
+	</select>
+
 	<select id="selectPlacesForHoursImport" resultType="PlaceDTO">
 		SELECT
-			PLACE_NO,
-			PLACE_CONTENT_ID,
-			PLACE_CATEGORY
+		PLACE_NO,
+		PLACE_CONTENT_ID,
+		PLACE_CATEGORY
 		FROM PLACE
-		WHERE PLACE_CONTENT_ID IS NOT NULL
+		WHERE
+		PLACE_CONTENT_ID IS NOT NULL
 		ORDER BY PLACE_NO
 	</select>
+
+	<!-- 메인 페이지 추천 여행지 검색 -->
+<!-- 	<select id="searchPlaces" parameterType="string" -->
+<!-- 		resultType="com.app.dto.PlaceDTO"> -->
+<!-- 		SELECT * FROM ( -->
+<!-- 		SELECT -->
+<!-- 		p.PLACE_NO as placeNo, -->
+<!-- 		p.PLACE_NAME as placeName, -->
+<!-- 		p.PLACE_CATEGORY as placeCategory, -->
+<!-- 		p.PLACE_ADDRESS as placeAddress, -->
+<!-- 		p.PLACE_RATING as placeRating, -->
+<!-- 		p.PLACE_THUMBNAIL_URL as -->
+<!-- 		placeThumbnailUrl, -->
+<!-- 		(SELECT COUNT(*) FROM PLACE_REVIEW r WHERE -->
+<!-- 		r.PLACE_NO = p.PLACE_NO) as -->
+<!-- 		reviewCount -->
+<!-- 		FROM PLACE p -->
+<!-- 		<where> -->
+<!-- 			<choose> -->
+<!-- 				<when test="keyword != null and keyword != ''"> -->
+<!-- 					(p.PLACE_NAME LIKE '%' || #{keyword} || '%' -->
+<!-- 					OR -->
+<!-- 					p.PLACE_ADDRESS LIKE '%' || #{keyword} || '%') -->
+<!-- 				</when> -->
+<!-- 				<otherwise> -->
+<!-- 					1=1 -->
+<!-- 				</otherwise> -->
+<!-- 			</choose> -->
+<!-- 		</where> -->
+
+<!-- 		ORDER BY -->
+<!-- 		<choose> -->
+<!-- 			<when test="keyword != null and keyword != ''"> -->
+<!-- 				p.PLACE_NAME ASC -->
+<!-- 			</when> -->
+<!-- 			<otherwise> -->
+<!-- 				reviewCount DESC, -->
+<!-- 				p.PLACE_RATING DESC, -->
+<!-- 				p.PLACE_NAME ASC -->
+<!-- 			</otherwise> -->
+<!-- 		</choose> -->
+<!-- 		) -->
+<!-- 		<if test="keyword == null or keyword == ''"> -->
+<!-- 			WHERE ROWNUM &lt;= 10 -->
+<!-- 		</if> -->
+<!-- 	</select> -->
+
+	<select id="searchPlaces" parameterType="string"
+		resultType="com.app.dto.PlaceDTO">
+		SELECT * FROM (
+		SELECT
+		p.PLACE_NO as placeNo,
+		p.PLACE_NAME as placeName,
+		p.PLACE_CATEGORY as placeCategory,
+		p.PLACE_ADDRESS as placeAddress,
+		p.PLACE_RATING as placeRating,
+		p.PLACE_THUMBNAIL_URL as placeThumbnailUrl,
+		(SELECT COUNT(*) FROM PLACE_REVIEW r WHERE r.PLACE_NO = p.PLACE_NO) as
+		reviewCount
+		FROM PLACE p
+		<where>
+			<choose>
+				<when test="keyword != null and keyword != ''">
+					(
+					p.PLACE_NAME LIKE '%' || #{keyword} || '%'
+					OR p.PLACE_ADDRESS LIKE '%' || #{keyword} || '%'
+					OR EXISTS (
+					SELECT 1
+					FROM PLACE_TAG_MAP pt
+					JOIN TAG_MASTER tm ON pt.TAG_CODE = tm.TAG_CODE
+					WHERE pt.PLACE_NO = p.PLACE_NO
+					AND (
+					tm.TAG_NAME LIKE '%' || #{keyword} || '%'
+					OR tm.TAG_CODE LIKE '%' || #{keyword} || '%'
+					)
+					)
+					)
+				</when>
+				<otherwise>
+					1=1
+				</otherwise>
+			</choose>
+		</where>
+		ORDER BY
+		<choose>
+			<when test="keyword != null and keyword != ''">
+				p.PLACE_NAME ASC
+			</when>
+			<otherwise>
+				reviewCount DESC,
+				p.PLACE_RATING DESC,
+				p.PLACE_NAME ASC
+			</otherwise>
+		</choose>
+		)
+		<if test="keyword == null or keyword == ''">
+			WHERE ROWNUM &lt;= 10
+		</if>
+	</select>
+	
+	<select id="searchPlacesWithLike"
+		resultType="com.app.dto.PlaceDTO" parameterType="map">
+		SELECT
+		p.place_no AS
+		placeNo,
+		p.place_name AS placeName,
+		p.place_address AS placeAddress,
+		p.place_thumbnail_url AS placeThumbnailUrl,
+		CASE WHEN up.user_id IS NOT
+		NULL THEN 'Y' ELSE 'N' END AS savedYn
+		FROM places p
+		LEFT JOIN
+		users_place up ON p.place_no = up.place_no
+		AND up.user_id = #{userId}
+		WHERE p.place_name LIKE CONCAT('%', #{keyword}, '%')
+	</select>
+
+	<!-- 반경(km) 내 근처 장소 조회 (haversine), 현재 장소 제외 가능 -->
+	<select id="selectPlacesNearby"
+		resultType="com.app.dto.PlaceDTO" parameterType="map">
+		SELECT * FROM (
+		SELECT t.PLACE_NO, t.PLACE_CONTENT_ID, t.PLACE_NAME,
+		t.PLACE_CATEGORY,
+		t.PLACE_ADDRESS,
+		t.PLACE_LATITUDE, t.PLACE_LONGITUDE,
+		t.PLACE_RATING, t.PLACE_NUMBER,
+		t.PLACE_THUMBNAIL_URL,
+		t.dist AS
+		distance
+		FROM (
+		SELECT p.PLACE_NO, p.PLACE_CONTENT_ID, p.PLACE_NAME,
+		p.PLACE_CATEGORY,
+		p.PLACE_ADDRESS,
+		p.PLACE_LATITUDE, p.PLACE_LONGITUDE,
+		p.PLACE_RATING, p.PLACE_NUMBER,
+		p.PLACE_THUMBNAIL_URL,
+		6371 *
+		ACOS(LEAST(1, GREATEST(-1,
+		COS(#{lat} * 0.017453292519943) *
+		COS(p.PLACE_LATITUDE * 0.017453292519943) *
+		COS((p.PLACE_LONGITUDE -
+		#{lng}) * 0.017453292519943)
+		+ SIN(#{lat} * 0.017453292519943) *
+		SIN(p.PLACE_LATITUDE *
+		0.017453292519943)
+		))) AS dist
+		FROM PLACE p
+		WHERE
+		p.PLACE_LATITUDE IS NOT NULL AND p.PLACE_LONGITUDE IS NOT NULL
+		<if test="excludePlaceNo != null">
+			AND p.PLACE_NO != #{excludePlaceNo}
+		</if>
+		) t
+		WHERE t.dist &lt;= #{radiusKm}
+		ORDER BY t.dist
+		) WHERE ROWNUM &lt;=
+		30
+	</select>
+
 </mapper>

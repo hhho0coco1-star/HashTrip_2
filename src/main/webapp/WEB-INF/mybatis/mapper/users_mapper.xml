@@ -4,127 +4,400 @@
 		   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="users_mapper">
-	<select id="getUserByAuthId" resultType="UsersDTO" parameterType="string">
+	<select id="getUserByAuthId" resultType="UsersDTO"
+		parameterType="string">
 		SELECT
-			u.USER_NO AS userNo,
-			u.USER_TYPE AS userType,
-			u.USER_CREATED_AT AS userCreatedAt,
-			u.USER_UPDATED_AT AS userUpdatedAt,
-			u.USER_STATUS AS userStatus,
-			u.USER_NAME AS userName,
-			u.USER_GENDER AS userGender,
-			u.USER_PHONENUMBER AS userPhoneNumber,
-			u.USER_REGISTRATION_NO AS userRegistrationNo,
-			u.USER_NICKNAME AS userNickName,
-			u.USER_PROFILE_IMG AS userProfileImg
+		u.USER_NO AS userNo,
+		u.USER_TYPE AS userType,
+		u.USER_CREATED_AT AS userCreatedAt,
+		u.USER_UPDATED_AT AS userUpdatedAt,
+		u.USER_STATUS AS userStatus,
+		u.USER_NAME AS userName,
+		u.USER_GENDER AS
+		userGender,
+		u.USER_PHONENUMBER AS userPhoneNumber,
+		u.USER_REGISTRATION_NO AS userRegistrationNo,
+		u.USER_NICKNAME AS
+		userNickName,
+		u.USER_PROFILE_IMG AS userProfileImg,
+		ua2.USER_ADDRESS_NO
+		AS userAddressNo,
+		ua2.USER_ZIP_CODE AS userZipCode,
+		ua2.USER_BASE_ADDRESS AS userBaseAddress,
+		ua2.USER_DETAIL_ADDRESS AS
+		userDetailAddress
 		FROM USERS u
 		JOIN USER_AUTHENTICATION ua
-			ON ua.USER_NO = u.USER_NO
-		WHERE ua.USER_AUTH_ID = #{value}
+		ON ua.USER_NO
+		= u.USER_NO
+		LEFT JOIN USER_ADDRESS ua2
+		ON ua2.USER_NO = u.USER_NO
+		WHERE
+		ua.USER_AUTH_ID = #{value}
 	</select>
 
-	<select id="getUserTagsByAuthId" resultType="UserTagMapDTO" parameterType="string">
+	<select id="getUserTagsByAuthId" resultType="UserTagMapDTO"
+		parameterType="string">
 		SELECT
-			utm.MAPPING_NO,
-			utm.USER_NO,
-			utm.QUESTION_ID,
-			utm.TAG_CODE,
-			tm.TAG_NAME,
-			tm.TAG_CATEGORY
+		utm.MAPPING_NO,
+		utm.USER_NO,
+		utm.QUESTION_ID,
+		utm.TAG_CODE,
+		tm.TAG_NAME,
+		tm.TAG_CATEGORY
 		FROM USER_TAG_MAP utm
-		JOIN USER_AUTHENTICATION ua
-			ON ua.USER_NO = utm.USER_NO
-		LEFT JOIN TAG_MASTER tm
-			ON tm.TAG_CODE = utm.TAG_CODE
+		JOIN
+		USER_AUTHENTICATION ua
+		ON ua.USER_NO = utm.USER_NO
+		LEFT JOIN TAG_MASTER
+		tm
+		ON tm.TAG_CODE = utm.TAG_CODE
 		WHERE ua.USER_AUTH_ID = #{value}
-		ORDER BY tm.TAG_CATEGORY ASC, tm.TAG_NAME ASC, utm.MAPPING_NO ASC
+		ORDER
+		BY
+		tm.TAG_CATEGORY ASC, tm.TAG_NAME ASC, utm.MAPPING_NO ASC
 	</select>
 
 	<select id="getTagMasterList" resultType="TagMasterDTO">
 		SELECT
-			TAG_CODE,
-			TAG_NAME,
-			TAG_CATEGORY
+		TAG_CODE,
+		TAG_NAME,
+		TAG_CATEGORY
 		FROM TAG_MASTER
-		ORDER BY TAG_CATEGORY ASC, TAG_NAME ASC
+		ORDER BY TAG_CATEGORY ASC,
+		TAG_NAME ASC
 	</select>
 
-	<select id="countTagMasterByTagCode" resultType="int" parameterType="string">
+	<select id="countTagMasterByTagCode" resultType="int"
+		parameterType="string">
 		SELECT COUNT(1)
 		FROM TAG_MASTER
 		WHERE TAG_CODE = #{value}
 	</select>
 
 	<insert id="insertUserTagByAuthId" parameterType="map">
-		INSERT INTO USER_TAG_MAP (
-			MAPPING_NO, USER_NO, QUESTION_ID, TAG_CODE
+		INSERT INTO
+		USER_TAG_MAP (
+		MAPPING_NO, USER_NO, QUESTION_ID, TAG_CODE
 		)
 		SELECT
-			SEQ_USER_TAG_MAP_NO.NEXTVAL,
-			ua.USER_NO,
-			#{questionId},
-			#{tagCode}
-		FROM USER_AUTHENTICATION ua
+		SEQ_USER_TAG_MAP_NO.NEXTVAL,
+		ua.USER_NO,
+		#{questionId},
+		#{tagCode}
+		FROM
+		USER_AUTHENTICATION ua
 		WHERE ua.USER_AUTH_ID = #{authId}
-		  AND NOT EXISTS (
-			SELECT 1
-			FROM USER_TAG_MAP utm
-			WHERE utm.USER_NO = ua.USER_NO
-			  AND utm.TAG_CODE = #{tagCode}
+		AND NOT EXISTS
+		(
+		SELECT 1
+		FROM USER_TAG_MAP utm
+		WHERE utm.USER_NO = ua.USER_NO
+		AND
+		utm.TAG_CODE = #{tagCode}
 		)
 	</insert>
 
 	<delete id="deleteUserTagByAuthId" parameterType="map">
-		DELETE FROM USER_TAG_MAP
+		DELETE FROM
+		USER_TAG_MAP
 		WHERE USER_NO = (
-			SELECT ua.USER_NO
-			FROM USER_AUTHENTICATION ua
-			WHERE ua.USER_AUTH_ID = #{authId}
+		SELECT ua.USER_NO
+		FROM USER_AUTHENTICATION
+		ua
+		WHERE ua.USER_AUTH_ID = #{authId}
 		)
-		  AND TAG_CODE = #{tagCode}
+		AND TAG_CODE = #{tagCode}
 	</delete>
 
+	<update id="updateUserProfileByAuthId" parameterType="map">
+		UPDATE
+		USERS u
+		SET
+		u.USER_NICKNAME = #{userNickName},
+		u.USER_GENDER = CASE
+		WHEN
+		u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
+		ELSE
+		u.USER_GENDER
+		END,
+		u.USER_PHONENUMBER = #{userPhoneNumber},
+		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
+		u.USER_UPDATED_AT = SYSTIMESTAMP
+		WHERE EXISTS (
+		SELECT 1
+		FROM
+		USER_AUTHENTICATION ua
+		WHERE ua.USER_NO = u.USER_NO
+		AND ua.USER_AUTH_ID
+		= #{authId}
+		)
+	</update>
+
+	<update id="upsertUserAddressByAuthId" parameterType="map">
+		MERGE INTO
+		USER_ADDRESS ua
+		USING (
+		SELECT ua2.USER_NO AS userNo
+		FROM
+		USER_AUTHENTICATION ua2
+		WHERE ua2.USER_AUTH_ID = #{authId}
+		) src
+		ON
+		(ua.USER_NO = src.userNo)
+		WHEN
+		MATCHED THEN
+		UPDATE SET
+		ua.USER_ZIP_CODE =
+		#{userZipCode},
+		ua.USER_BASE_ADDRESS = #{userBaseAddress},
+		ua.USER_DETAIL_ADDRESS = #{userDetailAddress}
+		WHEN NOT MATCHED THEN
+		INSERT (
+		USER_ADDRESS_NO,
+		USER_NO,
+		USER_ZIP_CODE,
+		USER_BASE_ADDRESS,
+		USER_DETAIL_ADDRESS
+		)
+		VALUES (
+		SEQ_USER_ADDRESS_NO.NEXTVAL,
+		src.userNo,
+		#{userZipCode},
+		#{userBaseAddress},
+		#{userDetailAddress}
+		)
+	</update>
+
+	<select id="findAuthPasswordByAuthId" parameterType="string"
+		resultType="string">
+		SELECT ua.USER_AUTH_PW
+		FROM USER_AUTHENTICATION ua
+		WHERE
+		ua.USER_AUTH_ID = #{value}
+	</select>
+
+	<update id="updateAuthPasswordByAuthId" parameterType="map">
+		UPDATE
+		USER_AUTHENTICATION
+		SET USER_AUTH_PW = #{encodedPassword}
+		WHERE
+		USER_AUTH_ID = #{authId}
+	</update>
+
 	<delete id="deleteUserTagsByUserNo" parameterType="long">
-		DELETE FROM USER_TAG_MAP
+		DELETE FROM
+		USER_TAG_MAP
 		WHERE USER_NO = #{value}
 	</delete>
 
 	<insert id="insertUserTagByUserNo" parameterType="UserTagMapDTO">
-		INSERT INTO USER_TAG_MAP (
-			MAPPING_NO, USER_NO, QUESTION_ID, TAG_CODE
+		INSERT INTO
+		USER_TAG_MAP (
+		MAPPING_NO, USER_NO, QUESTION_ID, TAG_CODE
 		)
 		SELECT
-			SEQ_USER_TAG_MAP_NO.NEXTVAL,
-			#{userNo},
-			#{questionId},
-			#{tagCode}
-		FROM DUAL
+		SEQ_USER_TAG_MAP_NO.NEXTVAL,
+		#{userNo},
+		#{questionId},
+		#{tagCode}
+		FROM
+		DUAL
 		WHERE NOT EXISTS (
-			SELECT 1
-			FROM USER_TAG_MAP utm
-			WHERE utm.USER_NO = #{userNo}
-			  AND utm.TAG_CODE = #{tagCode}
+		SELECT 1
+		FROM USER_TAG_MAP utm
+		WHERE utm.USER_NO =
+		#{userNo}
+		AND utm.TAG_CODE = #{tagCode}
 		)
 	</insert>
 
-	<select id="findUserTagsByUserNo" resultType="UserTagMapDTO" parameterType="long">
+	<select id="findUserTagsByUserNo" resultType="UserTagMapDTO"
+		parameterType="long">
 		SELECT
-			utm.MAPPING_NO,
-			utm.USER_NO,
-			utm.QUESTION_ID,
-			utm.TAG_CODE,
-			tm.TAG_NAME,
-			tm.TAG_CATEGORY
+		utm.MAPPING_NO,
+		utm.USER_NO,
+		utm.QUESTION_ID,
+		utm.TAG_CODE,
+		tm.TAG_NAME,
+		tm.TAG_CATEGORY
 		FROM USER_TAG_MAP utm
-		LEFT JOIN TAG_MASTER tm
-			ON tm.TAG_CODE = utm.TAG_CODE
+		LEFT JOIN
+		TAG_MASTER tm
+		ON tm.TAG_CODE = utm.TAG_CODE
 		WHERE utm.USER_NO = #{value}
-		ORDER BY tm.TAG_CATEGORY ASC, tm.TAG_NAME ASC, utm.MAPPING_NO ASC
+		ORDER BY
+		tm.TAG_CATEGORY ASC, tm.TAG_NAME ASC, utm.MAPPING_NO ASC
 	</select>
 
-	<select id="getUserNickname" parameterType="int" resultType="string">
+	<select id="getUserNickname" parameterType="int"
+		resultType="string">
 		SELECT USER_NICKNAME
 		FROM USERS
 		WHERE USER_NO = #{value}
 	</select>
+
+	<select id="selectUserAnalysisResult"
+		resultType="com.app.dto.UserTagMapDTO">
+		SELECT
+		A.QUESTION_ID,
+		A.TAG_CODE,
+		B.TAG_NAME,
+		B.CATEGORY,
+		FROM
+		USER_TAG_MAP A
+		JOIN TAG_MASTER B ON (A.TAG_CODE =
+		B.TAG_CODE)
+		WHERE
+		A.USER_NO = #{userNo}
+		ORDER BY A.QUESTION_ID ASC
+	</select>
+
+	<delete id="deleteUserTags" parameterType="long">
+		DELETE FROM
+		USER_TAG_MAP
+		WHERE USER_NO = #{userNo}
+	</delete>
+
+	<insert id="insertUserAnalysisTags"
+		parameterType="java.util.List">
+		INSERT INTO USER_TAG_MAP (MAPPING_NO, USER_NO, QUESTION_ID, TAG_CODE)
+		SELECT SEQ_USER_TAG_MAP_NO.NEXTVAL, A.* FROM (
+		<foreach collection="list" item="item" separator="UNION ALL">
+			SELECT
+			#{item.userNo} as USER_NO,
+			#{item.questionId} as QUESTION_ID,
+			#{item.tagCode} as TAG_CODE
+			FROM DUAL
+		</foreach>
+		) A
+	</insert>
+
+	<!-- 1:1 문의내용 저장 -->
+	<insert id="insertInquiry"
+		parameterType="com.app.dto.InquiryDTO">
+		INSERT INTO PLACE_INQUIRY (
+		INQUIRY_NO,
+		USER_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT,
+		INQUIRY_EMAIL,
+		INQUIRY_DATE,
+		STATUS
+		) VALUES (
+		SEQ_INQUIRY_NO.NEXTVAL,
+		#{userNo},
+		#{inquiryType},
+		#{inquiryTitle},
+		#{inquiryContent},
+		#{inquiryEmail},
+		SYSDATE,
+		'N' )
+	</insert>
+
+	<!-- 1:1 문의 내용 확인 -->
+	<select id="selectMyInquiries" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT AS inquiryContent,
+		INQUIRY_DATE,
+		REPLY_CONTENT,
+		REPLY_DATE,
+		STATUS
+		FROM PLACE_INQUIRY
+		WHERE USER_NO = #{userNo}
+		ORDER BY
+		INQUIRY_DATE DESC
+	</select>
+
+	<!-- 1:1 문의 내용 확인(상세) -->
+	<select id="selectInquiryDetail" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO,
+		INQUIRY_TYPE,
+		INQUIRY_TITLE,
+		INQUIRY_CONTENT,
+		INQUIRY_EMAIL,
+		INQUIRY_DATE,
+		REPLY_CONTENT,
+		REPLY_DATE,
+		STATUS
+		FROM PLACE_INQUIRY
+		WHERE INQUIRY_NO = #{inquiryNo}
+	</select>
+
+	<!-- 1:1 문의 삭제 -->
+	<delete id="deleteInquiry" parameterType="long">
+		DELETE FROM
+		PLACE_INQUIRY
+		WHERE INQUIRY_NO = #{inquiryNo}
+		AND STATUS = 'N'
+	</delete>
+
+	<!-- 1:1 문의 수정 -->
+	<update id="updateInquiry"
+		parameterType="com.app.dto.InquiryDTO">
+		UPDATE PLACE_INQUIRY
+		SET
+		INQUIRY_TYPE = #{inquiryType},
+		INQUIRY_TITLE = #{inquiryTitle},
+		INQUIRY_CONTENT = #{inquiryContent},
+		INQUIRY_EMAIL = #{inquiryEmail},
+		INQUIRY_DATE = SYSDATE WHERE
+		INQUIRY_NO = #{inquiryNo}
+		AND STATUS = 'N'
+	</update>
+
+	<!-- 1:1 문의 조회 -->
+	<select id="getInquiryDetail" parameterType="long"
+		resultType="com.app.dto.InquiryDTO">
+		SELECT
+		INQUIRY_NO AS inquiryNo,
+		INQUIRY_TYPE AS inquiryType,
+		INQUIRY_TITLE AS inquiryTitle,
+		INQUIRY_CONTENT AS inquiryContent,
+		INQUIRY_EMAIL AS inquiryEmail,
+		STATUS AS status
+		FROM PLACE_INQUIRY
+		WHERE
+		INQUIRY_NO = #{inquiryNo}
+	</select>
+
+	<!-- 1:1 문의 email 기본값 넣기 -->
+	<select id="getUserEmail" parameterType="string"
+		resultType="string">
+		SELECT user_auth_email
+		FROM User_Authentication
+		WHERE user_auth_id = #{userAuthId}
+	<!-- 성향 분석 결과 전달 -->
+	<select id="getTravelAnalysisResult" parameterType="string"
+		resultType="map">
+		SELECT
+		ts.USER_NO,
+		am_energy.RESULT_TEXT AS ENERGY_TEXT,
+		am_plan.RESULT_TEXT AS PLAN_TEXT,
+		am_place.RESULT_TEXT AS PLACE_TEXT,
+		am_plan.RESULT_TEXT, ' ', am_place.RESULT_TEXT)
+		(am_energy.RESULT_TEXT || ' ' || am_plan.RESULT_TEXT || ' ' || am_place.RESULT_TEXT) AS
+		FINAL_FULL_SENTENCE
+		FROM
+		TRAVEL_STYLES ts
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_energy
+		ON am_energy.CATEGORY = 'ENERGY'
+		AND am_energy.COMBINATION_KEY = ts.Q9_ENERGY
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_plan
+		ON am_plan.CATEGORY = 'PLAN'
+		AND am_plan.COMBINATION_KEY = ts.Q2_PLAN
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_place
+		ON am_place.CATEGORY = 'PLACE'
+		AND am_place.COMBINATION_KEY = ts.Q1_PLACE
+		WHERE
+		ts.USER_NO = #{user_no}
+	</select>
+
 </mapper>
