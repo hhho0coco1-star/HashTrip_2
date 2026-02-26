@@ -56,13 +56,9 @@ public class AnalysisController {
                 dto.setUserNo(realUserNo); // 0으로 들어온 값을 진짜 유저번호로 변경
             }
         } else {
-            // 만약 로그인을 안 했는데 테스트를 진행했다면? 
-            // 1) 에러 리턴: return "error_login_required";
-            // 2) 혹은 비회원용 유저번호(예: 999)가 있다면 그걸 세팅
             return "fail"; 
         }
         
-        // 3. 서비스 호출 (이제 실제 존재하는 USER_NO가 들어갑니다)
         String finalResult = userTagMapService.processUserAnalysis((long)loginUser.getUserNo(), selections);
         
         session.setAttribute("finalResult", finalResult);
