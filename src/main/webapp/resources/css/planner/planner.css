@@ -979,11 +979,24 @@
     box-shadow: var(--shadow-sm);
 }
 
+.planner-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
 .planner-day-title {
     font-size: 1.05rem;
     font-weight: 700;
-    margin: 0 0 12px;
+    margin: 0;
     color: var(--text-primary);
+}
+
+.planner-day-header .planner-day-add-btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
 }
 
 .planner-day-cards {

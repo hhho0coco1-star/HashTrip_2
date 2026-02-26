@@ -16,6 +16,7 @@
     let replaceCurrentOverlay = null;
     let mapSearchKakaoList = [];
     let mapSearchEnriched = {};
+    let targetDayForAdd = null; // { dayNumber, date } - 일차별 장소 추가 버튼에서 설정
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
@@ -109,8 +110,14 @@
                 }
             }
             const emptyHint = list.length === 0 ? "<p class=\"planner-day-empty-hint\">장소를 여기로 드래그하세요</p>" : "";
+            const addBtnHtml =
+                "<button type=\"button\" class=\"planner-btn planner-btn-sm planner-day-add-btn\" " +
+                "data-day=\"" + dayNum + "\" data-date=\"" + (dayDate || "") + "\">장소 추가</button>";
             return "<div class=\"planner-day-group planner-day-dropzone\" data-day=\"" + dayNum + "\" data-date=\"" + (dayDate || "") + "\">" +
+                "<div class=\"planner-day-header\">" +
                 "<h3 class=\"planner-day-title\">" + dayTitle + "</h3>" +
+                addBtnHtml +
+                "</div>" +
                 "<div class=\"planner-day-cards\">" + cards + emptyHint + "</div>" +
                 "</div>";
         }).join("");
@@ -158,6 +165,26 @@
                 if (!zone.contains(e.relatedTarget)) zone.classList.remove("planner-drag-over");
             });
             zone.addEventListener("drop", onDropDayZone);
+        });
+
+        // 일차별 '장소 추가' 버튼 이벤트
+        qsAll(".planner-day-add-btn", container).forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var dayNum = parseInt(btn.getAttribute("data-day"), 10);
+                var dayDate = btn.getAttribute("data-date") || "";
+                if (!dayNum || !dayDate) {
+                    // 날짜 정보가 없으면 마지막 일차로 fallback
+                    var startStr = getPlanStartDate();
+                    var numDays = getPlanDayCount();
+                    dayNum = numDays || 1;
+                    dayDate = dateStrAddDays(startStr, dayNum - 1) || startStr;
+                }
+                targetDayForAdd = {
+                    dayNumber: dayNum,
+                    date: dayDate
+                };
+                openMapModal();
+            });
         });
     }
 
@@ -616,6 +643,7 @@
         const modal = id("mapModal");
         if (modal) modal.classList.add("hidden");
         selectedPlace = null;
+        targetDayForAdd = null;
         mapSearchKakaoList = [];
         mapSearchEnriched = {};
         const res = id("searchResults");
@@ -628,6 +656,18 @@
             return;
         }
         const startStr = getPlanStartDate();
+        const numDays = getPlanDayCount();
+
+        // 기본값: 마지막 일차
+        let dayNum = numDays || 1;
+        let dayDate = dateStrAddDays(startStr, dayNum - 1) || startStr;
+
+        // 일차별 '장소 추가' 버튼에서 지정된 타겟이 있으면 우선 사용
+        if (targetDayForAdd && targetDayForAdd.dayNumber) {
+            dayNum = targetDayForAdd.dayNumber;
+            dayDate = targetDayForAdd.date || dateStrAddDays(startStr, dayNum - 1) || startStr;
+        }
+
         places.push({
             id: createPlaceId(),
             placeNo: selectedPlace.placeNo || null,
@@ -635,13 +675,15 @@
             placeAddress: selectedPlace.placeAddress || "",
             placeLatitude: selectedPlace.placeLatitude,
             placeLongitude: selectedPlace.placeLongitude,
-            date: startStr,
+            date: dayDate,
             time: "",
             endDate: "",
             endTime: "",
             memo: "",
-            dayNumber: 1
+            dayNumber: dayNum
         });
+
+        targetDayForAdd = null;
         render();
         closeMapModal();
     }
