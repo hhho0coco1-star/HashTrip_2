@@ -303,6 +303,9 @@ CREATE TABLE photo_data (
     photo_no NUMBER(19) PRIMARY KEY,
     comment_no NUMBER(19),
     log_photo_url VARCHAR2(1000),
+    photo_binary BLOB,
+    photo_mime_type VARCHAR2(100),
+    photo_file_name VARCHAR2(255),
     CONSTRAINT fk_photo_comment FOREIGN KEY (comment_no) REFERENCES Place_Review(comment_no)
 );
 
@@ -390,3 +393,23 @@ NOCACHE;
 -- 조회성능을 높이기 위한 인덱스 이걸 하면 자동으로 오라클이 빨리 조회 할수 있음 물론 PLACE_TAG_MAP테이블을 테그 코드와 플레이스번호로 조회했을떄,,,
 CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON PLACE_TAG_MAP(TAG_CODE);
 CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON PLACE_TAG_MAP(PLACE_NO);
+
+-- 사용자 1:1 문의 DB 테이블 추가
+CREATE TABLE PLACE_INQUIRY (
+    INQUIRY_NO      NUMBER PRIMARY KEY,          -- 문의 고유 번호
+    USER_NO         NUMBER NOT NULL,             -- 작성자 번호 (FK)
+    INQUIRY_TYPE    VARCHAR2(50) NOT NULL,       -- [추가] 문의 유형 (예: 서비스 이용, 정보 오류, 기타)
+    INQUIRY_EMAIL   VARCHAR2(100) NOT NULL,      -- [추가] 답변받을 이메일 주소
+    INQUIRY_TITLE   VARCHAR2(200) NOT NULL,      -- 문의 제목
+    INQUIRY_CONTENT CLOB NOT NULL,               -- 문의 내용
+    REPLY_CONTENT   CLOB,                        -- 관리자 답변 내용
+    INQUIRY_DATE    DATE DEFAULT SYSDATE,        -- 작성일
+    REPLY_DATE      DATE,                        -- 답변일
+    STATUS          CHAR(1) DEFAULT 'N',         -- 답변 여부 ('N': 미답변, 'Y': 답변완료)
+    
+    -- 외래키 설정
+    CONSTRAINT FK_INQUIRY_USER FOREIGN KEY (USER_NO) REFERENCES USERS(USER_NO)
+);
+
+-- 번호 자동 생성을 위한 시퀀스
+CREATE SEQUENCE SEQ_INQUIRY_NO START WITH 1 INCREMENT BY 1;

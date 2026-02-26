@@ -1,6 +1,7 @@
 package com.app.dto;
 
 import java.sql.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -14,6 +15,9 @@ public class TravelPlanDTO {
     private String planStatus;
     private Date planStartDate;
     private Date planEndDate;
+
+    /** 일정 목록용: 방문 순서·썸네일 등 */
+    private List<PlanDetailDTO> planDetails;
 
     // Card data for recommended routes
     private String userName;

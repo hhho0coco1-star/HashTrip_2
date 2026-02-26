@@ -1,89 +1,16 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>#Trip</title>
+
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/resources/css/common.css">
+
 <style type="text/css">
-
-/* ================== 1. 상단 헤더바 영역 ================== */
-.main-header {
-	background-color: #ffffff;
-	border-bottom: 1px solid #eee;
-	padding: 10px 0;
-	position: sticky;
-	top: 0;
-	z-index: 1000;
-}
-
-.header-container {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 0 20px;
-}
-
-.header-logo {
-	font-size: 24px;
-	text-decoration: none;
-	flex: 1;
-}
-
-.header-menu-wrapper {
-	flex: 2;
-	display: flex;
-	justify-content: center;
-}
-
-.nav-menu {
-	display: flex;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	gap: 30px;
-}
-
-.nav-menu li a {
-	text-decoration: none;
-	color: #333;
-	font-weight: 500;
-}
-
-.nav-menu li a:hover {
-	color: #007bff;
-}
-
-.user-auth {
-	flex: 1;
-	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 15px;
-}
-
-.btn-login, .btn-signup, .btn-logout {
-	text-decoration: none;
-	font-size: 14px;
-	padding: 6px 12px;
-	border-radius: 4px;
-}
-
-.btn-login {
-	color: #555;
-}
-
-.btn-signup {
-	background-color: #007bff;
-	color: #fff;
-}
-
-.user-info {
-	font-size: 14px;
-	color: #666;
-}
 
 /* ================== 2. 자주묻는질문 ================== */
 .faq-wrapper {
@@ -259,7 +186,15 @@
 
 			<div class="faq-footer">
 				<p>
-					원하는 답변을 찾지 못하셨나요? <a href="/hashTrip/contact">1:1 문의하기</a>를 이용해 주세요.
+					원하는 답변을 찾지 못하셨나요?
+					<c:choose>
+						<c:when test="${not empty usersDTO and not empty usersDTO.userNo}">
+							<a href="/hashTrip/contact">1:1 문의하기</a>를 이용해 주세요.
+						</c:when>
+						<c:otherwise>
+							<a href="javascript:void(0);" onclick="checkLogin()">1:1 문의하기</a>를 이용해 주세요.
+						</c:otherwise>
+					</c:choose>
 				</p>
 			</div>
 		</div>
@@ -280,6 +215,12 @@
 		        faqItem.classList.toggle('active');
 		    });
 		});
+		
+		function checkLogin() {
+			if(confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+			location.href = "${pageContext.request.contextPath}/auth/login";
+			}
+		}
 	</script>
 </body>
 </html>

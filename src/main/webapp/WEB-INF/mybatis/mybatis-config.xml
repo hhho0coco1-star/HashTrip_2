@@ -17,6 +17,7 @@
 		<typeAlias type="com.app.dto.PlaceDTO" alias="PlaceDTO" />
 		<typeAlias type="com.app.dto.PlaceHoursDTO" alias="PlaceHoursDTO" />
 		<typeAlias type="com.app.dto.PlaceReviewDTO" alias="PlaceReviewDTO" />
+		<typeAlias type="com.app.dto.PhotoDataDTO" alias="PhotoDataDTO" />
 		<typeAlias type="com.app.dto.PlaceTagMapDTO" alias="PlaceTagMapDTO" />
 		<typeAlias type="com.app.dto.WishListDTO" alias="WishListDTO" />
 		<typeAlias type="com.app.dto.CategoryDTO" alias="CategoryDTO" />

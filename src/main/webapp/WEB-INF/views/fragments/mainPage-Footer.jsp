@@ -12,7 +12,7 @@
 
             <div class="footer-links">
                 <h3>법적 고지</h3>
-                <ul>
+                <ul class="footer-ul">
                     <li><a href="<c:url value='/hashTrip/privacy' />">개인정보처리방침</a></li>
                     <li><a href="<c:url value='/hashTrip/terms' />">이용약관</a></li>
                     <li><a href="<c:url value='/hashTrip/location' />">위치기반서비스</a></li>
@@ -21,16 +21,23 @@
 
             <div class="footer-links">
                 <h3>고객 지원</h3>
-                <ul>
+                <ul class="footer-ul">
                     <li><a href="<c:url value='/hashTrip/faq' />">자주 묻는 질문</a></li>
-                    <li><a href="<c:url value='/hashTrip/contact' />">1:1 문의</a></li>
+                    <c:choose>
+							<c:when test="${not empty usersDTO and not empty usersDTO.userNo}">
+								<li><a href="/hashTrip/contact">1:1 문의</a></li>
+							</c:when>
+							<c:otherwise>
+								<li><a href="javascript:void(0);" onclick="checkLogin()">1:1 문의</a></li>
+							</c:otherwise>
+						</c:choose>
                     <li><a href="<c:url value='/hashTrip/notice' />">공지사항</a></li>
                 </ul>
             </div>
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 HASHTRIP. All rights reserved.</p>
+            <p>&copy; 2026 #TRIP. All rights reserved.</p>
         </div>
     </div>
 </footer>

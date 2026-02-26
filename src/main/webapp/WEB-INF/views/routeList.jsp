@@ -86,7 +86,7 @@
                 <button type="button"
                         class="btn-cta-outline btn-share"
                         id="btn-create-plan"
-                        onclick="location.href='${pageContext.request.contextPath}/plan/new'">+ 내 일정 작성</button>
+                        onclick="location.href='${pageContext.request.contextPath}/planner/new'">+ 내 일정 작성</button>
             </div>
             <p class="section-subtitle">취향이 맞는 여행자들의 루트를 발견해보세요</p>
         </div>

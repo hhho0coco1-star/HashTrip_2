@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.app.dao.PlaceDAO;
+import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.PlaceHoursDTO;
 import com.app.dto.PlaceReviewDTO;
@@ -27,7 +28,11 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String INSERT_PLACE_TAG_MAP_STATEMENT_ID = "place_mapper.insertPlaceTagMap";
 	private static final String INSERT_PLACE_HOURS_STATEMENT_ID = "place_mapper.insertPlaceHours";
 	private static final String INSERT_PLACE_REVIEW_STATEMENT_ID = "place_mapper.insertPlaceReview";
+	private static final String INSERT_REVIEW_PHOTO_STATEMENT_ID = "place_mapper.insertReviewPhoto";
+	private static final String SELECT_PHOTO_DATA_BY_PHOTO_NO_STATEMENT_ID = "place_mapper.selectPhotoDataByPhotoNo";
 	private static final String UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.updatePlaceReviewByOwner";
+	private static final String EXISTS_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.existsPlaceReviewByOwner";
+	private static final String DELETE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deleteReviewPhotosByOwner";
 	private static final String DELETE_PLACE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewPhotosByOwner";
 	private static final String DELETE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID = "place_mapper.deletePlaceReviewByOwner";
 	private static final String UPDATE_PLACE_RATING_BY_PLACE_NO_STATEMENT_ID = "place_mapper.updatePlaceRatingByPlaceNo";
@@ -55,6 +60,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPaged";
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_SORTED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPagedSorted";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
+	private static final String SELECT_PLACES_NEARBY_STATEMENT_ID = "place_mapper.selectPlacesNearby";
 	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
 	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
 
@@ -187,8 +193,43 @@ public class PlaceDAOImpl implements PlaceDAO {
 	}
 
 	@Override
+	public int insertReviewPhotos(Long commentNo, List<PhotoDataDTO> photoDataList) throws Exception {
+		if (commentNo == null || photoDataList == null || photoDataList.isEmpty()) {
+			return 0;
+		}
+
+		return executeBatchInsert(photoDataList, (batchSession, photoData) -> {
+			photoData.setCommentNo(commentNo);
+			batchSession.insert(INSERT_REVIEW_PHOTO_STATEMENT_ID, photoData);
+		});
+	}
+
+	@Override
+	public PhotoDataDTO selectPhotoDataByPhotoNo(Long photoNo) throws Exception {
+		return sqlSessionTemplate.selectOne(SELECT_PHOTO_DATA_BY_PHOTO_NO_STATEMENT_ID, photoNo);
+	}
+
+	@Override
 	public int updatePlaceReviewByOwner(PlaceReviewDTO placeReviewDTO) throws Exception {
 		return sqlSessionTemplate.update(UPDATE_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, placeReviewDTO);
+	}
+
+	@Override
+	public boolean existsPlaceReviewByOwner(Long commentNo, Long placeNo, String createdBy) throws Exception {
+		Map<String, Object> params = buildReviewOwnerParams(commentNo, placeNo, createdBy);
+		Integer count = sqlSessionTemplate.selectOne(EXISTS_PLACE_REVIEW_BY_OWNER_STATEMENT_ID, params);
+		return count != null && count > 0;
+	}
+
+	@Override
+	public int deleteReviewPhotosByOwner(Long commentNo, Long placeNo, String createdBy, List<Long> photoNoList) throws Exception {
+		if (photoNoList == null || photoNoList.isEmpty()) {
+			return 0;
+		}
+
+		Map<String, Object> params = buildReviewOwnerParams(commentNo, placeNo, createdBy);
+		params.put("photoNoList", photoNoList);
+		return sqlSessionTemplate.delete(DELETE_REVIEW_PHOTOS_BY_OWNER_STATEMENT_ID, params);
 	}
 
 	@Override
@@ -259,6 +300,16 @@ public class PlaceDAOImpl implements PlaceDAO {
 	@Override
 	public List<PlaceDTO> searchPlaces(String keyword) {
 		return sqlSessionTemplate.selectList("place_mapper.searchPlaces", keyword);
+	}
+
+	@Override
+	public List<PlaceDTO> selectPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("lat", lat);
+		params.put("lng", lng);
+		params.put("radiusKm", radiusKm);
+		params.put("excludePlaceNo", excludePlaceNo);
+		return sqlSessionTemplate.selectList(SELECT_PLACES_NEARBY_STATEMENT_ID, params);
 	}
 
 }

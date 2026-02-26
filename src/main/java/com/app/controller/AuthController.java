@@ -1,13 +1,6 @@
 package com.app.controller;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
-
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.UsersDTO;
 import com.app.service.LoginService;
+import com.app.service.ProfileImageStorageService;
 import com.app.service.impl.SocialUserProvisionService;
 
 @Controller
@@ -42,15 +36,15 @@ public class AuthController {
 
     private final LoginService loginService;
     private final SocialUserProvisionService socialUserProvisionService;
-    private final ServletContext servletContext;
+    private final ProfileImageStorageService profileImageStorageService;
 
     @Autowired
     public AuthController(LoginService loginService,
                           SocialUserProvisionService socialUserProvisionService,
-                          ServletContext servletContext) {
+                          ProfileImageStorageService profileImageStorageService) {
         this.loginService = loginService;
         this.socialUserProvisionService = socialUserProvisionService;
-        this.servletContext = servletContext;
+        this.profileImageStorageService = profileImageStorageService;
     }
 
     @GetMapping("/login")
@@ -88,8 +82,9 @@ public class AuthController {
                                 @RequestParam(value = "userDetailAddress", required = false) String userDetailAddress,
                                 @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
                                 RedirectAttributes redirectAttributes) {
+        String savedProfileImagePath = null;
         try {
-            String savedProfileImagePath = saveProfileImage(profileImage);
+            savedProfileImagePath = profileImageStorageService.store(profileImage);
 
             loginService.register(userId, email, password, userName, userNickName, userGender, userPhoneNumber,
                     userRegistrationNo, savedProfileImagePath, userZipCode, userBaseAddress, userDetailAddress);
@@ -97,9 +92,15 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해 주세요.");
             return "redirect:/auth/login?signupSuccess=true";
         } catch (IllegalArgumentException e) {
+            if (StringUtils.hasText(savedProfileImagePath)) {
+                profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+            }
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/auth/signup";
         } catch (Exception e) {
+            if (StringUtils.hasText(savedProfileImagePath)) {
+                profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+            }
             Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
             String reason = root != null && root.getMessage() != null ? root.getMessage() : e.getMessage();
             log.error("회원가입 실패 userId={}, email={}", userId, email, e);
@@ -235,38 +236,5 @@ public class AuthController {
         return digitsOnly.substring(0, 4) + "-"
                 + digitsOnly.substring(4, 6) + "-"
                 + digitsOnly.substring(6, 8);
-    }
-
-    private String saveProfileImage(MultipartFile profileImage) throws IOException {
-        if (profileImage == null || profileImage.isEmpty()) {
-            return null;
-        }
-
-        String contentType = profileImage.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("프로필 이미지는 이미지 파일만 업로드할 수 있습니다.");
-        }
-
-        String originalFilename = profileImage.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null) {
-            int dotIndex = originalFilename.lastIndexOf('.');
-            if (dotIndex > -1 && dotIndex < originalFilename.length() - 1) {
-                extension = originalFilename.substring(dotIndex).toLowerCase();
-            }
-        }
-
-        String savedName = UUID.randomUUID().toString().replace("-", "") + extension;
-        String uploadRoot = servletContext.getRealPath("/resources/uploads/profile");
-        if (uploadRoot == null) {
-            throw new IllegalStateException("업로드 경로를 찾을 수 없습니다. 서버 배포 경로를 확인해 주세요.");
-        }
-        Path uploadDir = Paths.get(uploadRoot);
-        Files.createDirectories(uploadDir);
-
-        Path targetPath = uploadDir.resolve(savedName);
-        profileImage.transferTo(targetPath.toFile());
-
-        return "/resources/uploads/profile/" + savedName;
     }
 }

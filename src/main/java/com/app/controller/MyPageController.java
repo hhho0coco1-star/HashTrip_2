@@ -10,20 +10,25 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.dto.CommunityDTO;
+import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceReviewDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 import com.app.dto.WishListDTO;
 import com.app.service.PlaceService;
+import com.app.service.ProfileImageStorageService;
 import com.app.service.UsersService;
 import com.app.service.WishListService;
 import com.app.service.impl.CommunityService;
@@ -45,6 +50,9 @@ public class MyPageController {
 
 	@Autowired
 	private CommunityService communityService;
+
+	@Autowired
+	private ProfileImageStorageService profileImageStorageService;
 
 	@GetMapping({ "/mypage", "/mypage/", "/myPage", "/my-page", "/hashTrip/mypage" })
 	public String mypage(
@@ -118,6 +126,11 @@ public class MyPageController {
 		model.addAttribute("reviewPageSize", REVIEW_PAGE_SIZE);
 		model.addAttribute("reviewPreviewSize", REVIEW_PREVIEW_SIZE);
 		model.addAttribute("kakaoMapAppKey", kakaoMapAppKey);
+		
+		// 1:1 문의
+		List<InquiryDTO> inquiryList = usersService.getMyInquiries(usersDTO.getUserNo());
+	    model.addAttribute("inquiryList", inquiryList); // JSP로 전달
+	    
 		return "mypage";
 	}
 
@@ -143,6 +156,7 @@ public class MyPageController {
 	public String updateMypageProfile(
 			Authentication authentication,
 			@ModelAttribute("usersDTO") UsersDTO usersDTO,
+			@RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
 			RedirectAttributes redirectAttributes,
 			Model model) {
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
@@ -150,13 +164,49 @@ public class MyPageController {
 			return "redirect:/auth/login";
 		}
 
+		UsersDTO currentUsersDTO = usersService.getUserByAuthId(currentAuthId);
+		String savedProfileImagePath = null;
 		try {
+			savedProfileImagePath = profileImageStorageService.store(profileImage);
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				usersDTO.setUserProfileImg(savedProfileImagePath);
+			}
+
 			usersService.updateProfileByAuthId(currentAuthId, usersDTO);
+			if (StringUtils.hasText(savedProfileImagePath)
+					&& currentUsersDTO != null
+					&& StringUtils.hasText(currentUsersDTO.getUserProfileImg())
+					&& !savedProfileImagePath.equals(currentUsersDTO.getUserProfileImg())) {
+				profileImageStorageService.deleteIfManaged(currentUsersDTO.getUserProfileImg());
+			}
 			redirectAttributes.addFlashAttribute("message", "회원 정보가 수정되었습니다.");
 			return "redirect:/mypage";
 		} catch (IllegalArgumentException e) {
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+			}
+			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
+				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
+				if (fallbackUser != null) {
+					usersDTO.setUserProfileImg(fallbackUser.getUserProfileImg());
+				}
+			}
 			model.addAttribute("usersDTO", usersDTO);
 			model.addAttribute("errorMessage", e.getMessage());
+			model.addAttribute("currentAuthId", currentAuthId);
+			return "mypage-edit";
+		} catch (Exception e) {
+			if (StringUtils.hasText(savedProfileImagePath)) {
+				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
+			}
+			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
+				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
+				if (fallbackUser != null) {
+					usersDTO.setUserProfileImg(fallbackUser.getUserProfileImg());
+				}
+			}
+			model.addAttribute("usersDTO", usersDTO);
+			model.addAttribute("errorMessage", "회원정보 수정 중 오류가 발생했습니다.");
 			model.addAttribute("currentAuthId", currentAuthId);
 			return "mypage-edit";
 		}
@@ -270,4 +320,34 @@ public class MyPageController {
 	private boolean isExpanded(String expanded) {
 		return "Y".equalsIgnoreCase(expanded);
 	}
+	
+	@PostMapping("/contact/inquiry/delete")
+	public String deleteInquiry(@RequestParam("inquiryNo") Long inquiryNo, RedirectAttributes ra) {
+	    int result = usersService.removeInquiry(inquiryNo);
+	    if(result > 0) {
+	        ra.addFlashAttribute("msg", "문의가 삭제되었습니다.");
+	    }
+	    return "redirect:/mypage";
+	}
+	
+	// 1. 수정 페이지로 이동 (SELECT 필요)
+	@GetMapping("/contact/inquiry/edit/{inquiryNo}")
+	public String editForm(@PathVariable("inquiryNo") Long inquiryNo, Model model) {
+	    // 지금 작성하신 UPDATE 쿼리가 아니라, 기존에 있던 SELECT 쿼리를 써야 합니다!
+	    InquiryDTO inquiry = usersService.getInquiryDetail(inquiryNo); 
+	    model.addAttribute("inquiry", inquiry);
+	    model.addAttribute("isEdit", true);
+	    return "mainPage/mainPage-contact";
+	}
+
+	// 2. 수정 실행
+	@PostMapping("/contact/inquiry/update")
+	public String updateInquiry(InquiryDTO dto, RedirectAttributes ra) {
+	    int result = usersService.modifyInquiry(dto);
+	    if(result > 0) {
+	        ra.addFlashAttribute("msg", "문의 내용이 성공적으로 수정되었습니다.");
+	    }
+	    return "redirect:/mypage";
+	}
+	
 }

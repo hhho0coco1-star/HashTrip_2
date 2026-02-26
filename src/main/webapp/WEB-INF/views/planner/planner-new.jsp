@@ -1,0 +1,145 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+    <title>새 여행 만들기 — #HiFive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Gmarket+Sans:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/routes.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/planner/planner.css">
+</head>
+<body>
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
+
+    <div class="page-container">
+        <div class="routes-wrap planner-new-wrap">
+            <div class="routes-header planner-new-header-row">
+                <div>
+                    <div class="section-badge">NEW PLAN</div>
+                    <h2 class="section-title">✈️ 새 여행 만들기</h2>
+                    <p class="section-subtitle">추천 루트를 선택하거나 직접 장소를 추가해 일정을 만들어 보세요</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/planner" class="btn-cta-outline">목록으로</a>
+            </div>
+
+            <c:if test="${not empty plannerError}">
+                <div class="planner-alert planner-alert-err"><c:out value="${plannerError}"/></div>
+            </c:if>
+
+            <form id="plannerNewForm" action="${pageContext.request.contextPath}/planner" method="post">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                <input type="hidden" id="planDetailsJson" name="planDetailsJson" value="" />
+                <input type="hidden" id="planStartDate" name="planStartDate" value="" />
+                <input type="hidden" id="planEndDate" name="planEndDate" value="" />
+
+                <div id="wizardSteps" class="planner-wizard">
+                    <%-- 첫 화면: 두 갈래 선택 (크게 나누기) --%>
+                    <div id="step1Panel" class="planner-wizard-panel planner-wizard-active">
+                        <section class="planner-section planner-choice-landing">
+                            <p class="planner-choice-intro">어떤 방식으로 여행 일정을 만들까요?</p>
+                            <div class="planner-choice-cards">
+                                <button type="button" id="choiceRoute" class="planner-choice-card planner-choice-card-route">
+                                    <span class="planner-choice-card-icon">🗺️</span>
+                                    <span class="planner-choice-card-title">추천 루트에서 고르기</span>
+                                    <span class="planner-choice-card-desc">태그에 맞는 루트를 추천받아 일정으로 저장해요</span>
+                                </button>
+                                <button type="button" id="choiceDirect" class="planner-choice-card planner-choice-card-direct">
+                                    <span class="planner-choice-card-icon">📍</span>
+                                    <span class="planner-choice-card-title">내가 장소 직접 넣기</span>
+                                    <span class="planner-choice-card-desc">검색해서 장소를 추가하고 일정을 만들어요</span>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <%-- Step 2 (route only): 어떤 태그로 검색할까요? --%>
+                    <div id="step2Panel" class="planner-wizard-panel hidden">
+                        <section class="planner-section planner-step planner-question-card">
+                            <h2 class="planner-step-title">어떤 태그로 검색할까요?</h2>
+                            <div class="planner-option-group planner-option-cards">
+                                <label class="planner-option-card">
+                                    <input type="radio" name="tagMode" value="myTags" checked />
+                                    <span class="planner-option-card-inner">나의 태그로 검색</span>
+                                </label>
+                                <a href="${pageContext.request.contextPath}/hashTrip/analysis" class="planner-option-card planner-option-card-link" title="성향테스트로 이동">
+                                    <span class="planner-option-card-inner">새로운 태그 만들기 <span class="planner-option-badge">성향테스트 →</span></span>
+                                </a>
+                            </div>
+                            <p class="planner-tooltip-hint">나의 태그는 마이페이지에서 설정한 취향 태그로, 맞는 루트를 추천받을 수 있어요.</p>
+                            <div class="planner-wizard-nav">
+                                <button type="button" id="btnStep2Prev" class="planner-btn planner-btn-ghost">이전</button>
+                                <button type="button" id="btnStep2Next" class="planner-btn planner-btn-primary">다음</button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <%-- Step 3 (route only): 어디로 갈까요? --%>
+                    <div id="step3Panel" class="planner-wizard-panel hidden">
+                        <section class="planner-section planner-step planner-question-card">
+                            <h2 class="planner-step-title">어디로 갈까요?</h2>
+                            <p class="planner-hint">지역을 선택하거나 검색하면 해당 지역이 포함된 루트만 보여드려요.</p>
+                            <div class="planner-region-combobox" id="regionCombobox">
+                                <input type="text" id="regionSearch" class="planner-region-input" placeholder="지역 선택 또는 검색" autocomplete="off" />
+                                <input type="hidden" id="regionValue" name="region" value="" />
+                                <button type="button" class="planner-region-toggle" id="regionToggle" aria-label="지역 목록 열기">&nbsp;</button>
+                                <div class="planner-region-dropdown" id="regionDropdown" role="listbox"></div>
+                            </div>
+                            <div class="planner-wizard-nav">
+                                <button type="button" id="btnStep3Prev" class="planner-btn planner-btn-ghost">이전</button>
+                                <button type="button" id="btnSearchRoutes" class="planner-btn planner-btn-primary">추천 루트 보기</button>
+                            </div>
+                            <a href="${pageContext.request.contextPath}/routes" class="planner-link-inline" target="_blank">🗺️ 전체 루트 둘러보기</a>
+                            <div id="routeResultArea" class="planner-route-result hidden"></div>
+                        </section>
+                    </div>
+
+                    <%-- Direct path: 장소 추가 --%>
+                    <div id="directPanel" class="planner-wizard-panel hidden">
+                        <section class="planner-section planner-step planner-question-card">
+                            <h2 class="planner-step-title">장소 추가</h2>
+                            <p class="planner-hint">장소를 검색해서 추가한 뒤 완료하면 일정이 저장되고 수정 페이지로 이동해요.</p>
+                            <button type="button" id="btnAddPlace" class="planner-btn planner-btn-primary">장소 검색해서 추가</button>
+                            <div id="placeList" class="planner-place-list"></div>
+                            <div class="planner-wizard-nav planner-direct-actions">
+                                <button type="button" id="btnDirectPrev" class="planner-btn planner-btn-ghost">이전</button>
+                                <button type="submit" id="btnSaveNewDirect" class="planner-btn planner-btn-save" disabled>일정 저장</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="mapModal" class="planner-modal hidden">
+            <div class="planner-modal-content">
+                <div class="planner-modal-header">
+                    <h2>장소 선택</h2>
+                    <button type="button" id="closeMapModal" class="planner-modal-close">&times;</button>
+                </div>
+                <div class="planner-modal-body">
+                    <div class="planner-search-box">
+                        <input type="text" id="placeSearch" placeholder="장소 검색" />
+                        <button type="button" id="searchBtn">검색</button>
+                    </div>
+                    <div id="map" class="planner-map-container"></div>
+                    <div id="searchResults" class="planner-search-results planner-replace-list"></div>
+                </div>
+                <div class="planner-modal-footer">
+                    <button type="button" id="confirmPlace" class="planner-btn planner-btn-primary">선택 완료</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <jsp:include page="/WEB-INF/views/fragments/mainPage-Footer.jsp" />
+
+    <script>window.appContextPath = '${pageContext.request.contextPath}';</script>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=c0f942806f26f0fe25ab08a3eacbea9d&libraries=services"></script>
+    <script src="${pageContext.request.contextPath}/js/planner/planner-new.js"></script>
+</body>
+</html>

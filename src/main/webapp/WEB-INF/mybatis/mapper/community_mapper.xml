@@ -80,6 +80,32 @@
 		ORDER BY r.rn
 	</select>
 
+	<select id="getCommunityReviewByPlanNoAndUserNo" parameterType="map" resultType="CommunityDTO">
+		SELECT
+			c.review_no,
+			c.plan_no,
+			tp.plan_title,
+			c.user_no,
+			c.review_content,
+			c.review_rating AS rating,
+			NVL(u.user_nickname, u.user_name) AS created_by,
+			c.created_at AS created_at
+		FROM Community c
+		LEFT JOIN Travel_Plans tp ON tp.plan_no = c.plan_no
+		LEFT JOIN Users u ON u.user_no = c.user_no
+		WHERE c.plan_no = #{planNo}
+		  AND c.user_no = #{userNo}
+		  AND c.review_content IS NOT NULL
+	</select>
+
+	<update id="updateCommunityReview" parameterType="CommunityDTO">
+		UPDATE Community
+		SET review_content = #{reviewContent},
+		    review_rating = #{rating,jdbcType=NUMERIC}
+		WHERE review_no = #{reviewNo}
+		  AND user_no = #{userNo}
+	</update>
+
 	<insert id="insertCommunityReview" parameterType="CommunityDTO">
 		<selectKey keyProperty="reviewNo" resultType="long" order="BEFORE">
 			SELECT SEQ_COMMUNITY_REVIEW_NO.NEXTVAL FROM dual
@@ -90,5 +116,10 @@
 			#{reviewNo}, #{planNo}, #{userNo}, #{reviewContent}, #{rating,jdbcType=NUMERIC}, SYSDATE
 		)
 	</insert>
+
+    <delete id="deleteCommunityReviewsByPlanNo" parameterType="long">
+        DELETE FROM Community
+        WHERE plan_no = #{value}
+    </delete>
 
 </mapper>

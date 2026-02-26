@@ -105,19 +105,83 @@ public class RouteController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String prefCategory,
             @RequestParam(required = false) String prefTagCode,
+            @RequestParam(required = false) String region,
             Authentication authentication) {
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
         List<RouteDTO> routes = routeService.getRoutesByFilters(category, prefCategory, prefTagCode);
         routes = excludeCurrentUserRoutes(routes, currentUser);
+        if (region != null && !region.isBlank()) {
+            List<Long> planNosInRegion = planDetailService.findPlanNosByRegion(region.trim());
+            List<RouteDTO> filtered = new ArrayList<>();
+            for (RouteDTO r : routes) {
+                if (planNosInRegion.contains(r.getId())) {
+                    filtered.add(r);
+                }
+            }
+            routes = filtered;
+        }
         applySimilarityScores(routes, authentication);
         return routes;
     }
 
-    @GetMapping("/preference-tags")
+    /**
+     * 어디로 갈까요에서 선택한 지역(또는 장소 태그)로 추천 루트 검색. region이 있으면 루트에 포함된 여행지 중 해당 지역이
+     * 포함된 루트만 반환.
+     */
+    @GetMapping("/recommend")
     @ResponseBody
-    public List<TagMasterDTO> preferenceTags(
-            @RequestParam String category) {
-        return routeService.getPreferenceTagsByCategory(category);
+    public List<RouteDTO> recommendByPlaceTags(
+            @RequestParam(required = false) String placeTagCodes,
+            @RequestParam(required = false) String region,
+            Authentication authentication) {
+        UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        List<RouteDTO> routes = routeService.getRoutesByCategory(null);
+        routes = excludeCurrentUserRoutes(routes, currentUser);
+
+        if (region != null && !region.isBlank()) {
+            List<Long> planNosInRegion = planDetailService.findPlanNosByRegion(region.trim());
+            List<RouteDTO> filtered = new ArrayList<>();
+            for (RouteDTO r : routes) {
+                if (planNosInRegion.contains(r.getId())) {
+                    filtered.add(r);
+                }
+            }
+            routes = filtered;
+        }
+
+        List<String> selectedTagNames = resolveTagNamesByCodes(placeTagCodes);
+        if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
+            routeService.applyPlaceTagScores(routes, selectedTagNames);
+        } else {
+            applySimilarityScores(routes, authentication);
+        }
+        return routes;
+    }
+
+    private List<String> resolveTagNamesByCodes(String placeTagCodes) {
+        if (placeTagCodes == null || placeTagCodes.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<TagMasterDTO> all = usersService.getTagMasterList();
+        if (all == null) {
+            return Collections.emptyList();
+        }
+        Set<String> codes = new LinkedHashSet<>();
+        for (String s : placeTagCodes.split("[,;]")) {
+            String c = s != null ? s.trim() : "";
+            if (!c.isEmpty()) {
+                codes.add(c);
+            }
+        }
+        List<String> names = new ArrayList<>();
+        for (TagMasterDTO t : all) {
+            if (t != null && t.getTagCode() != null && codes.contains(t.getTagCode().trim())) {
+                if (t.getTagName() != null && !t.getTagName().trim().isEmpty()) {
+                    names.add(t.getTagName().trim());
+                }
+            }
+        }
+        return names;
     }
 
     @PostMapping("/save")
@@ -134,12 +198,10 @@ public class RouteController {
             response.put("success", true);
             response.put("savedUserCount", saveResult.getSavedUserCount());
             response.put("saveRegistered", saveResult.isSaveRegistered());
-            response.put("message", saveResult.isSaveRegistered()
-                    ? "내 일정으로 저장했습니다."
-                    : "이미 저장한 루트입니다.");
+            response.put("message", "내 일정으로 저장했습니다.");
             if (saveResult.getCopiedPlanNo() != null) {
                 response.put("planNo", saveResult.getCopiedPlanNo());
-                response.put("redirectUrl", "/plan/" + saveResult.getCopiedPlanNo() + "/edit");
+                response.put("redirectUrl", "/planner/" + saveResult.getCopiedPlanNo() + "/edit");
             }
             return response;
         } catch (Exception e) {
@@ -193,7 +255,7 @@ public class RouteController {
             response.put("success", true);
             response.put("message", "새 일정으로 복사했습니다.");
             response.put("planNo", copiedPlanNo);
-            response.put("redirectUrl", "/plan/" + copiedPlanNo + "/edit");
+            response.put("redirectUrl", "/planner/" + copiedPlanNo + "/edit");
             return response;
         } catch (Exception e) {
             response.put("success", false);

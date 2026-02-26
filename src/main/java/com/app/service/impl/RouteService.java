@@ -15,6 +15,8 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.app.dto.CommunityDTO;
+import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteDTO;
 import com.app.dto.TagMasterDTO;
 import com.app.dto.TagCategoryDTO;
@@ -36,6 +38,9 @@ public class RouteService {
 
     @Autowired
     private UsersService usersService;
+
+    @Autowired
+    private CommunityService communityService;
 
     public RouteDTO getRouteById(Long routeId) {
         TravelPlanDTO travelPlan = travelPlanService.findTravelPlan(routeId);
@@ -205,6 +210,18 @@ public class RouteService {
         }
         route.setSteps(steps);
 
+        List<PlanDetailDTO> details = planDetailService.findPlanDetails(route.getId());
+        if (details != null && !details.isEmpty()) {
+            List<Map<String, String>> stepDetails = new ArrayList<>();
+            for (PlanDetailDTO d : details) {
+                Map<String, String> m = new LinkedHashMap<>();
+                m.put("placeName", defaultIfBlank(d.getPlaceName(), ""));
+                m.put("placeThumbnailUrl", defaultIfBlank(d.getPlaceThumbnailUrl(), ""));
+                stepDetails.add(m);
+            }
+            route.setStepDetails(stepDetails);
+        }
+
         route.setTags(buildTagMap(planDetailService.findTagNames(route.getId())));
 
         String representativeMemo = defaultIfBlank(planDetailService.findRepresentativeMemo(route.getId()), null);
@@ -214,6 +231,28 @@ public class RouteService {
 
         if (route.getDescription() == null || route.getDescription().trim().isEmpty()) {
             route.setDescription("\uC124\uBA85 \uC815\uBCF4 \uC5C6\uC74C");
+        }
+
+        List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(route.getId());
+        if (reviews != null && !reviews.isEmpty()) {
+            route.setReviewCount(reviews.size());
+            double sum = 0;
+            int rated = 0;
+            for (CommunityDTO r : reviews) {
+                if (r.getRating() != null) {
+                    sum += r.getRating();
+                    rated++;
+                }
+            }
+            route.setAvgRating(rated > 0 ? sum / rated : null);
+            String content = reviews.get(0).getReviewContent();
+            if (content != null && !content.trim().isEmpty()) {
+                String snippet = content.trim();
+                if (snippet.length() > 80) {
+                    snippet = snippet.substring(0, 80) + "\u2026";
+                }
+                route.setRepresentativeReviewSnippet(snippet);
+            }
         }
     }
 
@@ -540,5 +579,49 @@ public class RouteService {
         }
 
         return map;
+    }
+
+    /**
+     * 선택한 장소 태그(이름)와 루트의 장소 태그 일치도로 점수 부여 후 적합도 순 정렬.
+     * (어디로 갈까요에서 선택한 태그를 임시로 사용해 검색할 때 사용)
+     */
+    public void applyPlaceTagScores(List<RouteDTO> routes, List<String> selectedTagNames) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+        if (selectedTagNames == null) {
+            selectedTagNames = Collections.emptyList();
+        }
+        Set<String> selectedNormalized = new LinkedHashSet<>();
+        for (String name : selectedTagNames) {
+            if (name != null && !name.trim().isEmpty()) {
+                selectedNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        for (RouteDTO route : routes) {
+            List<String> routeTagNames = planDetailService.findTagNames(route.getId());
+            Set<String> routeNormalized = new LinkedHashSet<>();
+            if (routeTagNames != null) {
+                for (String name : routeTagNames) {
+                    if (name != null && !name.trim().isEmpty()) {
+                        routeNormalized.add(name.trim().toLowerCase(Locale.ROOT));
+                    }
+                }
+            }
+            int matchCount = 0;
+            for (String s : selectedNormalized) {
+                if (routeNormalized.contains(s)) {
+                    matchCount++;
+                }
+            }
+            int score = selectedNormalized.isEmpty()
+                    ? 50
+                    : Math.min(98, 40 + (matchCount * 60 / selectedNormalized.size()));
+            route.setMatchScore(score);
+        }
+        routes.sort(
+                Comparator.comparing(RouteDTO::getMatchScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(RouteDTO::getSavedCount, Comparator.reverseOrder())
+                        .thenComparing(RouteDTO::getId, Comparator.nullsLast(Comparator.reverseOrder())));
     }
 }

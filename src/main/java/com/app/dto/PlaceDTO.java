@@ -16,5 +16,8 @@ public class PlaceDTO {
 	private String placeThumbnailUrl;
 	
 	// [추가] 좋아요 여부를 저장할 필드
-    private String savedYn = "N"; // 기본값은 'N'
+	private String savedYn = "N"; // 기본값은 'N'
+
+	/** 근처 장소 검색 시 반환되는 거리(km). 조회 전용 */
+	private Double distance;
 }

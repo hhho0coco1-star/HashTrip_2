@@ -13,9 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceDTO;
+import com.app.dto.UsersDTO;
 import com.app.service.PlaceService;
+import com.app.service.UsersService;
 import com.app.util.ApiResponse;
 
 @Controller
@@ -24,10 +28,20 @@ public class MainPageController {
 	@Autowired
 	private PlaceService placeService;
 	
+	@Autowired
+	private UsersService usersService;
+	
 	@GetMapping({"/", "/main", "/hashTrip"}) // 메인 페이지
-	public String hashTag(Model model) {
+	public String hashTag(Model model, Authentication authentication) {
+		
 		List<PlaceDTO> list = placeService.searchPlaces("");
+		String currentAuthId = resolveAuthenticatedAuthId(authentication);
+		
+		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		
+		model.addAttribute("usersDTO", usersDTO);
 		model.addAttribute("places", list);
+		
 		return "mainPage/mainPage";
 	}
 	
@@ -55,7 +69,13 @@ public class MainPageController {
 	}
 	
 	@GetMapping("/hashTrip/faq") // 메인 페이지 자주묻는질문
-	public String hashTrip_faq() {
+	public String hashTrip_faq(Model model, Authentication authentication) {
+		
+		String currentAuthId = resolveAuthenticatedAuthId(authentication);
+		
+		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		model.addAttribute("usersDTO", usersDTO);
+		
 	    return "mainPage/mainPage-faq"; 
 	}
 	
@@ -96,6 +116,42 @@ public class MainPageController {
 	    
 	    res.setBody("SUCCESS");
 	    return res;
+	}
+	
+	// 1:1문의 답변 작성
+	@PostMapping("/contact/submit")
+	public String submitInquiry(InquiryDTO dto, Authentication authentication, RedirectAttributes ra) {
+	    // 1. 로그인 유저 확인 (이전에 만든 메서드 활용)
+	    String authId = resolveAuthenticatedAuthId(authentication);
+	    if (authId == null) return "redirect:/auth/login";
+
+	    // 2. 유저 정보 세팅 (DB 조회를 통해 userNo 가져오기)
+	    UsersDTO user = usersService.getUserByAuthId(authId);
+	    dto.setUserNo(user.getUserNo());
+
+	    // 3. DB 저장 서비스 호출
+	    int result = usersService.registerInquiry(dto);
+
+	    if (result > 0) {
+	        ra.addFlashAttribute("msg", "문의가 성공적으로 접수되었습니다.");
+	        return "redirect:/mypage"; // 마이페이지 리스트로 이동
+	    } else {
+	        ra.addFlashAttribute("msg", "접수에 실패했습니다.");
+	        return "redirect:/hashTrip"; 
+	    }
+	}
+	
+	private String resolveAuthenticatedAuthId(Authentication authentication) {
+		if (authentication == null
+				|| !authentication.isAuthenticated()
+				|| authentication instanceof AnonymousAuthenticationToken) {
+			return null;
+		}
+		String authId = authentication.getName();
+		if (authId == null || authId.trim().isEmpty()) {
+			return null;
+		}
+		return authId.trim();
 	}
 	
 }
