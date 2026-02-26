@@ -1375,6 +1375,18 @@
 .planner-replace-expanded-reviews .planner-replace-review-meta { color: #64748b; }
 .planner-replace-expanded-reviews .planner-replace-review-item p { margin: 2px 0 0; color: #334155; }
 
+.planner-replace-expanded-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.planner-replace-expanded-header .planner-btn {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+}
+
 #replaceSearchBtn {
     margin-bottom: 8px;
 }
