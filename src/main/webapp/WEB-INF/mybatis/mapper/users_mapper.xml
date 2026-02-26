@@ -374,7 +374,10 @@
 		SELECT user_auth_email
 		FROM User_Authentication
 		WHERE user_auth_id = #{userAuthId}
+	</select>
 	<!-- 성향 분석 결과 전달 -->
+	
+	
 	<select id="getTravelAnalysisResult" parameterType="string"
 		resultType="map">
 		SELECT
