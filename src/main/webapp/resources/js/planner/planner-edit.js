@@ -17,10 +17,30 @@
     let mapSearchKakaoList = [];
     let mapSearchEnriched = {};
     let targetDayForAdd = null; // { dayNumber, date } - 일차별 장소 추가 버튼에서 설정
+    let lastScrollY = null;     // 모달 열기 전 스크롤 위치 저장
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
     function qsAll(s, r) { return Array.from((r || document).querySelectorAll(s)); }
+
+    function openModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (lastScrollY === null) {
+            lastScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        }
+        window.scrollTo(0, 0);
+        modal.classList.remove("hidden");
+    }
+
+    function closeModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add("hidden");
+        if (lastScrollY !== null) {
+            window.scrollTo(0, lastScrollY);
+            lastScrollY = null;
+        }
+    }
 
     function loadInitial() {
         const el = id("initial-plan-data");
@@ -252,11 +272,11 @@
         const lng = place.placeLongitude != null ? parseFloat(place.placeLongitude) : NaN;
         if (isNaN(lat) || isNaN(lng)) {
             list.innerHTML = "<p class=\"planner-replace-msg\">이 장소에는 위치 정보가 없어 근처 여행지를 검색할 수 없습니다. 장소 추가로 새 장소를 넣은 뒤 순서를 바꿔 보세요.</p>";
-            modal.classList.remove("hidden");
+            openModalWithScroll("replaceModal");
             return;
         }
         list.innerHTML = "<p class=\"planner-replace-msg\">검색 중...</p>";
-        modal.classList.remove("hidden");
+        openModalWithScroll("replaceModal");
         fetchReplacePlaces();
     }
 
@@ -495,8 +515,7 @@
         replaceCurrentOverlay = null;
         const mapEl = id("replaceMap");
         if (mapEl) mapEl.classList.add("hidden");
-        const modal = id("replaceModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("replaceModal");
         replacePlaceId = null;
     }
 
@@ -603,12 +622,11 @@
         if (pubCheck && pubVal) {
             pubCheck.onchange = function () { pubVal.value = pubCheck.checked ? "Y" : "N"; };
         }
-        modal.classList.remove("hidden");
+        openModalWithScroll("completeReviewModal");
     }
 
     function closeCompleteReviewModal() {
-        const modal = id("completeReviewModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("completeReviewModal");
     }
 
     function buildPayload() {
@@ -630,9 +648,8 @@
     }
 
     function openMapModal() {
-        const modal = id("mapModal");
-        if (!modal) return;
-        modal.classList.remove("hidden");
+        if (!id("mapModal")) return;
+        openModalWithScroll("mapModal");
         ensureMapReady().then(function () {
             if (id("placeSearch")) id("placeSearch").value = "";
             if (id("searchResults")) id("searchResults").innerHTML = "";
@@ -640,8 +657,7 @@
     }
 
     function closeMapModal() {
-        const modal = id("mapModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("mapModal");
         selectedPlace = null;
         targetDayForAdd = null;
         mapSearchKakaoList = [];
@@ -1042,7 +1058,10 @@
 
         if (id("planStartDate")) id("planStartDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
         if (id("planEndDate")) id("planEndDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
-        if (id("btnAddPlace")) id("btnAddPlace").addEventListener("click", openMapModal);
+        if (id("btnAddPlace")) id("btnAddPlace").addEventListener("click", function () {
+            targetDayForAdd = null;
+            openMapModal();
+        });
         if (id("btnCompleteReview")) id("btnCompleteReview").addEventListener("click", openCompleteReviewModal);
         if (id("closeCompleteReviewModal")) id("closeCompleteReviewModal").addEventListener("click", closeCompleteReviewModal);
         if (id("cancelCompleteReview")) id("cancelCompleteReview").addEventListener("click", closeCompleteReviewModal);

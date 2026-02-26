@@ -9,10 +9,30 @@
     let mapReady = false;
     let mapSearchKakaoList = [];
     let mapSearchEnriched = {};
+    let lastScrollY = null; // 모달 열기 전 스크롤 위치 저장
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
     function qsAll(s, r) { return Array.from((r || document).querySelectorAll(s)); }
+
+    function openModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (lastScrollY === null) {
+            lastScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        }
+        window.scrollTo(0, 0);
+        modal.classList.remove("hidden");
+    }
+
+    function closeModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add("hidden");
+        if (lastScrollY !== null) {
+            window.scrollTo(0, lastScrollY);
+            lastScrollY = null;
+        }
+    }
 
     var step1Panel = null;
     var step2Panel = null;
@@ -457,9 +477,8 @@
     }
 
     function openMapModal() {
-        const modal = id("mapModal");
-        if (!modal) return;
-        modal.classList.remove("hidden");
+        if (!id("mapModal")) return;
+        openModalWithScroll("mapModal");
         ensureMapReady().then(function () {
             if (id("placeSearch")) id("placeSearch").value = "";
             if (id("searchResults")) id("searchResults").innerHTML = "";
@@ -467,8 +486,7 @@
     }
 
     function closeMapModal() {
-        const modal = id("mapModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("mapModal");
         selectedPlace = null;
         mapSearchKakaoList = [];
         mapSearchEnriched = {};
