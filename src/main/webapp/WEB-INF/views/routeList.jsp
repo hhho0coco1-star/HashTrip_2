@@ -60,21 +60,31 @@
 
             <div class="personal-meta-block">
                 <div class="personal-meta-title">Selected Moods</div>
-                <div class="personal-meta">
+                <div class="personal-meta" id="personal-meta">
                     <c:choose>
                         <c:when test="${not empty myTopTags}">
                             <c:forEach var="tagName" items="${myTopTags}">
                                 <span class="meta-pill meta-tag">✨ #<c:out value="${tagName}"/></span>
                             </c:forEach>
+
+                            <c:forEach var="tagName" items="${myAllTags}" begin="${fn:length(myTopTags)}">
+                                <span class="meta-pill meta-tag meta-extra-tag hidden">✨ #<c:out value="${tagName}"/></span>
+                            </c:forEach>
+
+                            <c:if test="${fn:length(myAllTags) > fn:length(myTopTags)}">
+                                <button type="button"
+                                        class="meta-pill meta-link meta-link-btn"
+                                        id="personal-meta-toggle"
+                                        aria-expanded="false"
+                                        onclick="togglePersonalTags()">
+                                    전체보기 <span class="meta-arrow">›</span>
+                                </button>
+                            </c:if>
                         </c:when>
                         <c:otherwise>
                             <span class="meta-pill meta-empty">등록된 태그 없음</span>
                         </c:otherwise>
                     </c:choose>
-
-                    <a class="meta-pill meta-link" href="${pageContext.request.contextPath}/mypage">
-                        전체보기 <span class="meta-arrow">›</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -215,6 +225,30 @@
     let appliedPreferenceCategory = '';
     let appliedPreferenceTagCode = '';
     let appliedPreferenceTagName = '';
+
+    function togglePersonalTags() {
+        const toggleButton = document.getElementById('personal-meta-toggle');
+        if (!toggleButton) {
+            return;
+        }
+
+        const extraTags = document.querySelectorAll('.meta-extra-tag');
+        if (!extraTags.length) {
+            return;
+        }
+
+        const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+        const nextExpanded = !isExpanded;
+
+        extraTags.forEach(tag => {
+            tag.classList.toggle('hidden', !nextExpanded);
+        });
+
+        toggleButton.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+        toggleButton.innerHTML = nextExpanded
+            ? '접기 <span class="meta-arrow">‹</span>'
+            : '전체보기 <span class="meta-arrow">›</span>';
+    }
 
     function applyRouteFilters() {
         const params = new URLSearchParams();
