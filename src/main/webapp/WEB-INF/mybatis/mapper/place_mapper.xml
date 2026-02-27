@@ -870,6 +870,95 @@
 			WHERE ROWNUM &lt;= 10
 		</if>
 	</select>
+
+	<select id="searchPlacesForMain" parameterType="map"
+		resultType="com.app.dto.PlaceDTO">
+		SELECT * FROM (
+		SELECT
+		p.PLACE_NO as placeNo,
+		p.PLACE_NAME as placeName,
+		p.PLACE_CATEGORY as placeCategory,
+		p.PLACE_ADDRESS as placeAddress,
+		p.PLACE_RATING as placeRating,
+		p.PLACE_THUMBNAIL_URL as placeThumbnailUrl,
+		(SELECT COUNT(*) FROM PLACE_REVIEW r WHERE r.PLACE_NO = p.PLACE_NO) as
+		reviewCount,
+		CASE
+		WHEN #{authId} IS NULL THEN 'N'
+		WHEN EXISTS (
+		SELECT 1
+		FROM WISHLIST w
+		JOIN USER_AUTHENTICATION ua
+		ON ua.USER_NO = w.USER_NO
+		WHERE w.PLACE_NO = p.PLACE_NO
+		AND ua.USER_AUTH_ID = #{authId}
+		)
+		THEN 'Y'
+		ELSE 'N'
+		END as savedYn
+		FROM PLACE p
+		<where>
+			<if test="keyword != null and keyword != ''">
+				(
+				p.PLACE_NAME LIKE '%' || #{keyword} || '%'
+				OR p.PLACE_ADDRESS LIKE '%' || #{keyword} || '%'
+				OR EXISTS (
+				SELECT 1
+				FROM PLACE_TAG_MAP pt
+				JOIN TAG_MASTER tm ON pt.TAG_CODE = tm.TAG_CODE
+				WHERE pt.PLACE_NO = p.PLACE_NO
+				AND (
+				tm.TAG_NAME LIKE '%' || #{keyword} || '%'
+				OR tm.TAG_CODE LIKE '%' || #{keyword} || '%'
+				)
+				)
+				)
+			</if>
+
+			<if test="prefCategory != null and prefCategory != ''">
+				AND EXISTS (
+				SELECT 1
+				FROM PLACE_TAG_MAP ptf
+				JOIN TAG_MASTER tmf ON tmf.TAG_CODE = ptf.TAG_CODE
+				WHERE ptf.PLACE_NO = p.PLACE_NO
+				AND UPPER(tmf.TAG_CATEGORY) = UPPER(#{prefCategory})
+				<if test="prefTagCode != null and prefTagCode != ''">
+					AND INSTR(
+						',' || UPPER(REPLACE(#{prefTagCode}, ' ', '')) || ',',
+						',' || UPPER(ptf.TAG_CODE) || ','
+					) &gt; 0
+				</if>
+				)
+			</if>
+
+			<if test="(prefCategory == null or prefCategory == '') and (prefTagCode != null and prefTagCode != '')">
+				AND EXISTS (
+				SELECT 1
+				FROM PLACE_TAG_MAP ptf
+				WHERE ptf.PLACE_NO = p.PLACE_NO
+				AND INSTR(
+					',' || UPPER(REPLACE(#{prefTagCode}, ' ', '')) || ',',
+					',' || UPPER(ptf.TAG_CODE) || ','
+				) &gt; 0
+				)
+			</if>
+		</where>
+		ORDER BY
+		<choose>
+			<when test="keyword != null and keyword != ''">
+				p.PLACE_NAME ASC
+			</when>
+			<otherwise>
+				reviewCount DESC,
+				p.PLACE_RATING DESC,
+				p.PLACE_NAME ASC
+			</otherwise>
+		</choose>
+		)
+		<if test="keyword == null or keyword == ''">
+			WHERE ROWNUM &lt;= 10
+		</if>
+	</select>
 	
 	<select id="searchPlacesWithLike"
 		resultType="com.app.dto.PlaceDTO" parameterType="map">
