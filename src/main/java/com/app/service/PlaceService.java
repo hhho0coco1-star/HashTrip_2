@@ -51,10 +51,12 @@ public interface PlaceService {
 	public boolean deletePlaceReview(Long placeNo, Long commentNo, String createdBy) throws Exception;
 
 	public PhotoDataDTO getReviewPhotoByPhotoNo(Long photoNo) throws Exception;
-	
+
 	public List<PlaceDTO> searchPlaces(String keyword);
 
-	/** 위경도 기준 반경(km) 내 근처 장소 목록 (교체용) */
+	public List<PlaceDTO> searchPlaces(String keyword, String prefCategory, String prefTagCode, String authId);
+
+	/** 반경 기준 주변(km) 내 근처 장소 목록 (교체용) */
 	List<PlaceDTO> getPlacesNearby(double lat, double lng, int radiusKm, Long excludePlaceNo);
 
 }
