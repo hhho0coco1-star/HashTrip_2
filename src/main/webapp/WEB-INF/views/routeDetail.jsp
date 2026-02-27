@@ -99,7 +99,7 @@
         <form id="review-form" class="review-form" onsubmit="submitReview(event, ${route.id})">
             <textarea id="review-content" class="review-input" placeholder="코스 경험을 공유해 주세요." maxlength="2000" required></textarea>
             <div class="review-form-row">
-                <div>
+                <div class="review-rating-wrap">
                     <label for="review-rating">별점</label>
                     <input type="hidden" id="review-rating" name="rating" value="5">
                     <div class="review-star-picker" id="review-star-picker" aria-label="리뷰 별점 선택">
@@ -110,7 +110,14 @@
                         <button type="button" class="star-picker-btn is-active" data-value="5" aria-label="5점">★</button>
                     </div>
                 </div>
-                <button type="submit" class="btn-detail-action btn-review-main">리뷰 등록</button>
+                <div class="review-form-actions">
+                    <button type="submit" id="review-submit-btn" class="btn-detail-action btn-review-main">
+                        <c:choose>
+                            <c:when test="${not empty myReview}">리뷰 수정</c:when>
+                            <c:otherwise>리뷰 등록</c:otherwise>
+                        </c:choose>
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -121,9 +128,12 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="review" items="${reviews}">
-                        <div class="review-item">
-                            <div class="review-head">
-                                <strong><c:out value="${not empty review.createdBy ? review.createdBy : '익명'}"/></strong>
+                        <div class="review-item" data-review-no="${review.reviewNo}">
+                            <div class="review-main">
+                                <div class="review-author"><c:out value="${not empty review.createdBy ? review.createdBy : '익명'}"/></div>
+                                <div class="review-content"><c:out value="${review.reviewContent}"/></div>
+                            </div>
+                            <div class="review-side">
                                 <span class="review-stars" aria-label="별점 ${empty review.rating ? 0 : review.rating}점">
                                     <c:forEach var="star" begin="1" end="5">
                                         <c:choose>
@@ -136,8 +146,6 @@
                                         </c:choose>
                                     </c:forEach>
                                 </span>
-                            </div>
-                            <div class="review-meta">
                                 <span class="review-date">
                                     <c:choose>
                                         <c:when test="${not empty review.createdAt}">
@@ -146,8 +154,12 @@
                                         <c:otherwise>-</c:otherwise>
                                     </c:choose>
                                 </span>
+                                <c:if test="${not empty currentUserNo and review.userNo == currentUserNo}">
+                                    <button type="button"
+                                            class="review-inline-delete-btn"
+                                            onclick="deleteMyReview(${route.id}, ${review.reviewNo})">삭제</button>
+                                </c:if>
                             </div>
-                            <div class="review-content"><c:out value="${review.reviewContent}"/></div>
                         </div>
                     </c:forEach>
                 </c:otherwise>
@@ -165,9 +177,13 @@
     const csrfHeader = '${_csrf.headerName}';
     const csrfToken = '${_csrf.token}';
     const REVIEW_MAX_STAR = 5;
+    const currentRouteId = ${route.id};
+    const currentUserNo = <c:choose><c:when test="${not empty currentUserNo}">${currentUserNo}</c:when><c:otherwise>null</c:otherwise></c:choose>;
+    let myReviewNo = <c:choose><c:when test="${not empty myReview and not empty myReview.reviewNo}">${myReview.reviewNo}</c:when><c:otherwise>null</c:otherwise></c:choose>;
 
     document.addEventListener('DOMContentLoaded', function () {
         initReviewStarPicker();
+        updateReviewFormMode(myReviewNo != null);
     });
 
     function toAbsolutePath(path) {
@@ -245,13 +261,48 @@
             }
 
             prependReview(data.review);
+            if (data.review && data.review.reviewNo != null) {
+                myReviewNo = data.review.reviewNo;
+            }
+            updateReviewFormMode(true);
             document.getElementById('review-count').textContent = data.reviewCount;
             contentInput.value = '';
             ratingInput.value = '5';
             applyReviewStarPicker(5);
-            showToast('리뷰가 등록되었습니다.');
+            showToast(data && data.message ? data.message : (data.updated ? '리뷰가 수정되었습니다.' : '리뷰가 등록되었습니다.'));
         } catch (e) {
             showToast('리뷰 저장 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function deleteMyReview(routeId, reviewNo) {
+        const targetReviewNo = reviewNo != null ? String(reviewNo) : (myReviewNo != null ? String(myReviewNo) : '');
+        if (!targetReviewNo) {
+            showToast('삭제할 내 리뷰가 없습니다.');
+            return;
+        }
+
+        if (!confirm('내 리뷰를 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const result = await postForm(contextPath + '/routes/' + routeId + '/reviews/delete', '');
+            const data = result.data;
+
+            if (handleLoginRedirect(data)) return;
+            if (!result.response.ok || !data.success) {
+                showToast(data && data.message ? data.message : '리뷰 삭제 중 오류가 발생했습니다.');
+                return;
+            }
+
+            removeReviewByNo(data.deletedReviewNo || targetReviewNo);
+            myReviewNo = null;
+            updateReviewFormMode(false);
+            document.getElementById('review-count').textContent = data.reviewCount;
+            showToast(data && data.message ? data.message : '내 리뷰를 삭제했습니다.');
+        } catch (e) {
+            showToast('리뷰 삭제 중 오류가 발생했습니다.');
         }
     }
 
@@ -346,6 +397,14 @@
         const empty = list.querySelector('.review-empty');
         if (empty) empty.remove();
 
+        const reviewNo = review && review.reviewNo != null ? String(review.reviewNo) : '';
+        if (reviewNo) {
+            const existing = list.querySelector('.review-item[data-review-no="' + reviewNo + '"]');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
         const name = review && review.createdBy ? review.createdBy : '익명';
         const rating = normalizeStarRating(review && review.rating ? review.rating : 0);
         const content = review && review.reviewContent ? review.reviewContent : '';
@@ -353,15 +412,74 @@
 
         const item = document.createElement('div');
         item.className = 'review-item';
-        item.innerHTML = ''
-            + '<div class="review-head">'
-            + '<strong>' + escapeHtml(name) + '</strong>'
-            + createReviewStarsHtml(rating)
-            + '</div>'
-            + '<div class="review-meta"><span class="review-date">' + escapeHtml(createdAtText) + '</span></div>'
-            + '<div class="review-content">' + escapeHtml(content) + '</div>';
+        if (reviewNo) {
+            item.setAttribute('data-review-no', reviewNo);
+        }
+
+        const reviewMain = document.createElement('div');
+        reviewMain.className = 'review-main';
+        const author = document.createElement('div');
+        author.className = 'review-author';
+        author.textContent = name;
+        reviewMain.appendChild(author);
+        const contentBlock = document.createElement('div');
+        contentBlock.className = 'review-content';
+        contentBlock.textContent = content;
+        reviewMain.appendChild(contentBlock);
+
+        const reviewSide = document.createElement('div');
+        reviewSide.className = 'review-side';
+        reviewSide.insertAdjacentHTML('beforeend', createReviewStarsHtml(rating));
+        const date = document.createElement('span');
+        date.className = 'review-date';
+        date.textContent = createdAtText;
+        reviewSide.appendChild(date);
+
+        const mineByUserNo = currentUserNo != null
+            && review
+            && review.userNo != null
+            && String(review.userNo) === String(currentUserNo);
+        const mineByReviewNo = myReviewNo != null && reviewNo && String(reviewNo) === String(myReviewNo);
+        const isMyReview = mineByUserNo || mineByReviewNo;
+        if (isMyReview && reviewNo) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'review-inline-delete-btn';
+            deleteBtn.textContent = '삭제';
+            deleteBtn.addEventListener('click', function () {
+                deleteMyReview(currentRouteId, reviewNo);
+            });
+            reviewSide.appendChild(deleteBtn);
+        }
+
+        item.appendChild(reviewMain);
+        item.appendChild(reviewSide);
 
         list.prepend(item);
+    }
+
+    function removeReviewByNo(reviewNo) {
+        const list = document.getElementById('review-list');
+        if (!list) return;
+
+        const safeReviewNo = reviewNo != null ? String(reviewNo) : '';
+        if (safeReviewNo) {
+            const item = list.querySelector('.review-item[data-review-no="' + safeReviewNo + '"]');
+            if (item) {
+                item.remove();
+            }
+        }
+
+        if (!list.querySelector('.review-item')) {
+            list.innerHTML = '<div class="review-empty">첫 리뷰를 작성해보세요.</div>';
+        }
+    }
+
+    function updateReviewFormMode(hasReview) {
+        const submitBtn = document.getElementById('review-submit-btn');
+        if (submitBtn) {
+            submitBtn.textContent = hasReview ? '리뷰 수정' : '리뷰 등록';
+        }
     }
 
     function initReviewStarPicker() {

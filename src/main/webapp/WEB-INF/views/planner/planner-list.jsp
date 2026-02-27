@@ -10,21 +10,20 @@
     <title>여행 일정 — #HiFive</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Gmarket+Sans:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/routes.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/planner/planner-list.css">
 </head>
 <body>
     <jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
 
-    <div class="page-container">
-        <div class="routes-wrap planner-list-wrap">
-            <div class="routes-header">
-                <div class="section-badge">MY PLANS</div>
-                <div class="routes-header-row">
-                    <h2 class="section-title">📋 여행 일정</h2>
-                    <a class="btn-cta-outline btn-share" href="${pageContext.request.contextPath}/planner/new">+ 새 여행 만들기</a>
+    <div class="planner-page">
+        <div class="planner-list-wrap">
+            <div class="planner-page-header">
+                <div class="planner-page-badge">MY PLANS</div>
+                <div class="planner-page-header-row">
+                    <h2 class="planner-page-title">📋 여행 일정</h2>
+                    <a class="planner-btn-new" href="${pageContext.request.contextPath}/planner/new">+ 새 여행 만들기</a>
                 </div>
-                <p class="section-subtitle">나의 여행 일정을 관리하고 수정해 보세요</p>
+                <p class="planner-page-subtitle">나의 여행 일정을 관리하고 수정해 보세요</p>
             </div>
 
             <c:if test="${not empty plannerMessage}">
@@ -35,16 +34,15 @@
             </c:if>
 
             <%-- 필터: 전체 / 계획 중 / 여행 중 / 완료 --%>
-            <div class="filter-bar planner-filter-bar">
-                <a class="filter-chip ${empty activeStatus ? 'active' : ''}" href="${pageContext.request.contextPath}/planner">전체</a>
-                <a class="filter-chip ${activeStatus == 'PLANNING' ? 'active' : ''}" href="${pageContext.request.contextPath}/planner?status=PLANNING">계획 중</a>
-                <a class="filter-chip ${activeStatus == 'RECORDING' ? 'active' : ''}" href="${pageContext.request.contextPath}/planner?status=RECORDING">여행 중</a>
-                <a class="filter-chip ${activeStatus == 'COMPLETED' ? 'active' : ''}" href="${pageContext.request.contextPath}/planner?status=COMPLETED">완료</a>
+            <div class="planner-filter-bar">
+                <a class="planner-filter-chip ${empty activeStatus ? 'active' : ''}" href="${pageContext.request.contextPath}/planner">전체</a>
+                <a class="planner-filter-chip ${activeStatus == 'PLANNING' ? 'active' : ''}" href="${pageContext.request.contextPath}/planner?status=PLANNING">계획 중</a>
+                <a class="planner-filter-chip ${activeStatus == 'COMPLETED' ? 'active' : ''}" href="${pageContext.request.contextPath}/planner?status=COMPLETED">완료</a>
             </div>
 
             <c:choose>
                 <c:when test="${empty myPlans}">
-                    <div class="empty-state planner-empty">
+                    <div class="planner-empty">
                         <div class="empty-icon">📋</div>
                         <p>
                             <c:choose>
@@ -54,44 +52,46 @@
                                 <c:otherwise>저장된 일정이 없어요</c:otherwise>
                             </c:choose>
                         </p>
-                        <a class="btn-cta-outline" href="${pageContext.request.contextPath}/planner/new" style="margin-top:1rem">새 여행 만들기</a>
+                        <a class="planner-btn-new planner-btn-new-empty" href="${pageContext.request.contextPath}/planner/new">새 여행 만들기</a>
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <div class="route-grid planner-plan-grid">
+                    <div class="planner-plan-grid">
                         <c:forEach var="plan" items="${myPlans}">
                             <c:set var="planTitle" value="${plan.planTitle}" />
-                            <div class="route-card planner-plan-card">
+                            <div class="planner-plan-card">
                                 <a class="planner-plan-card-link" href="${pageContext.request.contextPath}/planner/${plan.planNo}/edit">
-                                    <div class="route-head planner-plan-head">
-                                        <div class="traveler-av" style="background:rgba(91,141,238,.15)">📌</div>
-                                        <div class="traveler-info">
+                                    <div class="planner-plan-head">
+                                        <div class="planner-plan-pin">📌</div>
+                                        <div class="planner-plan-info">
                                             <c:choose>
                                                 <c:when test="${not empty planTitle and fn:length(planTitle) > 12}">
-                                                    <div class="t-name planner-plan-title" title="${planTitle}">
+                                                    <div class="planner-plan-title" title="${planTitle}">
                                                         <c:out value="${fn:substring(planTitle, 0, 12)}"/>...
                                                     </div>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <div class="t-name planner-plan-title">
+                                                    <div class="planner-plan-title">
                                                         <c:out value="${planTitle}"/>
                                                     </div>
                                                 </c:otherwise>
                                             </c:choose>
-                                            <c:if test="${not empty plan.planStartDate && not empty plan.planEndDate}">
-                                                <span class="planner-plan-dates">
-                                                    <fmt:formatDate value="${plan.planStartDate}" pattern="M/d"/> ~
-                                                    <fmt:formatDate value="${plan.planEndDate}" pattern="M/d"/>
+                                            <div class="planner-plan-meta-row">
+                                                <c:if test="${not empty plan.planStartDate && not empty plan.planEndDate}">
+                                                    <span class="planner-plan-dates">
+                                                        <fmt:formatDate value="${plan.planStartDate}" pattern="M/d"/> ~
+                                                        <fmt:formatDate value="${plan.planEndDate}" pattern="M/d"/>
+                                                    </span>
+                                                </c:if>
+                                                <span class="planner-plan-status planner-status-${plan.planStatus}">
+                                                    <c:choose>
+                                                        <c:when test="${plan.planStatus eq 'PLANNING'}">계획 중</c:when>
+                                                        <c:when test="${plan.planStatus eq 'RECORDING'}">여행 중</c:when>
+                                                        <c:when test="${plan.planStatus eq 'COMPLETED'}">완료</c:when>
+                                                        <c:otherwise><c:out value="${plan.planStatus}"/></c:otherwise>
+                                                    </c:choose>
                                                 </span>
-                                            </c:if>
-                                            <span class="planner-plan-status planner-status-${plan.planStatus}">
-                                                <c:choose>
-                                                    <c:when test="${plan.planStatus eq 'PLANNING'}">계획 중</c:when>
-                                                    <c:when test="${plan.planStatus eq 'RECORDING'}">여행 중</c:when>
-                                                    <c:when test="${plan.planStatus eq 'COMPLETED'}">완료</c:when>
-                                                    <c:otherwise><c:out value="${plan.planStatus}"/></c:otherwise>
-                                                </c:choose>
-                                            </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <%-- 일정 순서 + 썸네일 --%>

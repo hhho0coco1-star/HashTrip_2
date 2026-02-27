@@ -150,19 +150,19 @@
 						<option value="">유형을 선택해 주세요</option>
 						<%-- 2. 기존 선택값 유지 --%>
 						<option value="서비스"
-							${inquiry.inquiryType == 'service' ? 'selected' : ''}>서비스
+							${inquiry.inquiryType == '서비스' ? 'selected' : ''}>서비스
 							이용 문의</option>
 						<option value="계정/로그인"
-							${inquiry.inquiryType == 'account' ? 'selected' : ''}>계정/로그인
+							${inquiry.inquiryType == '계정/로그인' ? 'selected' : ''}>계정/로그인
 							관련</option>
 						<option value="오류"
-							${inquiry.inquiryType == 'error' ? 'selected' : ''}>오류
+							${inquiry.inquiryType == '오류' ? 'selected' : ''}>오류
 							제보</option>
 						<option value="제휴"
-							${inquiry.inquiryType == 'proposal' ? 'selected' : ''}>제휴
+							${inquiry.inquiryType == '제휴' ? 'selected' : ''}>제휴
 							및 건의사항</option>
 						<option value="기타"
-							${inquiry.inquiryType == 'etc' ? 'selected' : ''}>기타</option>
+							${inquiry.inquiryType == '기타' ? 'selected' : ''}>기타</option>
 					</select>
 				</div>
 
@@ -178,7 +178,7 @@
 					<label for="email">답변 받을 이메일</label>
 					<%-- 4. 이메일 데이터 바인딩 --%>
 					<input type="email" id="email" name="inquiryEmail"
-						placeholder="example@mail.com" value="${inquiry.inquiryEmail}"
+						placeholder="example@mail.com" value="${not empty inquiry.inquiryEmail ? inquiry.inquiryEmail : defaultEmail}"
 						required>
 				</div>
 

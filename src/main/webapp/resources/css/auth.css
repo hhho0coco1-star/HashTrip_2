@@ -123,6 +123,11 @@ body {
     background-color: #004ecb;
 }
 
+.auth-btn:disabled {
+    background-color: #8daeea;
+    cursor: not-allowed;
+}
+
 .auth-links {
     margin-top: 20px;
     text-align: center;

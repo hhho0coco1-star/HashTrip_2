@@ -12,16 +12,17 @@ import com.app.dto.PlanDetailDTO;
 @Repository
 public class PlanDetailDAOImpl implements PlanDetailDAO {
 
-	private static final String INSERT_PLAN_DETAIL_STATEMENT_ID = "plan_detail_mapper.insertPlanDetail";
-	private static final String GET_PLAN_DETAILS_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getPlanDetailsByPlanNo";
-	private static final String GET_PLAN_DETAIL_BY_PLAN_DETAIL_NO_STATEMENT_ID = "plan_detail_mapper.getPlanDetailByPlanDetailNo";
-	private static final String GET_MAX_VISIT_ORDER_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getMaxVisitOrderByPlanNo";
-	private static final String DELETE_PLAN_DETAILS_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.deletePlanDetailsByPlanNo";
-	private static final String GET_STEP_NAMES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getStepNamesByPlanNo";
-	private static final String GET_TAG_NAMES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagNamesByPlanNo";
-	private static final String GET_TAG_CATEGORIES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagCategoriesByPlanNo";
-	private static final String GET_REPRESENTATIVE_MEMO_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getRepresentativeMemoByPlanNo";
-	private static final String GET_PLAN_NOS_BY_REGION_STATEMENT_ID = "plan_detail_mapper.getPlanNosByRegion";
+    private static final String INSERT_PLAN_DETAIL_STATEMENT_ID = "plan_detail_mapper.insertPlanDetail";
+    private static final String GET_PLAN_DETAILS_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getPlanDetailsByPlanNo";
+    private static final String GET_PLAN_DETAIL_BY_PLAN_DETAIL_NO_STATEMENT_ID = "plan_detail_mapper.getPlanDetailByPlanDetailNo";
+    private static final String GET_MAX_VISIT_ORDER_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getMaxVisitOrderByPlanNo";
+    private static final String DELETE_PLAN_DETAILS_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.deletePlanDetailsByPlanNo";
+    private static final String GET_STEP_NAMES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getStepNamesByPlanNo";
+    private static final String GET_TAG_NAMES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagNamesByPlanNo";
+    private static final String GET_TAG_CATEGORIES_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getTagCategoriesByPlanNo";
+    private static final String GET_REPRESENTATIVE_MEMO_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getRepresentativeMemoByPlanNo";
+    private static final String GET_REPRESENTATIVE_IMAGE_URL_BY_PLAN_NO_STATEMENT_ID = "plan_detail_mapper.getRepresentativeImageUrlByPlanNo";
+    private static final String GET_PLAN_NOS_BY_REGION_STATEMENT_ID = "plan_detail_mapper.getPlanNosByRegion";
 
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
@@ -70,6 +71,11 @@ public class PlanDetailDAOImpl implements PlanDetailDAO {
     @Override
     public String getRepresentativeMemoByPlanNo(Long planNo) {
         return sqlSessionTemplate.selectOne(GET_REPRESENTATIVE_MEMO_BY_PLAN_NO_STATEMENT_ID, planNo);
+    }
+
+    @Override
+    public String getRepresentativeImageUrlByPlanNo(Long planNo) {
+        return sqlSessionTemplate.selectOne(GET_REPRESENTATIVE_IMAGE_URL_BY_PLAN_NO_STATEMENT_ID, planNo);
     }
 
     @Override

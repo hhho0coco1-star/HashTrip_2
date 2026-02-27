@@ -148,9 +148,7 @@
 												</c:forEach>
 											</span>
 										</div>
-										<p class="review-content">
-											<c:out value="${review.commentContent}" />
-										</p>
+										<p class="review-content"><c:out value="${fn:trim(review.commentContent)}" /></p>
 										<c:if test="${not empty review.photoUrlList}">
 											<div class="review-photo-list">
 												<c:forEach var="photoUrl" items="${review.photoUrlList}">
@@ -296,9 +294,7 @@
 												</c:forEach>
 											</span>
 										</div>
-										<p class="review-content">
-											<c:out value="${review.reviewContent}" />
-										</p>
+										<p class="review-content"><c:out value="${fn:trim(review.reviewContent)}" /></p>
 										<p class="review-date">
 											<fmt:formatDate value="${review.createdAt}"
 												pattern="yyyy-MM-dd HH:mm" />

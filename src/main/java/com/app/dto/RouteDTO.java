@@ -1,5 +1,6 @@
 package com.app.dto;
 
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -9,9 +10,13 @@ public class RouteDTO {
     private Long userNo;
     private String userName;
     private String emoji;
+    private String representativeImageUrl;
     private String typeId;
     private String title;
     private String description;
+    private String planStatus;
+    private Date planStartDate;
+    private Date planEndDate;
     private List<String> steps;
     /** 여행지별 이름·썸네일 (placeName, placeThumbnailUrl) */
     private List<Map<String, String>> stepDetails;
@@ -88,6 +93,14 @@ public class RouteDTO {
         this.emoji = emoji;
     }
 
+    public String getRepresentativeImageUrl() {
+        return representativeImageUrl;
+    }
+
+    public void setRepresentativeImageUrl(String representativeImageUrl) {
+        this.representativeImageUrl = representativeImageUrl;
+    }
+
     public String getTypeId() {
         return typeId;
     }
@@ -110,6 +123,30 @@ public class RouteDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getPlanStatus() {
+        return planStatus;
+    }
+
+    public void setPlanStatus(String planStatus) {
+        this.planStatus = planStatus;
+    }
+
+    public Date getPlanStartDate() {
+        return planStartDate;
+    }
+
+    public void setPlanStartDate(Date planStartDate) {
+        this.planStartDate = planStartDate;
+    }
+
+    public Date getPlanEndDate() {
+        return planEndDate;
+    }
+
+    public void setPlanEndDate(Date planEndDate) {
+        this.planEndDate = planEndDate;
     }
 
     public List<String> getSteps() {

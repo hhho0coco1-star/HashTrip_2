@@ -27,7 +27,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.app.dto.CategoryDTO;
 import com.app.dto.PhotoDataDTO;
 import com.app.dto.PlaceDTO;
-import com.app.dto.WishListDTO;
 import com.app.service.PlaceService;
 import com.app.service.WishListService;
 
@@ -79,11 +78,16 @@ public class PlaceDetailPageController {
 		if (place == null) {
 			model.addAttribute("tagNameList", Collections.emptyList());
 			model.addAttribute("photoUrlList", Collections.emptyList());
+			model.addAttribute("placeTypeLabel", "여행지");
+			model.addAttribute("representativeTagList", Collections.emptyList());
 			return "place/detail";
 		}
 
-		model.addAttribute("tagNameList", placeService.getPlaceTagNamesByPlaceNo(resolvedPlaceNo));
+		List<String> tagNameList = placeService.getPlaceTagNamesByPlaceNo(resolvedPlaceNo);
+		model.addAttribute("tagNameList", tagNameList);
 		model.addAttribute("photoUrlList", placeService.getPlacePhotoUrlsByPlaceNo(resolvedPlaceNo));
+		model.addAttribute("placeTypeLabel", resolvePlaceTypeLabel(place));
+		model.addAttribute("representativeTagList", buildRepresentativeTagList(place));
 		return "place/detail";
 	}
 
@@ -214,13 +218,36 @@ public class PlaceDetailPageController {
 		}
 
 		try {
-			WishListDTO wishlistDTO = wishListService.createWishList(currentAuthId, placeNo, categoryNo);
-			redirectAttributes.addFlashAttribute("wishlistActionMessage",
-					"장소를 찜했습니다. wish_no: " + wishlistDTO.getWishNo());
+			wishListService.createWishList(currentAuthId, placeNo, categoryNo);
+			redirectAttributes.addFlashAttribute("wishlistActionMessage", "장소를 찜했습니다.");
 		} catch (IllegalArgumentException e) {
 			redirectAttributes.addFlashAttribute("wishlistActionError", e.getMessage());
 		}
 		return buildWishlistRedirect(placeNo);
+	}
+
+	@PostMapping("/place/{placeNo}/wishlist/delete")
+	public String deleteWishlistByPlace(
+			@PathVariable Long placeNo,
+			Authentication authentication,
+			RedirectAttributes redirectAttributes) throws Exception {
+		String currentAuthId = resolveAuthenticatedAuthId(authentication);
+		if (currentAuthId == null) {
+			redirectAttributes.addFlashAttribute("wishlistActionError", "로그인이 필요합니다.");
+			return "redirect:/auth/login";
+		}
+
+		try {
+			boolean deleted = wishListService.deleteWishListByPlace(currentAuthId, placeNo);
+			if (deleted) {
+				redirectAttributes.addFlashAttribute("wishlistActionMessage", "찜을 취소했습니다.");
+			} else {
+				redirectAttributes.addFlashAttribute("wishlistActionError", "취소할 찜 정보가 없습니다.");
+			}
+		} catch (IllegalArgumentException e) {
+			redirectAttributes.addFlashAttribute("wishlistActionError", e.getMessage());
+		}
+		return "redirect:/place/detail?place_no=" + placeNo + "#section-overview";
 	}
 
 	@PostMapping("/place/{placeNo}/wishlist/{wishNo}/delete")
@@ -365,5 +392,75 @@ public class PlaceDetailPageController {
 
 	private String buildWishlistRedirect(Long placeNo) {
 		return "redirect:/place/detail?place_no=" + placeNo + "&openWishlist=true#section-overview";
+	}
+
+	private String resolvePlaceTypeLabel(PlaceDTO place) {
+		if (place == null || !StringUtils.hasText(place.getPlaceCategory())) {
+			return "여행지";
+		}
+		String category = place.getPlaceCategory().trim().toUpperCase(Locale.ROOT);
+		switch (category) {
+		case "12":
+			return "관광지";
+		case "14":
+			return "문화시설";
+		case "15":
+			return "축제/공연";
+		case "25":
+			return "여행코스";
+		case "28":
+			return "레포츠";
+		case "32":
+			return "숙박";
+		case "38":
+			return "쇼핑";
+		case "39":
+			return "음식점";
+		case "USER_MAP":
+			return "지도 등록 장소";
+		default:
+			return place.getPlaceCategory();
+		}
+	}
+
+	private List<String> buildRepresentativeTagList(PlaceDTO place) {
+		List<String> tags = new ArrayList<>();
+		String typeLabel = resolvePlaceTypeLabel(place);
+		if (StringUtils.hasText(typeLabel)) {
+			tags.add(typeLabel);
+		}
+		if (place == null || !StringUtils.hasText(place.getPlaceCategory())) {
+			return tags;
+		}
+		String category = place.getPlaceCategory().trim().toUpperCase(Locale.ROOT);
+		switch (category) {
+		case "12":
+			tags.add("자연/명소");
+			break;
+		case "14":
+			tags.add("전시/체험");
+			break;
+		case "15":
+			tags.add("행사");
+			break;
+		case "25":
+			tags.add("추천코스");
+			break;
+		case "28":
+			tags.add("액티비티");
+			break;
+		case "32":
+			tags.add("호텔/펜션");
+			break;
+		case "38":
+			tags.add("시장/상점");
+			break;
+		case "39":
+			tags.add("미식/맛집");
+			break;
+		default:
+			break;
+		}
+		return tags;
 	}
 }

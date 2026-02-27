@@ -2,6 +2,7 @@ package com.app.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -65,15 +66,21 @@ public class RouteController {
         }
 
         List<UserTagMapDTO> userTags = resolveCurrentUserTags(authentication);
+        List<String> allTagNames = extractTopTagNames(userTags, Integer.MAX_VALUE);
+        List<String> previewTagNames = allTagNames.size() > 5
+                ? new ArrayList<>(allTagNames.subList(0, 5))
+                : new ArrayList<>(allTagNames);
         List<RouteDTO> routes = routeService.getAllRoutes();
         routes = excludeCurrentUserRoutes(routes, currentUser);
         Integer similarityPct = applySimilarityScores(routes, authentication, userTags);
 
         model.addAttribute("routes", routes);
         model.addAttribute("similarityPct", similarityPct);
-        model.addAttribute("myTagCount", userTags.size());
-        model.addAttribute("myTopTags", extractTopTagNames(userTags, 5));
+        model.addAttribute("myTagCount", allTagNames.size());
+        model.addAttribute("myTopTags", previewTagNames);
+        model.addAttribute("myAllTags", allTagNames);
         model.addAttribute("categories", routeService.getAllTagCategories());
+        model.addAttribute("preferenceCategories", routeService.getPreferenceCategories());
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         return "routeList";
     }
@@ -86,11 +93,17 @@ public class RouteController {
         }
 
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        Long currentUserNo = currentUser == null ? null : currentUser.getUserNo();
+        CommunityDTO myReview = currentUserNo == null
+                ? null
+                : communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUserNo);
         model.addAttribute("route", route);
         model.addAttribute("reviews", communityService.getCommunityReviewsByPlanNo(routeId));
         model.addAttribute("routePlanDetails", planDetailService.findPlanDetails(routeId));
         model.addAttribute("travelerTypes", routeService.getAllTravelerTypes());
         model.addAttribute("categories", routeService.getAllTagCategories());
+        model.addAttribute("currentUserNo", currentUserNo);
+        model.addAttribute("myReview", myReview);
         model.addAttribute("currentAuthId", currentUser == null ? null : resolveAuthenticatedAuthId(authentication));
         model.addAttribute("myPlans", currentUser == null
                 ? Collections.emptyList()
@@ -102,16 +115,20 @@ public class RouteController {
     @ResponseBody
     public List<RouteDTO> filterRoutes(
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String prefCategory,
+            @RequestParam(required = false) String prefTagCode,
             @RequestParam(required = false) String region,
             Authentication authentication) {
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
-        List<RouteDTO> routes = routeService.getRoutesByCategory(category);
+        List<RouteDTO> routes = routeService.getRoutesByFilters(category, prefCategory, prefTagCode);
         routes = excludeCurrentUserRoutes(routes, currentUser);
         if (region != null && !region.isBlank()) {
             List<Long> planNosInRegion = planDetailService.findPlanNosByRegion(region.trim());
             List<RouteDTO> filtered = new ArrayList<>();
             for (RouteDTO r : routes) {
-                if (planNosInRegion.contains(r.getId())) filtered.add(r);
+                if (planNosInRegion.contains(r.getId())) {
+                    filtered.add(r);
+                }
             }
             routes = filtered;
         }
@@ -119,9 +136,16 @@ public class RouteController {
         return routes;
     }
 
+    @GetMapping("/preference-tags")
+    @ResponseBody
+    public List<TagMasterDTO> preferenceTagsByCategory(
+            @RequestParam(required = false) String category) {
+        return routeService.getPreferenceTagsByCategory(category);
+    }
+
     /**
-     * 어디로 갈까요에서 선택한 지역(또는 장소 태그)로 추천 루트 검색.
-     * region이 있으면 루트에 포함된 여행지 중 해당 지역이 포함된 루트만 반환.
+     * 어디로 갈까요에서 선택한 지역(또는 장소 태그)로 추천 루트 검색. region이 있으면 루트에 포함된 여행지 중 해당 지역이
+     * 포함된 루트만 반환.
      */
     @GetMapping("/recommend")
     @ResponseBody
@@ -137,13 +161,18 @@ public class RouteController {
             List<Long> planNosInRegion = planDetailService.findPlanNosByRegion(region.trim());
             List<RouteDTO> filtered = new ArrayList<>();
             for (RouteDTO r : routes) {
-                if (planNosInRegion.contains(r.getId())) filtered.add(r);
+                if (planNosInRegion.contains(r.getId())) {
+                    filtered.add(r);
+                }
             }
             routes = filtered;
         }
 
         List<String> selectedTagNames = resolveTagNamesByCodes(placeTagCodes);
-        if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
+        String authId = resolveAuthenticatedAuthId(authentication);
+        if (authId == null) {
+            applyGuestRouteDefaults(routes);
+        } else if (selectedTagNames != null && !selectedTagNames.isEmpty()) {
             routeService.applyPlaceTagScores(routes, selectedTagNames);
         } else {
             applySimilarityScores(routes, authentication);
@@ -218,12 +247,58 @@ public class RouteController {
         }
 
         try {
-            CommunityDTO savedReview = communityService.addCommunityReview(routeId, currentUser.getUserNo(), reviewContent, rating);
+            CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            boolean updated = existingReview != null && existingReview.getReviewNo() != null;
+
+            CommunityDTO savedReview;
+            if (updated) {
+                communityService.updateCommunityReview(existingReview.getReviewNo(), currentUser.getUserNo(), reviewContent, rating);
+                savedReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            } else {
+                savedReview = communityService.addCommunityReview(routeId, currentUser.getUserNo(), reviewContent, rating);
+            }
+
             List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(routeId);
 
             response.put("success", true);
             response.put("review", savedReview);
-            response.put("reviewCount", reviews.size());
+            response.put("reviewCount", reviews == null ? 0 : reviews.size());
+            response.put("updated", updated);
+            response.put("message", updated ? "리뷰를 수정했습니다." : "리뷰를 등록했습니다.");
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/{routeId}/reviews/delete")
+    @ResponseBody
+    public Map<String, Object> deleteMyReview(
+            @PathVariable Long routeId,
+            Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        UsersDTO currentUser = resolveAuthenticatedUser(authentication);
+        if (currentUser == null || currentUser.getUserNo() == null) {
+            return loginRequiredResponse();
+        }
+
+        try {
+            CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(routeId, currentUser.getUserNo());
+            if (existingReview == null || existingReview.getReviewNo() == null) {
+                response.put("success", false);
+                response.put("message", "삭제할 내 리뷰가 없습니다.");
+                return response;
+            }
+
+            Long deletedReviewNo = existingReview.getReviewNo();
+            communityService.deleteCommunityReview(deletedReviewNo, currentUser.getUserNo());
+            List<CommunityDTO> reviews = communityService.getCommunityReviewsByPlanNo(routeId);
+
+            response.put("success", true);
+            response.put("deletedReviewNo", deletedReviewNo);
+            response.put("reviewCount", reviews == null ? 0 : reviews.size());
+            response.put("message", "내 리뷰를 삭제했습니다.");
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", e.getMessage());
@@ -400,7 +475,8 @@ public class RouteController {
 
         String authId = resolveAuthenticatedAuthId(authentication);
         if (authId == null) {
-            return null;
+            applyGuestRouteDefaults(routes);
+            return 0;
         }
 
         UsersDTO currentUser = usersService.getUserByAuthId(authId);
@@ -426,6 +502,29 @@ public class RouteController {
             }
         }
         return bestScore == 0 ? null : bestScore;
+    }
+
+    private void applyGuestRouteDefaults(List<RouteDTO> routes) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+
+        for (RouteDTO route : routes) {
+            if (route != null) {
+                route.setMatchScore(0);
+            }
+        }
+
+        routes.sort(
+                Comparator.comparing(
+                        (RouteDTO route) -> route == null ? null : route.getPlanStartDate(),
+                        Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(
+                                route -> route == null ? null : route.getPlanEndDate(),
+                                Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(
+                                route -> route == null ? null : route.getId(),
+                                Comparator.nullsLast(Comparator.reverseOrder())));
     }
 
     private List<RouteDTO> excludeCurrentUserRoutes(List<RouteDTO> routes, UsersDTO currentUser) {

@@ -24,6 +24,7 @@ public class WishListDAOImpl implements WishListDAO {
 	private static final String SELECT_CATEGORIES_BY_USER_NO_STATEMENT_ID = "place_mapper.selectWishlistCategoriesByUserNo";
 	private static final String INSERT_WISHLIST_STATEMENT_ID = "place_mapper.insertWishlist";
 	private static final String DELETE_WISHLIST_BY_OWNER_STATEMENT_ID = "place_mapper.deleteWishlistByOwner";
+	private static final String DELETE_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID = "place_mapper.deleteWishlistByUserAndPlace";
 	private static final String SELECT_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID = "place_mapper.selectWishlistByUserAndPlace";
 	private static final String COUNT_WISHLIST_BY_USER_AND_PLACE_AND_CATEGORY_STATEMENT_ID = "place_mapper.countWishlistByUserAndPlaceAndCategory";
 	private static final String COUNT_WISH_USERS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.countWishUsersByPlaceNo";
@@ -73,6 +74,11 @@ public class WishListDAOImpl implements WishListDAO {
 	@Override
 	public int deleteWishListByOwner(Long wishNo, Long userNo) throws Exception {
 		return sqlSessionTemplate.delete(DELETE_WISHLIST_BY_OWNER_STATEMENT_ID, buildWishOwnerParams(wishNo, userNo));
+	}
+
+	@Override
+	public int deleteWishListByUserAndPlace(Long userNo, Long placeNo) throws Exception {
+		return sqlSessionTemplate.delete(DELETE_WISHLIST_BY_USER_AND_PLACE_STATEMENT_ID, buildWishLookupParams(userNo, placeNo));
 	}
 
 	@Override

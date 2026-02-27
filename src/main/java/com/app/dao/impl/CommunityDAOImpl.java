@@ -18,6 +18,7 @@ public class CommunityDAOImpl implements CommunityDAO {
 	private static final String GET_COMMUNITY_REVIEW_BY_PLAN_NO_AND_USER_NO_STATEMENT_ID = "community_mapper.getCommunityReviewByPlanNoAndUserNo";
 	private static final String INSERT_COMMUNITY_REVIEW_STATEMENT_ID = "community_mapper.insertCommunityReview";
 	private static final String UPDATE_COMMUNITY_REVIEW_STATEMENT_ID = "community_mapper.updateCommunityReview";
+    private static final String DELETE_COMMUNITY_REVIEW_STATEMENT_ID = "community_mapper.deleteCommunityReview";
 	private static final String COUNT_COMMUNITY_REVIEWS_BY_AUTH_ID_STATEMENT_ID = "community_mapper.countCommunityReviewsByAuthId";
 	private static final String GET_COMMUNITY_REVIEWS_BY_AUTH_ID_PAGED_STATEMENT_ID = "community_mapper.getCommunityReviewsByAuthIdPaged";
     private static final String DELETE_COMMUNITY_REVIEWS_BY_PLAN_NO_STATEMENT_ID = "community_mapper.deleteCommunityReviewsByPlanNo";
@@ -46,6 +47,14 @@ public class CommunityDAOImpl implements CommunityDAO {
     @Override
     public int updateCommunityReview(CommunityDTO review) {
         return sqlSessionTemplate.update(UPDATE_COMMUNITY_REVIEW_STATEMENT_ID, review);
+    }
+
+    @Override
+    public int deleteCommunityReview(Long reviewNo, Long userNo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("reviewNo", reviewNo);
+        params.put("userNo", userNo);
+        return sqlSessionTemplate.delete(DELETE_COMMUNITY_REVIEW_STATEMENT_ID, params);
     }
 
 	@Override

@@ -13,7 +13,7 @@
     <div class="auth-container">
         <div class="auth-logo">
             <h1>비밀번호 찾기</h1>
-            <p>아이디와 이메일을 입력하면 임시 비밀번호를 발급합니다.</p>
+            <p>아이디와 이메일을 입력하면 임시 비밀번호를 가입한 메일로 전송합니다.</p>
         </div>
 
         <form action="${pageContext.request.contextPath}/auth/find-password" method="post">
@@ -29,7 +29,7 @@
                 <input type="email" name="email" required>
             </div>
 
-            <button type="submit" class="auth-btn">임시 비밀번호 발급</button>
+            <button type="submit" class="auth-btn">임시 비밀번호 메일 전송</button>
         </form>
 
         <div class="auth-links">

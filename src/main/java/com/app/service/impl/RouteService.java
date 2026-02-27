@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.app.dto.CommunityDTO;
 import com.app.dto.PlanDetailDTO;
 import com.app.dto.RouteDTO;
+import com.app.dto.TagMasterDTO;
 import com.app.dto.TagCategoryDTO;
 import com.app.dto.TravelPlanDTO;
 import com.app.dto.TravelerTypeDTO;
@@ -53,15 +54,35 @@ public class RouteService {
     }
 
     public List<RouteDTO> getAllRoutes() {
-        return getRoutesByCategory(null);
+        return getRoutesByFilters(null, null, null);
     }
 
     public List<RouteDTO> getRoutesByCategory(String categoryKey) {
+        return getRoutesByFilters(categoryKey, null, null);
+    }
+
+    public List<RouteDTO> getRoutesByFilters(
+            String categoryKey,
+            String preferenceCategoryKey,
+            String preferenceTagCode) {
         String normalizedCategory = normalizeCategoryKey(categoryKey);
+        String normalizedPreferenceCategory = normalizeCategoryKey(preferenceCategoryKey);
+        String normalizedPreferenceTagCode = normalizeTagCode(preferenceTagCode);
+        boolean hasPreferenceFilter = normalizedPreferenceCategory != null || normalizedPreferenceTagCode != null;
+
         List<TravelPlanDTO> travelPlans = travelPlanService.findPublicTravelPlans();
         List<RouteDTO> routes = new ArrayList<>();
+        Map<Long, Boolean> preferenceMatchCache = new HashMap<>();
         for (TravelPlanDTO travelPlan : travelPlans) {
             if (normalizedCategory != null && !hasCategory(travelPlan.getPlanNo(), normalizedCategory)) {
+                continue;
+            }
+            if (hasPreferenceFilter
+                    && !matchesPreferenceFilter(
+                            travelPlan.getUserNo(),
+                            normalizedPreferenceCategory,
+                            normalizedPreferenceTagCode,
+                            preferenceMatchCache)) {
                 continue;
             }
 
@@ -86,6 +107,53 @@ public class RouteService {
             new TagCategoryDTO("INTENSITY", "\uAC15\uB3C4", "\u26A1", "#7C3AED", "#F2EBFF", "tag-intensity"),
             new TagCategoryDTO("MOOD", "\uBB34\uB4DC", "\uD83C\uDF19", "#0EA5E9", "#E6F7FF", "tag-mood")
         );
+    }
+
+    public List<TagCategoryDTO> getPreferenceCategories() {
+        return getAllTagCategories();
+    }
+
+    public List<TagMasterDTO> getPreferenceTagsByCategory(String categoryKey) {
+        String normalizedCategory = normalizeCategoryKey(categoryKey);
+        if (normalizedCategory == null) {
+            return Collections.emptyList();
+        }
+
+        List<TagMasterDTO> allTagMaster = usersService.getTagMasterList();
+        if (allTagMaster == null || allTagMaster.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<TagMasterDTO> filteredTags = new ArrayList<>();
+        Set<String> addedTagCodes = new LinkedHashSet<>();
+        for (TagMasterDTO tagMaster : allTagMaster) {
+            if (tagMaster == null) {
+                continue;
+            }
+
+            String tagCategory = normalizeCategoryKey(tagMaster.getTagCategory());
+            if (!normalizedCategory.equals(tagCategory)) {
+                continue;
+            }
+
+            String tagCode = normalizeTagCode(tagMaster.getTagCode());
+            if (tagCode == null || addedTagCodes.contains(tagCode)) {
+                continue;
+            }
+
+            TagMasterDTO item = new TagMasterDTO();
+            item.setTagCode(tagCode);
+            item.setTagCategory(tagCategory);
+            item.setTagName(defaultIfBlank(tagMaster.getTagName(), tagCode));
+            filteredTags.add(item);
+            addedTagCodes.add(tagCode);
+
+            if (filteredTags.size() >= 4) {
+                break;
+            }
+        }
+
+        return filteredTags;
     }
 
     public List<TravelerTypeDTO> getAllTravelerTypes() {
@@ -134,6 +202,7 @@ public class RouteService {
         String normalizedTypeId = normalizeTypeId(route.getTypeId());
         route.setTypeId(normalizedTypeId);
         route.setEmoji(resolveEmoji(normalizedTypeId));
+        route.setRepresentativeImageUrl(defaultIfBlank(planDetailService.findRepresentativeImageUrl(route.getId()), null));
 
         List<String> steps = planDetailService.findStepNames(route.getId());
         if (steps == null || steps.isEmpty()) {
@@ -195,6 +264,9 @@ public class RouteService {
         route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
         route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
         route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
+        route.setPlanStatus(normalizePlanStatus(travelPlan.getPlanStatus()));
+        route.setPlanStartDate(travelPlan.getPlanStartDate());
+        route.setPlanEndDate(travelPlan.getPlanEndDate());
         route.setLikeCount(defaultIfNull(travelPlan.getLikeCount(), 0));
         route.setSavedCount(defaultIfNull(travelPlan.getSavedCount(), 0));
         route.setMatchScore(defaultIfNull(travelPlan.getMatchScore(), 70));
@@ -351,11 +423,64 @@ public class RouteService {
         return value == null ? defaultValue : value;
     }
 
+    private boolean matchesPreferenceFilter(
+            Long authorUserNo,
+            String preferenceCategoryKey,
+            String preferenceTagCode,
+            Map<Long, Boolean> preferenceMatchCache) {
+        if (authorUserNo == null) {
+            return false;
+        }
+
+        Boolean cachedResult = preferenceMatchCache.get(authorUserNo);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
+        List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
+        boolean matched = hasMatchingPreferenceTag(authorTags, preferenceCategoryKey, preferenceTagCode);
+        preferenceMatchCache.put(authorUserNo, matched);
+        return matched;
+    }
+
+    private boolean hasMatchingPreferenceTag(
+            List<UserTagMapDTO> authorTags,
+            String preferenceCategoryKey,
+            String preferenceTagCode) {
+        if (authorTags == null || authorTags.isEmpty()) {
+            return false;
+        }
+
+        for (UserTagMapDTO authorTag : authorTags) {
+            if (authorTag == null) {
+                continue;
+            }
+
+            String tagCode = normalizeTagCode(authorTag.getTagCode());
+            String tagCategory = normalizeCategoryKey(authorTag.getTagCategory());
+            if (preferenceTagCode != null && !preferenceTagCode.equals(tagCode)) {
+                continue;
+            }
+            if (preferenceCategoryKey != null && !preferenceCategoryKey.equals(tagCategory)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     private String normalizeCategoryKey(String categoryKey) {
         if (categoryKey == null || categoryKey.trim().isEmpty()) {
             return null;
         }
         return categoryKey.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeTagCode(String tagCode) {
+        if (tagCode == null || tagCode.trim().isEmpty()) {
+            return null;
+        }
+        return tagCode.trim().toUpperCase(Locale.ROOT);
     }
 
     private boolean hasCategory(Long planNo, String categoryKey) {
@@ -412,6 +537,15 @@ public class RouteService {
                 }
                 return "adventurer";
         }
+    }
+
+    private String normalizePlanStatus(String rawPlanStatus) {
+        if (rawPlanStatus == null) {
+            return null;
+        }
+
+        String normalized = rawPlanStatus.trim().toUpperCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private String resolveEmoji(String typeId) {

@@ -43,4 +43,11 @@ public class PlanDetailServiceImpl implements PlanDetailService {
     public List<Long> findPlanNosByRegion(String region) {
         return planDetailDAO.getPlanNosByRegion(region);
     }
+
+	@Override
+	public String findRepresentativeImageUrl(Long planNo) {
+		return planDetailDAO.getRepresentativeImageUrlByPlanNo(planNo);
+	}
+    
+    
 }

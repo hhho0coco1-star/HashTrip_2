@@ -14,6 +14,8 @@ public interface CommunityDAO {
 
     int updateCommunityReview(CommunityDTO review);
 
+    int deleteCommunityReview(Long reviewNo, Long userNo);
+
     int countCommunityReviewsByAuthId(String authId);
 
     List<CommunityDTO> getCommunityReviewsByAuthIdPaged(String authId, int startRow, int endRow, String sortType);
