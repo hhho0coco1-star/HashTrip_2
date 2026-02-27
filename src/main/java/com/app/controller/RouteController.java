@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -115,12 +116,17 @@ public class RouteController {
     @ResponseBody
     public List<RouteDTO> filterRoutes(
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String prefCategory,
-            @RequestParam(required = false) String prefTagCode,
+            @RequestParam(required = false) List<String> prefCategory,
+            @RequestParam(required = false) List<String> prefTagCode,
             @RequestParam(required = false) String region,
             Authentication authentication) {
         UsersDTO currentUser = resolveAuthenticatedUser(authentication);
-        List<RouteDTO> routes = routeService.getRoutesByFilters(category, prefCategory, prefTagCode);
+        Map<String, String> preferenceSelections = buildPreferenceSelections(prefCategory, prefTagCode);
+        String singlePrefCategory = firstNonBlank(prefCategory);
+        String singlePrefTagCode = firstNonBlank(prefTagCode);
+        List<RouteDTO> routes = preferenceSelections.isEmpty()
+                ? routeService.getRoutesByFilters(category, singlePrefCategory, singlePrefTagCode)
+                : routeService.getRoutesByFilters(category, preferenceSelections);
         routes = excludeCurrentUserRoutes(routes, currentUser);
         if (region != null && !region.isBlank()) {
             List<Long> planNosInRegion = planDetailService.findPlanNosByRegion(region.trim());
@@ -410,6 +416,44 @@ public class RouteController {
         response.put("loginRequired", true);
         response.put("redirectUrl", "/auth/login");
         return response;
+    }
+
+    private Map<String, String> buildPreferenceSelections(
+            List<String> preferenceCategories,
+            List<String> preferenceTagCodes) {
+        if (preferenceCategories == null || preferenceTagCodes == null
+                || preferenceCategories.isEmpty() || preferenceTagCodes.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> selections = new LinkedHashMap<>();
+        int pairCount = Math.min(preferenceCategories.size(), preferenceTagCodes.size());
+        for (int i = 0; i < pairCount; i++) {
+            String category = preferenceCategories.get(i);
+            String tagCode = preferenceTagCodes.get(i);
+            if (category == null || tagCode == null) {
+                continue;
+            }
+            String normalizedCategory = category.trim();
+            String normalizedTagCode = tagCode.trim();
+            if (normalizedCategory.isEmpty() || normalizedTagCode.isEmpty()) {
+                continue;
+            }
+            selections.put(normalizedCategory, normalizedTagCode);
+        }
+        return selections.isEmpty() ? Collections.emptyMap() : selections;
+    }
+
+    private String firstNonBlank(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     private UsersDTO resolveAuthenticatedUser(Authentication authentication) {

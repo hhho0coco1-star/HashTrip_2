@@ -63,6 +63,36 @@ public class RouteService {
 
     public List<RouteDTO> getRoutesByFilters(
             String categoryKey,
+            Map<String, String> preferenceTagCodeByCategory) {
+        String normalizedCategory = normalizeCategoryKey(categoryKey);
+        Map<String, String> normalizedPreferenceSelections = normalizePreferenceSelections(preferenceTagCodeByCategory);
+        boolean hasPreferenceFilter = !normalizedPreferenceSelections.isEmpty();
+
+        List<TravelPlanDTO> travelPlans = travelPlanService.findPublicTravelPlans();
+        List<RouteDTO> routes = new ArrayList<>();
+        Map<Long, Boolean> preferenceMatchCache = new HashMap<>();
+        for (TravelPlanDTO travelPlan : travelPlans) {
+            if (normalizedCategory != null && !hasCategory(travelPlan.getPlanNo(), normalizedCategory)) {
+                continue;
+            }
+            if (hasPreferenceFilter
+                    && !matchesPreferenceFilter(
+                            travelPlan.getUserNo(),
+                            normalizedPreferenceSelections,
+                            preferenceMatchCache)) {
+                continue;
+            }
+
+            RouteDTO route = mapTravelPlanToRoute(travelPlan);
+            enrichRoute(route);
+            routes.add(route);
+        }
+
+        return routes;
+    }
+
+    public List<RouteDTO> getRoutesByFilters(
+            String categoryKey,
             String preferenceCategoryKey,
             String preferenceTagCode) {
         String normalizedCategory = normalizeCategoryKey(categoryKey);
@@ -423,6 +453,27 @@ public class RouteService {
         return value == null ? defaultValue : value;
     }
 
+    private Map<String, String> normalizePreferenceSelections(Map<String, String> preferenceTagCodeByCategory) {
+        if (preferenceTagCodeByCategory == null || preferenceTagCodeByCategory.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> normalized = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : preferenceTagCodeByCategory.entrySet()) {
+            if (entry == null) {
+                continue;
+            }
+
+            String normalizedCategory = normalizeCategoryKey(entry.getKey());
+            String normalizedTagCode = normalizeTagCode(entry.getValue());
+            if (normalizedCategory == null || normalizedTagCode == null) {
+                continue;
+            }
+            normalized.put(normalizedCategory, normalizedTagCode);
+        }
+        return normalized;
+    }
+
     private boolean matchesPreferenceFilter(
             Long authorUserNo,
             String preferenceCategoryKey,
@@ -439,6 +490,28 @@ public class RouteService {
 
         List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
         boolean matched = hasMatchingPreferenceTag(authorTags, preferenceCategoryKey, preferenceTagCode);
+        preferenceMatchCache.put(authorUserNo, matched);
+        return matched;
+    }
+
+    private boolean matchesPreferenceFilter(
+            Long authorUserNo,
+            Map<String, String> preferenceTagCodeByCategory,
+            Map<Long, Boolean> preferenceMatchCache) {
+        if (authorUserNo == null) {
+            return false;
+        }
+        if (preferenceTagCodeByCategory == null || preferenceTagCodeByCategory.isEmpty()) {
+            return true;
+        }
+
+        Boolean cachedResult = preferenceMatchCache.get(authorUserNo);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
+        List<UserTagMapDTO> authorTags = usersService.getUserTagsByUserNo(authorUserNo);
+        boolean matched = hasMatchingPreferenceTags(authorTags, preferenceTagCodeByCategory);
         preferenceMatchCache.put(authorUserNo, matched);
         return matched;
     }
@@ -467,6 +540,51 @@ public class RouteService {
             return true;
         }
         return false;
+    }
+
+    private boolean hasMatchingPreferenceTags(
+            List<UserTagMapDTO> authorTags,
+            Map<String, String> preferenceTagCodeByCategory) {
+        if (preferenceTagCodeByCategory == null || preferenceTagCodeByCategory.isEmpty()) {
+            return true;
+        }
+        if (authorTags == null || authorTags.isEmpty()) {
+            return false;
+        }
+
+        Map<String, Set<String>> authorTagCodeMapByCategory = new HashMap<>();
+        for (UserTagMapDTO authorTag : authorTags) {
+            if (authorTag == null) {
+                continue;
+            }
+
+            String tagCode = normalizeTagCode(authorTag.getTagCode());
+            String tagCategory = normalizeCategoryKey(authorTag.getTagCategory());
+            if (tagCode == null || tagCategory == null) {
+                continue;
+            }
+            authorTagCodeMapByCategory
+                    .computeIfAbsent(tagCategory, key -> new LinkedHashSet<>())
+                    .add(tagCode);
+        }
+
+        for (Map.Entry<String, String> selection : preferenceTagCodeByCategory.entrySet()) {
+            if (selection == null) {
+                return false;
+            }
+
+            String categoryKey = normalizeCategoryKey(selection.getKey());
+            String tagCode = normalizeTagCode(selection.getValue());
+            if (categoryKey == null || tagCode == null) {
+                return false;
+            }
+
+            Set<String> authorTagCodes = authorTagCodeMapByCategory.get(categoryKey);
+            if (authorTagCodes == null || !authorTagCodes.contains(tagCode)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String normalizeCategoryKey(String categoryKey) {

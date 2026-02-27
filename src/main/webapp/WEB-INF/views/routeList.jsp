@@ -229,12 +229,10 @@
     </c:forEach>
 
     const selectedPreferenceCategories = new Set();
-    let selectedPreferenceTagCategory = '';
-    let selectedPreferenceTagCode = '';
-    let selectedPreferenceTagName = '';
-    let appliedPreferenceCategory = '';
-    let appliedPreferenceTagCode = '';
-    let appliedPreferenceTagName = '';
+    const selectedPreferenceTagsByCategory = {};
+    const selectedPreferenceTagNamesByCategory = {};
+    let appliedPreferenceTagsByCategory = {};
+    let appliedPreferenceTagNamesByCategory = {};
 
     function togglePersonalTags() {
         const toggleButton = document.getElementById('personal-meta-toggle');
@@ -262,12 +260,14 @@
 
     function applyRouteFilters() {
         const params = new URLSearchParams();
-        if (appliedPreferenceCategory) {
-            params.append('prefCategory', appliedPreferenceCategory);
-        }
-        if (appliedPreferenceTagCode) {
-            params.append('prefTagCode', appliedPreferenceTagCode);
-        }
+        Object.keys(appliedPreferenceTagsByCategory).forEach(categoryKey => {
+            const tagCode = appliedPreferenceTagsByCategory[categoryKey];
+            if (!categoryKey || !tagCode) {
+                return;
+            }
+            params.append('prefCategory', categoryKey);
+            params.append('prefTagCode', tagCode);
+        });
 
         const query = params.toString();
         const url = contextPath + '/routes/filter' + (query ? ('?' + query) : '');
@@ -277,10 +277,15 @@
             .catch(() => showToast('오류가 발생했어요'));
     }
 
-    function clearSelectedPreferenceTag() {
-        selectedPreferenceTagCategory = '';
-        selectedPreferenceTagCode = '';
-        selectedPreferenceTagName = '';
+    function clearSelectedPreferenceTag(categoryKey) {
+        if (categoryKey) {
+            delete selectedPreferenceTagsByCategory[categoryKey];
+            delete selectedPreferenceTagNamesByCategory[categoryKey];
+            return;
+        }
+
+        Object.keys(selectedPreferenceTagsByCategory).forEach(key => delete selectedPreferenceTagsByCategory[key]);
+        Object.keys(selectedPreferenceTagNamesByCategory).forEach(key => delete selectedPreferenceTagNamesByCategory[key]);
     }
 
     function togglePreferenceCategory(categoryKey, btn) {
@@ -291,6 +296,7 @@
 
         if (selectedPreferenceCategories.has(normalizedCategory)) {
             selectedPreferenceCategories.delete(normalizedCategory);
+            clearSelectedPreferenceTag(normalizedCategory);
             if (btn) {
                 btn.classList.remove('active');
             }
@@ -395,7 +401,7 @@
             return;
         }
 
-        let hasActiveTag = false;
+        const renderedTagCodesByCategory = {};
         validGroups.forEach(group => {
             const categoryKey = group.categoryKey;
             const categoryLabel = preferenceCategoryLabelMap[categoryKey] || categoryKey;
@@ -416,18 +422,22 @@
                 emptyText.textContent = '선택 가능한 세부 취향이 없습니다.';
                 chipsWrap.appendChild(emptyText);
             } else {
+                const renderedTagCodes = new Set();
                 group.tags.forEach(tag => {
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'pref-chip pref-sub-chip';
                     button.textContent = tag.tagName;
-                    if (selectedPreferenceTagCategory === categoryKey && selectedPreferenceTagCode === tag.tagCode) {
+                    button.dataset.prefCategory = categoryKey;
+                    button.dataset.prefTagCode = tag.tagCode;
+                    renderedTagCodes.add(tag.tagCode);
+                    if (selectedPreferenceTagsByCategory[categoryKey] === tag.tagCode) {
                         button.classList.add('active');
-                        hasActiveTag = true;
                     }
                     button.addEventListener('click', () => selectPreferenceTag(categoryKey, tag.tagCode, tag.tagName, button));
                     chipsWrap.appendChild(button);
                 });
+                renderedTagCodesByCategory[categoryKey] = renderedTagCodes;
             }
 
             groupBox.appendChild(title);
@@ -435,31 +445,59 @@
             subWrap.appendChild(groupBox);
         });
 
-        if (!hasActiveTag) {
-            clearSelectedPreferenceTag();
-        }
+        Array.from(selectedPreferenceCategories).forEach(categoryKey => {
+            const selectedTagCode = selectedPreferenceTagsByCategory[categoryKey];
+            if (!selectedTagCode) {
+                return;
+            }
+            const renderedTagCodes = renderedTagCodesByCategory[categoryKey];
+            if (!renderedTagCodes || !renderedTagCodes.has(selectedTagCode)) {
+                clearSelectedPreferenceTag(categoryKey);
+            }
+        });
     }
 
     function selectPreferenceTag(categoryKey, tagCode, tagName, btn) {
-        selectedPreferenceTagCategory = categoryKey || '';
-        selectedPreferenceTagCode = tagCode || '';
-        selectedPreferenceTagName = tagName || selectedPreferenceTagCode;
+        const normalizedCategory = categoryKey ? String(categoryKey).trim() : '';
+        const normalizedTagCode = tagCode ? String(tagCode).trim() : '';
+        if (!normalizedCategory || !normalizedTagCode) {
+            return;
+        }
 
-        document.querySelectorAll('.pref-sub-chip').forEach(chip => chip.classList.remove('active'));
+        selectedPreferenceTagsByCategory[normalizedCategory] = normalizedTagCode;
+        selectedPreferenceTagNamesByCategory[normalizedCategory] = tagName || normalizedTagCode;
+
+        if (btn && btn.parentElement) {
+            btn.parentElement.querySelectorAll('.pref-sub-chip').forEach(chip => chip.classList.remove('active'));
+        }
         if (btn) {
             btn.classList.add('active');
         }
     }
 
     function applyPreferenceFilter() {
-        if (!selectedPreferenceTagCategory || !selectedPreferenceTagCode) {
-            showToast('상위 카테고리를 선택하고 세부 취향 1개를 선택해 주세요.');
+        if (selectedPreferenceCategories.size === 0) {
+            showToast('상위 카테고리를 먼저 선택해 주세요.');
             return;
         }
 
-        appliedPreferenceCategory = selectedPreferenceTagCategory;
-        appliedPreferenceTagCode = selectedPreferenceTagCode;
-        appliedPreferenceTagName = selectedPreferenceTagName;
+        const missingCategorySelections = Array.from(selectedPreferenceCategories)
+            .filter(categoryKey => !selectedPreferenceTagsByCategory[categoryKey]);
+        if (missingCategorySelections.length > 0) {
+            showToast('선택한 상위 카테고리마다 세부 취향 1개를 선택해 주세요.');
+            return;
+        }
+
+        appliedPreferenceTagsByCategory = {};
+        appliedPreferenceTagNamesByCategory = {};
+        Array.from(selectedPreferenceCategories).forEach(categoryKey => {
+            const selectedTagCode = selectedPreferenceTagsByCategory[categoryKey];
+            if (!selectedTagCode) {
+                return;
+            }
+            appliedPreferenceTagsByCategory[categoryKey] = selectedTagCode;
+            appliedPreferenceTagNamesByCategory[categoryKey] = selectedPreferenceTagNamesByCategory[categoryKey] || selectedTagCode;
+        });
         updatePreferenceSummary();
         applyRouteFilters();
     }
@@ -467,9 +505,8 @@
     function resetPreferenceFilter() {
         selectedPreferenceCategories.clear();
         clearSelectedPreferenceTag();
-        appliedPreferenceCategory = '';
-        appliedPreferenceTagCode = '';
-        appliedPreferenceTagName = '';
+        appliedPreferenceTagsByCategory = {};
+        appliedPreferenceTagNamesByCategory = {};
 
         document.querySelectorAll('.pref-top-chip').forEach(chip => chip.classList.remove('active'));
         document.querySelectorAll('.pref-sub-chip').forEach(chip => chip.classList.remove('active'));
@@ -489,14 +526,20 @@
             return;
         }
 
-        if (!appliedPreferenceCategory || !appliedPreferenceTagCode) {
+        const appliedCategories = Object.keys(appliedPreferenceTagsByCategory);
+        if (appliedCategories.length === 0) {
             summary.textContent = '';
             summary.classList.add('hidden');
             return;
         }
 
-        const categoryLabel = preferenceCategoryLabelMap[appliedPreferenceCategory] || appliedPreferenceCategory;
-        summary.textContent = '적용 중: ' + categoryLabel + ' · ' + appliedPreferenceTagName;
+        const summaryLabels = appliedCategories
+            .map(categoryKey => {
+                const categoryLabel = preferenceCategoryLabelMap[categoryKey] || categoryKey;
+                const tagName = appliedPreferenceTagNamesByCategory[categoryKey] || appliedPreferenceTagsByCategory[categoryKey];
+                return categoryLabel + ' · ' + tagName;
+            });
+        summary.textContent = '적용 중: ' + summaryLabels.join(' / ');
         summary.classList.remove('hidden');
     }
 
