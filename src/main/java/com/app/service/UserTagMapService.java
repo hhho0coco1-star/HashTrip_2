@@ -21,4 +21,6 @@ public interface UserTagMapService {
      * @return 저장된 태그 DTO 리스트
      */
     List<UserTagMapDTO> getUserTagHistory(Long userNo);
+    
+    
 }

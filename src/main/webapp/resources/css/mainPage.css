@@ -14,7 +14,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('${pageContext.request.contextPath}/resources/images/map.png'); /* 이미지 경로 */
+/*     background-image: url('${pageContext.request.contextPath}/resources/images/map.png'); 이미지 경로 */
     background-size: contain; /* 이미지가 잘리지 않게 전체 보이기 */
     background-repeat: no-repeat;
     background-position: center;

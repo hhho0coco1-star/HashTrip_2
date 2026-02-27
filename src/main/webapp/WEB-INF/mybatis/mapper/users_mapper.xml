@@ -4,6 +4,7 @@
 		   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="users_mapper">
+
 	<select id="getUserByAuthId" resultType="UsersDTO"
 		parameterType="string">
 		SELECT
@@ -373,11 +374,12 @@
 		resultType="string">
 		SELECT user_auth_email
 		FROM User_Authentication
-		WHERE user_auth_id = #{userAuthId}
+		WHERE
+		user_auth_id = #{userAuthId}
 	</select>
 	<!-- 성향 분석 결과 전달 -->
-	
-	
+
+
 	<select id="getTravelAnalysisResult" parameterType="string"
 		resultType="map">
 		SELECT
@@ -386,21 +388,76 @@
 		am_plan.RESULT_TEXT AS PLAN_TEXT,
 		am_place.RESULT_TEXT AS PLACE_TEXT,
 		am_plan.RESULT_TEXT, ' ', am_place.RESULT_TEXT)
-		(am_energy.RESULT_TEXT || ' ' || am_plan.RESULT_TEXT || ' ' || am_place.RESULT_TEXT) AS
+		(am_energy.RESULT_TEXT
+		|| ' ' || am_plan.RESULT_TEXT || ' ' || am_place.RESULT_TEXT) AS
 		FINAL_FULL_SENTENCE
 		FROM
 		TRAVEL_STYLES ts
-		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_energy
+		LEFT JOIN
+		TRAVEL_ANALYSIS_MASTER am_energy
 		ON am_energy.CATEGORY = 'ENERGY'
-		AND am_energy.COMBINATION_KEY = ts.Q9_ENERGY
-		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_plan
+		AND
+		am_energy.COMBINATION_KEY = ts.Q9_ENERGY
+		LEFT JOIN
+		TRAVEL_ANALYSIS_MASTER am_plan
 		ON am_plan.CATEGORY = 'PLAN'
-		AND am_plan.COMBINATION_KEY = ts.Q2_PLAN
-		LEFT JOIN TRAVEL_ANALYSIS_MASTER am_place
+		AND
+		am_plan.COMBINATION_KEY = ts.Q2_PLAN
+		LEFT JOIN TRAVEL_ANALYSIS_MASTER
+		am_place
 		ON am_place.CATEGORY = 'PLACE'
-		AND am_place.COMBINATION_KEY = ts.Q1_PLACE
+		AND am_place.COMBINATION_KEY =
+		ts.Q1_PLACE
 		WHERE
 		ts.USER_NO = #{user_no}
 	</select>
+
+	<!-- 성향 결과 출력 -->
+	<select id="getFinalResult" parameterType="long"
+		resultType="java.lang.String">
+		SELECT LISTAGG(M.RESULT_TEXT, ' ') WITHIN GROUP (
+		ORDER BY DECODE(M.CATEGORY, 'INTENSITY', 1, 'PLANNING', 2, 'LOCATION', 3,
+		4) ASC
+		) result
+		FROM TRAVEL_ANALYSIS_MASTER M
+		JOIN (
+		SELECT
+		CASE
+		WHEN TAG_CODE = 'SPONTANEOUS_HIGH' THEN 'IMPROMPTU'
+		WHEN TAG_CODE = 'DEPENDENT_STYLE' THEN 'DEPENDENT'
+		WHEN TAG_CODE = 'INTENSITY_VERY_HIGH' THEN 'MAX_ENERGY'
+		WHEN TAG_CODE = 'INTENSITY_HIGH' THEN 'HIGH_ENERGY'
+		WHEN TAG_CODE = 'INTENSITY_LOW' THEN 'LOW_ENERGY'
+		WHEN TAG_CODE = 'INTENSITY_VERY_LOW' THEN 'VERY_LOW'
+		ELSE REGEXP_REPLACE(TAG_CODE,
+		'^LOC_|^PLAN_|^MOVE_|^STAY_|^BUDGET_|^COMP_|^FOOD_|^PURPOSE_|^INTENSITY_|^MOOD_',
+		'')
+		END AS CLEAN_TAG,
+		USER_NO
+		FROM USER_TAG_MAP
+		WHERE USER_NO = #{userNo}
+		AND QUESTION_ID IN (1, 2, 9)
+		) U ON 1=1
+		WHERE U.CLEAN_TAG LIKE CONCAT(CONCAT('%', M.COMBINATION_KEY), '%')
+		GROUP BY U.USER_NO
+	</select>
+
+	<!-- 사용자 성향 분석 저장 -->
+	<insert id="insertTravelStyle"
+		parameterType="com.app.dto.TravelStyleDTO">
+		INSERT INTO Travel_Styles (
+		STYLE_USER_NO,
+		USER_NO,
+		TRAVEL_IS_ANALYZDE,
+		TRAVEL_ANALYZED_DATE,
+		TRAVEL_TYPE_NAME
+		) VALUES (
+		SEQ_TRAVEL_STYLE.NEXTVAL,
+		#{userNo},
+		'Y',
+		SYSDATE,
+		#{travelTypeName}
+		)
+	</insert>
 
 </mapper>

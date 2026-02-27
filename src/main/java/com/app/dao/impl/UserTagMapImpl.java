@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.app.dao.UserTagMapDAO;
+import com.app.dto.TravelStyleDTO;
 import com.app.dto.UserTagMapDTO;
 
 @Repository
@@ -33,4 +34,14 @@ public class UserTagMapImpl implements UserTagMapDAO {
 	public List<UserTagMapDTO> findByUserId(Long userNo) {
 		return sqlSessionTemplate.selectList(FIND_USER_TAGS_BY_USER_NO_STATEMENT_ID, userNo);
 	}
+
+	@Override
+	public String getFinalAnalysisResult(Long userNo) {
+		return sqlSessionTemplate.selectOne("users_mapper.getFinalResult", userNo);
+	}
+	
+	@Override
+    public int insertTravelStyle(TravelStyleDTO travelStyleDTO) {
+        return sqlSessionTemplate.insert("users_mapper.insertTravelStyle", travelStyleDTO);
+    }
 }

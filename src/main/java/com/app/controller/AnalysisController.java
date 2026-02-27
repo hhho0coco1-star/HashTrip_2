@@ -72,6 +72,9 @@ public class AnalysisController {
         String finalResult = (String) session.getAttribute("finalResult");
         UsersDTO loginUser = (UsersDTO) session.getAttribute("loginUser");
 
+        // [디버깅] 콘솔에 결과값 출력해보기 (null인지 실제 문구인지 확인)
+        System.out.println(">>> 컨트롤러에서 확인한 분석 결과: " + finalResult);
+        
         if (finalResult == null) {
             return "redirect:/hashTrip/analysis"; // 결과 없으면 다시 테스트로
         }
