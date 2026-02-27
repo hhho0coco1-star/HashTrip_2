@@ -260,12 +260,18 @@ body {
 	padding: 0 14px 14px;
 }
 
+#tag-managers {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+}
+
 .tag-mgr-card {
 	background: linear-gradient(180deg, #f7faff 0%, #edf4ff 100%);
 	border: 1px solid #e1ebff;
 	border-radius: var(--radius-md);
 	padding: 12px;
-	margin-bottom: 10px;
+	margin-bottom: 0;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -367,6 +373,7 @@ body {
 .review-list {
 	display: grid;
 	gap: 10px;
+	text-align: left;
 }
 
 .review-section-head {
@@ -379,6 +386,7 @@ body {
 
 .review-section-head h3 {
 	margin: 0;
+	text-align: left;
 }
 
 .review-sort-form {
@@ -409,6 +417,7 @@ body {
 	border: 1px solid var(--line-weak);
 	border-radius: var(--radius-md);
 	background: #fcfdff;
+	text-align: left;
 }
 
 .review-top {
@@ -437,8 +446,9 @@ body {
 .review-content {
 	margin: 10px 0 8px;
 	color: var(--text-main);
-	white-space: pre-wrap;
+	white-space: pre-line;
 	word-break: break-word;
+	text-align: left;
 }
 
 .review-photo-list {
@@ -467,6 +477,7 @@ body {
 	margin: 0;
 	color: var(--text-muted);
 	font-size: 12px;
+	text-align: left;
 }
 
 .review-more-toggle {
@@ -784,6 +795,10 @@ body {
 	}
 
 	.summary-card {
+		grid-template-columns: 1fr;
+	}
+
+	#tag-managers {
 		grid-template-columns: 1fr;
 	}
 

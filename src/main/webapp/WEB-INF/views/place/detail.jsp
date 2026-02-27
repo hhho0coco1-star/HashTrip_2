@@ -105,27 +105,39 @@
 					<section class="place-head">
 						<div>
 							<p class="place-kind">
-								<c:choose>
-									<c:when test="${not empty tagNameList}">
-										<c:out value="${tagNameList[0]}" />
-									</c:when>
-									<c:when test="${not empty place.placeCategory}">
-										<c:out value="${place.placeCategory}" />
-									</c:when>
-									<c:otherwise>여행지</c:otherwise>
-								</c:choose>
+								<c:out value="${placeTypeLabel}" />
 							</p>
 							<h3><c:out value="${place.placeName}" /></h3>
 							<p class="place-meta"><c:out value="${place.placeAddress}" /></p>
+							<c:if test="${not empty representativeTagList}">
+								<div class="tag-row">
+									<c:forEach var="tagLabel" items="${representativeTagList}">
+										<span class="tag-chip"><c:out value="${tagLabel}" /></span>
+									</c:forEach>
+								</div>
+							</c:if>
 						</div>
 						<c:set var="isWishedByMe" value="${not empty currentAuthId and not empty wishlistList}" />
 						<div class="place-head-actions">
 							<c:choose>
 								<c:when test="${not empty currentAuthId}">
-									<button type="button" class="wish-trigger-btn" id="wishlist-open-btn" aria-label="찜하기">
-										<span class="wish-label">찜</span>
-										<span class="wish-icon ${isWishedByMe ? 'is-active' : ''}">${isWishedByMe ? '♥' : '♡'}</span>
-									</button>
+									<c:choose>
+										<c:when test="${isWishedByMe}">
+											<form class="wish-trigger-form" method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/delete">
+												<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+												<button type="submit" class="wish-trigger-btn" aria-label="찜 취소">
+													<span class="wish-label">찜 취소</span>
+													<span class="wish-icon is-active">♥</span>
+												</button>
+											</form>
+										</c:when>
+										<c:otherwise>
+											<button type="button" class="wish-trigger-btn" id="wishlist-open-btn" aria-label="찜하기">
+												<span class="wish-label">찜</span>
+												<span class="wish-icon">♡</span>
+											</button>
+										</c:otherwise>
+									</c:choose>
 								</c:when>
 								<c:otherwise>
 									<a class="wish-trigger-btn wish-login-link" href="${pageContext.request.contextPath}/auth/login" aria-label="로그인 후 찜하기">
@@ -519,7 +531,7 @@
 								<c:forEach var="wish" items="${wishlistList}">
 									<div class="wishlist-card">
 										<p class="wishlist-name"><c:out value="${wish.categoryType}" /></p>
-										<form method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/${wish.wishNo}/delete" onsubmit="return confirm('찜을 삭제하시겠습니까?');">
+										<form method="post" action="${pageContext.request.contextPath}/place/${placeNo}/wishlist/${wish.wishNo}/delete">
 											<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 											<button type="submit" class="review-action-btn review-delete-btn">삭제</button>
 										</form>

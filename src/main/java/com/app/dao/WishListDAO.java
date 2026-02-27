@@ -24,6 +24,8 @@ public interface WishListDAO {
 
 	public int deleteWishListByOwner(Long wishNo, Long userNo) throws Exception;
 
+	public int deleteWishListByUserAndPlace(Long userNo, Long placeNo) throws Exception;
+
 	public List<WishListDTO> selectWishListByUserAndPlace(Long userNo, Long placeNo) throws Exception;
 
 	public int countWishListByUserAndPlaceAndCategory(Long userNo, Long placeNo, Long categoryNo) throws Exception;

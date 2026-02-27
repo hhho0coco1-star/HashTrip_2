@@ -93,6 +93,15 @@ public class WishListServiceImpl implements WishListService {
 	}
 
 	@Override
+	public boolean deleteWishListByPlace(String authId, Long placeNo) throws Exception {
+		Long userNo = resolveUserNoByAuthId(authId);
+		if (placeNo == null || placeNo <= 0) {
+			throw new IllegalArgumentException("placeNo is required.");
+		}
+		return wishListDAO.deleteWishListByUserAndPlace(userNo, placeNo) > 0;
+	}
+
+	@Override
 	public int getWishUserCountByPlaceNo(Long placeNo) throws Exception {
 		if (placeNo == null || placeNo <= 0) {
 			return 0;

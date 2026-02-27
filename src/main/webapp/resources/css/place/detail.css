@@ -204,6 +204,10 @@ body.modal-open {
 	gap: 10px;
 }
 
+.wish-trigger-form {
+	margin: 0;
+}
+
 .wish-trigger-btn {
 	border: 0;
 	background: transparent;

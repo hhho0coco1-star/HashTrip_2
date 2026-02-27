@@ -22,12 +22,14 @@ public class LoginServiceImpl implements LoginService {
 
     private final AuthDAO authDAO;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Autowired
-    public LoginServiceImpl(AuthDAO authDAO, PasswordEncoder passwordEncoder) {
+    public LoginServiceImpl(AuthDAO authDAO, PasswordEncoder passwordEncoder, MailService mailService) {
         this.authDAO = authDAO;
         this.passwordEncoder = passwordEncoder;
+        this.mailService = mailService;
     }
 
     @Override
@@ -117,9 +119,10 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
-    public String resetPassword(String userId, String email) {
+    @Transactional(rollbackFor = Exception.class)
+    public boolean resetPassword(String userId, String email) {
         if (!StringUtils.hasText(userId) || !StringUtils.hasText(email)) {
-            return null;
+            return false;
         }
 
         String normalizedUserId = userId.trim();
@@ -127,10 +130,10 @@ public class LoginServiceImpl implements LoginService {
         UsersDTO matchedUser = authDAO.findByAuthId(normalizedUserId);
 
         if (matchedUser == null || !ACTIVE_STATUS.equalsIgnoreCase(matchedUser.getUserStatus())) {
-            return null;
+            return false;
         }
         if (!normalizedEmail.equalsIgnoreCase(matchedUser.getAuthEmail())) {
-            return null;
+            return false;
         }
 
         String temporaryPassword = generateTemporaryPassword(10);
@@ -138,10 +141,11 @@ public class LoginServiceImpl implements LoginService {
 
         int updatedRows = authDAO.updatePasswordByAuthIdAndEmail(normalizedUserId, normalizedEmail, encodedPassword);
         if (updatedRows != 1) {
-            return null;
+            return false;
         }
 
-        return temporaryPassword;
+        mailService.sendTemporaryPassword(normalizedEmail, normalizedUserId, temporaryPassword);
+        return true;
     }
 
     @Override

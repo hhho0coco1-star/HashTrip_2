@@ -18,7 +18,7 @@ public interface LoginService {
 
     String findUserIdByEmail(String email);
 
-    String resetPassword(String userId, String email);
+    boolean resetPassword(String userId, String email);
 
     UsersDTO findByAuthId(String userId);
 
