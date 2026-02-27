@@ -16,10 +16,31 @@
     let replaceCurrentOverlay = null;
     let mapSearchKakaoList = [];
     let mapSearchEnriched = {};
+    let targetDayForAdd = null; // { dayNumber, date } - 일차별 장소 추가 버튼에서 설정
+    let lastScrollY = null;     // 모달 열기 전 스크롤 위치 저장
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
     function qsAll(s, r) { return Array.from((r || document).querySelectorAll(s)); }
+
+    function openModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (lastScrollY === null) {
+            lastScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        }
+        window.scrollTo(0, 0);
+        modal.classList.remove("hidden");
+    }
+
+    function closeModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add("hidden");
+        if (lastScrollY !== null) {
+            window.scrollTo(0, lastScrollY);
+            lastScrollY = null;
+        }
+    }
 
     function loadInitial() {
         const el = id("initial-plan-data");
@@ -109,8 +130,14 @@
                 }
             }
             const emptyHint = list.length === 0 ? "<p class=\"planner-day-empty-hint\">장소를 여기로 드래그하세요</p>" : "";
+            const addBtnHtml =
+                "<button type=\"button\" class=\"planner-btn planner-btn-sm planner-day-add-btn\" " +
+                "data-day=\"" + dayNum + "\" data-date=\"" + (dayDate || "") + "\">장소 추가</button>";
             return "<div class=\"planner-day-group planner-day-dropzone\" data-day=\"" + dayNum + "\" data-date=\"" + (dayDate || "") + "\">" +
+                "<div class=\"planner-day-header\">" +
                 "<h3 class=\"planner-day-title\">" + dayTitle + "</h3>" +
+                addBtnHtml +
+                "</div>" +
                 "<div class=\"planner-day-cards\">" + cards + emptyHint + "</div>" +
                 "</div>";
         }).join("");
@@ -158,6 +185,26 @@
                 if (!zone.contains(e.relatedTarget)) zone.classList.remove("planner-drag-over");
             });
             zone.addEventListener("drop", onDropDayZone);
+        });
+
+        // 일차별 '장소 추가' 버튼 이벤트
+        qsAll(".planner-day-add-btn", container).forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var dayNum = parseInt(btn.getAttribute("data-day"), 10);
+                var dayDate = btn.getAttribute("data-date") || "";
+                if (!dayNum || !dayDate) {
+                    // 날짜 정보가 없으면 마지막 일차로 fallback
+                    var startStr = getPlanStartDate();
+                    var numDays = getPlanDayCount();
+                    dayNum = numDays || 1;
+                    dayDate = dateStrAddDays(startStr, dayNum - 1) || startStr;
+                }
+                targetDayForAdd = {
+                    dayNumber: dayNum,
+                    date: dayDate
+                };
+                openMapModal();
+            });
         });
     }
 
@@ -225,11 +272,11 @@
         const lng = place.placeLongitude != null ? parseFloat(place.placeLongitude) : NaN;
         if (isNaN(lat) || isNaN(lng)) {
             list.innerHTML = "<p class=\"planner-replace-msg\">이 장소에는 위치 정보가 없어 근처 여행지를 검색할 수 없습니다. 장소 추가로 새 장소를 넣은 뒤 순서를 바꿔 보세요.</p>";
-            modal.classList.remove("hidden");
+            openModalWithScroll("replaceModal");
             return;
         }
         list.innerHTML = "<p class=\"planner-replace-msg\">검색 중...</p>";
-        modal.classList.remove("hidden");
+        openModalWithScroll("replaceModal");
         fetchReplacePlaces();
     }
 
@@ -393,9 +440,12 @@
                 if (!exp) return;
                 var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
                 var urls = data.photoUrls || [];
-                var photosHtml = urls.length === 0
+                var validUrls = Array.isArray(urls)
+                    ? urls.filter(function (u) { return isValidImageUrl(u); })
+                    : [];
+                var photosHtml = validUrls.length === 0
                     ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
-                    : urls.slice(0, 10).map(function (url) {
+                    : validUrls.slice(0, 10).map(function (url) {
                         return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
                     }).join("");
                 var reviews = data.reviews || [];
@@ -410,7 +460,39 @@
                         if ((r.commentContent || "").length > 120) content += "…";
                         return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
                     }).join("");
-                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+                // 카드 썸네일도 상세 페이지와 비슷하게, 가능하면 첫 번째 사진으로 교체
+                if (urls.length > 0) {
+                    var heroUrl = urls[0];
+                    var thumbImg = cardEl.querySelector(".planner-replace-thumb");
+                    if (thumbImg) {
+                        thumbImg.src = escapeHtml(heroUrl);
+                    } else {
+                        var placeholder = cardEl.querySelector(".planner-replace-thumb.placeholder");
+                        if (placeholder) {
+                            placeholder.outerHTML = "<img class=\"planner-replace-thumb\" src=\"" + escapeHtml(heroUrl) + "\" alt=\"\" />";
+                        }
+                    }
+                }
+
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                    detailLinkHtml +
+                    "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                    "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div>" +
+                    "<div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div>" +
+                    "</div>";
+
+                var selectBtn = exp.querySelector(".planner-expanded-select-btn");
+                if (selectBtn) {
+                    selectBtn.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        var footerBtn = typeof id === "function" ? id("replaceConfirmBtn") : document.getElementById("replaceConfirmBtn");
+                        if (footerBtn && !footerBtn.disabled) {
+                            footerBtn.click();
+                        }
+                    });
+                }
             })
             .catch(function () {
                 if (selectedReplaceIdx >= 0 && replaceNearbyList[selectedReplaceIdx] && replaceNearbyList[selectedReplaceIdx].placeNo === requestedPlaceNo) {
@@ -433,8 +515,7 @@
         replaceCurrentOverlay = null;
         const mapEl = id("replaceMap");
         if (mapEl) mapEl.classList.add("hidden");
-        const modal = id("replaceModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("replaceModal");
         replacePlaceId = null;
     }
 
@@ -529,10 +610,37 @@
             alert("장소를 최소 1개 이상 추가한 뒤 여행 완료를 할 수 있어요.");
             return;
         }
-        var steps = places.map(function (p, i) {
-            return (i + 1) + ". " + escapeHtml(p.placeName || "장소");
-        }).join(" → ");
-        summaryEl.innerHTML = "<p class=\"planner-complete-route-text\">" + steps + "</p>";
+
+        // 일차별로 묶어서 "1일차 (2/26) : 장소A → 장소B" 형식으로 표시
+        var byDay = {};
+        places.forEach(function (p) {
+            var dayNum = p.dayNumber || 1;
+            if (!byDay[dayNum]) byDay[dayNum] = [];
+            byDay[dayNum].push(p);
+        });
+        var dayKeys = Object.keys(byDay).map(function (k) { return parseInt(k, 10); }).sort(function (a, b) { return a - b; });
+
+        var html = dayKeys.map(function (dayNum) {
+            var list = byDay[dayNum] || [];
+            if (list.length === 0) return "";
+            var rawDate = (list[0].date || "").toString();
+            var displayDate = "";
+            if (rawDate) {
+                var d = new Date(rawDate);
+                if (!isNaN(d.getTime())) {
+                    var mm = d.getMonth() + 1;
+                    var dd = d.getDate();
+                    displayDate = mm + "/" + dd;
+                }
+            }
+            var header = dayNum + "일차" + (displayDate ? " (" + displayDate + ")" : "");
+            var stepNames = list.map(function (p, idx) {
+                return (idx + 1) + ". " + escapeHtml(p.placeName || "장소");
+            }).join(" → ");
+            return "<p class=\"planner-complete-route-text\">" + header + " : " + stepNames + "</p>";
+        }).filter(function (s) { return s; }).join("");
+
+        summaryEl.innerHTML = html;
         var titleInput = id("completeReviewPlanTitle");
         var headerTitle = id("planTitle");
         if (titleInput && headerTitle) titleInput.value = headerTitle.value || "";
@@ -541,12 +649,11 @@
         if (pubCheck && pubVal) {
             pubCheck.onchange = function () { pubVal.value = pubCheck.checked ? "Y" : "N"; };
         }
-        modal.classList.remove("hidden");
+        openModalWithScroll("completeReviewModal");
     }
 
     function closeCompleteReviewModal() {
-        const modal = id("completeReviewModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("completeReviewModal");
     }
 
     function buildPayload() {
@@ -568,9 +675,8 @@
     }
 
     function openMapModal() {
-        const modal = id("mapModal");
-        if (!modal) return;
-        modal.classList.remove("hidden");
+        if (!id("mapModal")) return;
+        openModalWithScroll("mapModal");
         ensureMapReady().then(function () {
             if (id("placeSearch")) id("placeSearch").value = "";
             if (id("searchResults")) id("searchResults").innerHTML = "";
@@ -578,9 +684,9 @@
     }
 
     function closeMapModal() {
-        const modal = id("mapModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("mapModal");
         selectedPlace = null;
+        targetDayForAdd = null;
         mapSearchKakaoList = [];
         mapSearchEnriched = {};
         const res = id("searchResults");
@@ -593,6 +699,18 @@
             return;
         }
         const startStr = getPlanStartDate();
+        const numDays = getPlanDayCount();
+
+        // 기본값: 마지막 일차
+        let dayNum = numDays || 1;
+        let dayDate = dateStrAddDays(startStr, dayNum - 1) || startStr;
+
+        // 일차별 '장소 추가' 버튼에서 지정된 타겟이 있으면 우선 사용
+        if (targetDayForAdd && targetDayForAdd.dayNumber) {
+            dayNum = targetDayForAdd.dayNumber;
+            dayDate = targetDayForAdd.date || dateStrAddDays(startStr, dayNum - 1) || startStr;
+        }
+
         places.push({
             id: createPlaceId(),
             placeNo: selectedPlace.placeNo || null,
@@ -600,13 +718,15 @@
             placeAddress: selectedPlace.placeAddress || "",
             placeLatitude: selectedPlace.placeLatitude,
             placeLongitude: selectedPlace.placeLongitude,
-            date: startStr,
+            date: dayDate,
             time: "",
             endDate: "",
             endTime: "",
             memo: "",
-            dayNumber: 1
+            dayNumber: dayNum
         });
+
+        targetDayForAdd = null;
         render();
         closeMapModal();
     }
@@ -660,9 +780,12 @@
                 if (!exp) return;
                 var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
                 var urls = data.photoUrls || [];
-                var photosHtml = urls.length === 0
+                var validUrls = Array.isArray(urls)
+                    ? urls.filter(function (u) { return isValidImageUrl(u); })
+                    : [];
+                var photosHtml = validUrls.length === 0
                     ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
-                    : urls.slice(0, 10).map(function (url) {
+                    : validUrls.slice(0, 10).map(function (url) {
                         return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
                     }).join("");
                 var reviews = data.reviews || [];
@@ -677,7 +800,63 @@
                         if ((r.commentContent || "").length > 120) content += "…";
                         return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
                     }).join("");
-                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+
+                // 장소 추가 지도 모달에서도, 가능하면 대표 이미지를 카드 썸네일로 사용
+                (function () {
+                    var heroUrl = "";
+
+                    // 1) mapSearchEnriched 에서 placeThumbnailUrl 우선 사용
+                    var idxAttr = cardEl.getAttribute("data-idx");
+                    if (typeof idxAttr === "string" && idxAttr !== "" && mapSearchEnriched) {
+                        var idx = parseInt(idxAttr, 10);
+                        var enriched = mapSearchEnriched[idx];
+                        if (enriched && isValidImageUrl(enriched.placeThumbnailUrl)) {
+                            heroUrl = enriched.placeThumbnailUrl.trim();
+                        }
+                    }
+
+                    // 2) 없으면 photoUrls 중 유효한 URL을 하나 선택
+                    if (!heroUrl && Array.isArray(validUrls) && validUrls.length > 0) {
+                        heroUrl = validUrls[0].trim();
+                    }
+
+                    if (!heroUrl) return;
+
+                    var thumbImg = cardEl.querySelector(".planner-replace-thumb");
+                    if (thumbImg) {
+                        thumbImg.src = escapeHtml(heroUrl);
+                    } else {
+                        var placeholder = cardEl.querySelector(".planner-replace-thumb.placeholder");
+                        if (placeholder) {
+                            placeholder.outerHTML = "<img class=\"planner-replace-thumb\" src=\"" + escapeHtml(heroUrl) + "\" alt=\"\" />";
+                        }
+                    }
+                })();
+
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                    detailLinkHtml +
+                    "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                    "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div>" +
+                    "<div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div>" +
+                    "</div>";
+
+                var selectBtn = exp.querySelector(".planner-expanded-select-btn");
+                if (selectBtn) {
+                    selectBtn.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        // 장소 추가 모달의 하단 "선택 완료" 버튼과 동일한 동작
+                        if (typeof confirmPlace === "function") {
+                            confirmPlace();
+                        } else {
+                            var footerBtn = typeof id === "function" ? id("confirmPlace") : document.getElementById("confirmPlace");
+                            if (footerBtn && !footerBtn.disabled) {
+                                footerBtn.click();
+                            }
+                        }
+                    });
+                }
             })
             .catch(function () {
                 var exp = cardEl.querySelector(".planner-replace-card-expanded");
@@ -689,15 +868,26 @@
         if (!cardEl || !place) return;
         var inner = cardEl.querySelector(".planner-replace-card-inner");
         if (!inner) return;
-        var name = escapeHtml(place.placeName || "");
-        var addr = escapeHtml(place.placeAddress || "");
+
+        // Kakao 검색에서 내려온 원래 이름/주소를 우선 사용
+        var originalName = cardEl.getAttribute("data-name") || "";
+        var originalAddr = cardEl.getAttribute("data-address") || "";
+
+        var name = escapeHtml(originalName || place.placeName || "");
+        var addr = escapeHtml(originalAddr || place.placeAddress || "");
+
         var thumb = place.placeThumbnailUrl ? escapeHtml(place.placeThumbnailUrl) : "";
-        var thumbHtml = thumb ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />" : "<div class=\"planner-replace-thumb placeholder\"></div>";
+        var thumbHtml = thumb
+            ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />"
+            : "<div class=\"planner-replace-thumb placeholder\"></div>";
+
         var detailUrl = place.placeNo ? (ctx + "/place/detail?place_no=" + place.placeNo) : "";
         var nameEl = detailUrl
             ? "<span class=\"planner-replace-name-wrap\"><a href=\"" + detailUrl + "\" class=\"planner-replace-name\" target=\"_blank\" rel=\"noopener\">" + name + "</a></span>"
             : "<strong class=\"planner-replace-name\">" + name + "</strong>";
+
         var rating = place.placeRating != null ? Number(place.placeRating).toFixed(1) : "";
+
         inner.innerHTML = "<div class=\"planner-replace-thumb-wrap\">" + thumbHtml + "</div>" +
             "<div class=\"planner-replace-info\">" +
             nameEl +
@@ -705,9 +895,45 @@
             "<div class=\"planner-replace-meta\">" +
             (rating ? "<span class=\"planner-replace-rating\">★ " + escapeHtml(rating) + "</span>" : "") +
             "</div></div>";
+
         qsAll("a.planner-replace-name", inner).forEach(function (link) {
             link.addEventListener("click", function (e) { e.stopPropagation(); });
         });
+    }
+
+    function normalizePlaceName(name) {
+        if (!name) return "";
+        return String(name)
+            .replace(/[()]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isClose(lat1, lng1, lat2, lng2) {
+        if (!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) {
+            return false;
+        }
+        var dLat = Math.abs(lat1 - lat2);
+        var dLng = Math.abs(lng1 - lng2);
+        return dLat < 0.0003 && dLng < 0.0003; // 수십 m 이내
+    }
+
+    function isSamePlace(kakaoItem, place) {
+        if (!kakaoItem || !place) return false;
+
+        var latK = parseFloat(kakaoItem.y);
+        var lngK = parseFloat(kakaoItem.x);
+        var latP = place.placeLatitude;
+        var lngP = place.placeLongitude;
+        if (!isClose(latK, lngK, latP, lngP)) {
+            return false;
+        }
+
+        var kakaoName = normalizePlaceName(kakaoItem.place_name || "");
+        var dbName = normalizePlaceName(place.placeName || "");
+        if (!kakaoName || !dbName) return false;
+        return kakaoName === dbName;
     }
 
     function searchPlace() {
@@ -754,49 +980,27 @@
                         }
                         clearAllSearchCardExpanded();
                         var enriched = mapSearchEnriched[idx];
-                        if (enriched != null) {
+                        var kakaoItem = mapSearchKakaoList[idx];
+
+                        if (enriched != null && kakaoItem && isSamePlace(kakaoItem, enriched)) {
                             selectedPlace = {
                                 placeNo: enriched.placeNo || null,
-                                placeName: enriched.placeName || "",
-                                placeAddress: enriched.placeAddress || "",
+                                placeName: name,
+                                placeAddress: address,
                                 placeLatitude: lat,
                                 placeLongitude: lng
                             };
                             updateSearchCardContent(el, enriched);
                             loadSearchPlacePreview(enriched.placeNo || null, el);
                         } else {
-                            var url = ctx + "/planner/nearby-places?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng) + "&radiusKm=1";
-                            fetch(url, { credentials: "same-origin" })
-                                .then(function (r) { return r.ok ? r.json() : []; })
-                                .then(function (arr) {
-                                    var list = Array.isArray(arr) ? arr : [];
-                                    var place = list.length > 0 ? list[0] : null;
-                                    mapSearchEnriched[idx] = place;
-                                    if (place) {
-                                        selectedPlace = {
-                                            placeNo: place.placeNo || null,
-                                            placeName: place.placeName || "",
-                                            placeAddress: place.placeAddress || "",
-                                            placeLatitude: lat,
-                                            placeLongitude: lng
-                                        };
-                                        updateSearchCardContent(el, place);
-                                        loadSearchPlacePreview(place.placeNo || null, el);
-                                    } else {
-                                        selectedPlace = {
-                                            placeNo: null,
-                                            placeName: name,
-                                            placeAddress: address,
-                                            placeLatitude: lat,
-                                            placeLongitude: lng
-                                        };
-                                        loadSearchPlacePreview(null, el);
-                                    }
-                                })
-                                .catch(function () {
-                                    selectedPlace = { placeNo: null, placeName: name, placeAddress: address, placeLatitude: lat, placeLongitude: lng };
-                                    loadSearchPlacePreview(null, el);
-                                });
+                            selectedPlace = {
+                                placeNo: null,
+                                placeName: name,
+                                placeAddress: address,
+                                placeLatitude: lat,
+                                placeLongitude: lng
+                            };
+                            loadSearchPlacePreview(enriched && enriched.placeNo ? enriched.placeNo : null, el);
                         }
                     });
                 });
@@ -837,6 +1041,25 @@
             .replace(/"/g, "&quot;");
     }
 
+    function isValidImageUrl(url) {
+        if (!url) return false;
+        var s = String(url).trim();
+        return /^https?:\/\//.test(s) || s.charAt(0) === "/";
+    }
+
+    // 썸네일/프리뷰 이미지 로딩 실패 시 깨진 이미지를 숨김
+    document.addEventListener("error", function (e) {
+        var target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.tagName || target.tagName.toLowerCase() !== "img") return;
+        if (!target.classList) return;
+
+        if (target.classList.contains("planner-replace-thumb")
+            || target.classList.contains("planner-replace-preview-photo")) {
+            target.style.display = "none";
+        }
+    }, true);
+
     function recalcDayNumbers() {
         const startStr = getPlanStartDate();
         if (!startStr) return;
@@ -862,7 +1085,10 @@
 
         if (id("planStartDate")) id("planStartDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
         if (id("planEndDate")) id("planEndDate").addEventListener("change", function () { recalcDayNumbers(); render(); });
-        if (id("btnAddPlace")) id("btnAddPlace").addEventListener("click", openMapModal);
+        if (id("btnAddPlace")) id("btnAddPlace").addEventListener("click", function () {
+            targetDayForAdd = null;
+            openMapModal();
+        });
         if (id("btnCompleteReview")) id("btnCompleteReview").addEventListener("click", openCompleteReviewModal);
         if (id("closeCompleteReviewModal")) id("closeCompleteReviewModal").addEventListener("click", closeCompleteReviewModal);
         if (id("cancelCompleteReview")) id("cancelCompleteReview").addEventListener("click", closeCompleteReviewModal);

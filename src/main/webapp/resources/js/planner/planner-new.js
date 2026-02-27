@@ -9,10 +9,30 @@
     let mapReady = false;
     let mapSearchKakaoList = [];
     let mapSearchEnriched = {};
+    let lastScrollY = null; // 모달 열기 전 스크롤 위치 저장
 
     function id(s) { return document.getElementById(s); }
     function qs(s, r) { return (r || document).querySelector(s); }
     function qsAll(s, r) { return Array.from((r || document).querySelectorAll(s)); }
+
+    function openModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (lastScrollY === null) {
+            lastScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        }
+        window.scrollTo(0, 0);
+        modal.classList.remove("hidden");
+    }
+
+    function closeModalWithScroll(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add("hidden");
+        if (lastScrollY !== null) {
+            window.scrollTo(0, lastScrollY);
+            lastScrollY = null;
+        }
+    }
 
     var step1Panel = null;
     var step2Panel = null;
@@ -457,9 +477,8 @@
     }
 
     function openMapModal() {
-        const modal = id("mapModal");
-        if (!modal) return;
-        modal.classList.remove("hidden");
+        if (!id("mapModal")) return;
+        openModalWithScroll("mapModal");
         ensureMapReady().then(function () {
             if (id("placeSearch")) id("placeSearch").value = "";
             if (id("searchResults")) id("searchResults").innerHTML = "";
@@ -467,8 +486,7 @@
     }
 
     function closeMapModal() {
-        const modal = id("mapModal");
-        if (modal) modal.classList.add("hidden");
+        closeModalWithScroll("mapModal");
         selectedPlace = null;
         mapSearchKakaoList = [];
         mapSearchEnriched = {};
@@ -540,9 +558,12 @@
                 if (!exp) return;
                 var detailLinkHtml = "<a href=\"" + ctx + "/place/detail?place_no=" + requestedPlaceNo + "\" class=\"planner-replace-detail-link\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">상세 페이지 보기</a>";
                 var urls = data.photoUrls || [];
-                var photosHtml = urls.length === 0
+                var validUrls = Array.isArray(urls)
+                    ? urls.filter(function (u) { return isValidImageUrl(u); })
+                    : [];
+                var photosHtml = validUrls.length === 0
                     ? "<p class=\"planner-replace-msg\">등록된 사진이 없습니다.</p>"
-                    : urls.slice(0, 10).map(function (url) {
+                    : validUrls.slice(0, 10).map(function (url) {
                         return "<img class=\"planner-replace-preview-photo\" src=\"" + escapeHtml(url) + "\" alt=\"\" />";
                     }).join("");
                 var reviews = data.reviews || [];
@@ -557,7 +578,64 @@
                         if ((r.commentContent || "").length > 120) content += "…";
                         return "<div class=\"planner-replace-review-item\"><span class=\"planner-replace-review-meta\">" + meta + "</span><p>" + content + "</p></div>";
                     }).join("");
-                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" + detailLinkHtml + "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div><div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div></div>";
+                // 카드 썸네일도 상세 페이지와 동일하게, 가능하면 대표 이미지로 교체
+                (function () {
+                    var heroUrl = "";
+
+                    // 1) mapSearchEnriched 에서 placeThumbnailUrl 우선 사용
+                    var idxAttr = cardEl.getAttribute("data-idx");
+                    if (typeof idxAttr === "string" && idxAttr !== "" && mapSearchEnriched) {
+                        var idx = parseInt(idxAttr, 10);
+                        var enriched = mapSearchEnriched[idx];
+                        if (enriched && isValidImageUrl(enriched.placeThumbnailUrl)) {
+                            heroUrl = enriched.placeThumbnailUrl.trim();
+                        }
+                    }
+
+                    // 2) 없으면 photoUrls 중 유효한 URL을 하나 선택
+                    if (!heroUrl && Array.isArray(urls) && urls.length > 0) {
+                        for (var i = 0; i < urls.length; i += 1) {
+                            if (isValidImageUrl(urls[i])) {
+                                heroUrl = urls[i].trim();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!heroUrl) return;
+
+                    var thumbImg = cardEl.querySelector(".planner-replace-thumb");
+                    if (thumbImg) {
+                        thumbImg.src = escapeHtml(heroUrl);
+                    } else {
+                        var placeholder = cardEl.querySelector(".planner-replace-thumb.placeholder");
+                        if (placeholder) {
+                            placeholder.outerHTML = "<img class=\"planner-replace-thumb\" src=\"" + escapeHtml(heroUrl) + "\" alt=\"\" />";
+                        }
+                    }
+                })();
+
+                exp.innerHTML = "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                    detailLinkHtml +
+                    "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                    "<div class=\"planner-replace-expanded-photos\">" + photosHtml + "</div>" +
+                    "<div class=\"planner-replace-expanded-reviews\">" + reviewsHtml + "</div>" +
+                    "</div>";
+
+                var selectBtn = exp.querySelector(".planner-expanded-select-btn");
+                if (selectBtn) {
+                    selectBtn.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        if (typeof confirmPlace === "function") {
+                            confirmPlace();
+                        } else {
+                            var footerBtn = typeof id === "function" ? id("confirmPlace") : document.getElementById("confirmPlace");
+                            if (footerBtn) footerBtn.click();
+                        }
+                    });
+                }
             })
             .catch(function () {
                 var exp = cardEl.querySelector(".planner-replace-card-expanded");
@@ -569,15 +647,26 @@
         if (!cardEl || !place) return;
         var inner = cardEl.querySelector(".planner-replace-card-inner");
         if (!inner) return;
-        var name = escapeHtml(place.placeName || "");
-        var addr = escapeHtml(place.placeAddress || "");
+
+        // Kakao 검색에서 내려온 원래 이름/주소를 우선 사용
+        var originalName = cardEl.getAttribute("data-name") || "";
+        var originalAddr = cardEl.getAttribute("data-address") || "";
+
+        var name = escapeHtml(originalName || place.placeName || "");
+        var addr = escapeHtml(originalAddr || place.placeAddress || "");
+
         var thumb = place.placeThumbnailUrl ? escapeHtml(place.placeThumbnailUrl) : "";
-        var thumbHtml = thumb ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />" : "<div class=\"planner-replace-thumb placeholder\"></div>";
+        var thumbHtml = thumb
+            ? "<img class=\"planner-replace-thumb\" src=\"" + thumb + "\" alt=\"\" />"
+            : "<div class=\"planner-replace-thumb placeholder\"></div>";
+
         var detailUrl = place.placeNo ? (ctx + "/place/detail?place_no=" + place.placeNo) : "";
         var nameEl = detailUrl
             ? "<span class=\"planner-replace-name-wrap\"><a href=\"" + detailUrl + "\" class=\"planner-replace-name\" target=\"_blank\" rel=\"noopener\">" + name + "</a></span>"
             : "<strong class=\"planner-replace-name\">" + name + "</strong>";
+
         var rating = place.placeRating != null ? Number(place.placeRating).toFixed(1) : "";
+
         inner.innerHTML = "<div class=\"planner-replace-thumb-wrap\">" + thumbHtml + "</div>" +
             "<div class=\"planner-replace-info\">" +
             nameEl +
@@ -585,9 +674,45 @@
             "<div class=\"planner-replace-meta\">" +
             (rating ? "<span class=\"planner-replace-rating\">★ " + escapeHtml(rating) + "</span>" : "") +
             "</div></div>";
+
         qsAll("a.planner-replace-name", inner).forEach(function (link) {
             link.addEventListener("click", function (e) { e.stopPropagation(); });
         });
+    }
+
+    function normalizePlaceName(name) {
+        if (!name) return "";
+        return String(name)
+            .replace(/[()]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isClose(lat1, lng1, lat2, lng2) {
+        if (!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) {
+            return false;
+        }
+        var dLat = Math.abs(lat1 - lat2);
+        var dLng = Math.abs(lng1 - lng2);
+        return dLat < 0.0003 && dLng < 0.0003; // 수십 m 이내
+    }
+
+    function isSamePlace(kakaoItem, place) {
+        if (!kakaoItem || !place) return false;
+
+        var latK = parseFloat(kakaoItem.y);
+        var lngK = parseFloat(kakaoItem.x);
+        var latP = place.placeLatitude;
+        var lngP = place.placeLongitude;
+        if (!isClose(latK, lngK, latP, lngP)) {
+            return false;
+        }
+
+        var kakaoName = normalizePlaceName(kakaoItem.place_name || "");
+        var dbName = normalizePlaceName(place.placeName || "");
+        if (!kakaoName || !dbName) return false;
+        return kakaoName === dbName;
     }
 
     function searchPlace() {
@@ -634,49 +759,27 @@
                         }
                         clearAllSearchCardExpanded();
                         var enriched = mapSearchEnriched[idx];
-                        if (enriched != null) {
+                        var kakaoItem = mapSearchKakaoList[idx];
+
+                        if (enriched != null && kakaoItem && isSamePlace(kakaoItem, enriched)) {
                             selectedPlace = {
                                 placeNo: enriched.placeNo || null,
-                                placeName: enriched.placeName || "",
-                                placeAddress: enriched.placeAddress || "",
+                                placeName: name,
+                                placeAddress: address,
                                 placeLatitude: lat,
                                 placeLongitude: lng
                             };
                             updateSearchCardContent(el, enriched);
                             loadSearchPlacePreview(enriched.placeNo || null, el);
                         } else {
-                            var url = ctx + "/planner/nearby-places?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng) + "&radiusKm=1";
-                            fetch(url, { credentials: "same-origin" })
-                                .then(function (r) { return r.ok ? r.json() : []; })
-                                .then(function (arr) {
-                                    var list = Array.isArray(arr) ? arr : [];
-                                    var place = list.length > 0 ? list[0] : null;
-                                    mapSearchEnriched[idx] = place;
-                                    if (place) {
-                                        selectedPlace = {
-                                            placeNo: place.placeNo || null,
-                                            placeName: place.placeName || "",
-                                            placeAddress: place.placeAddress || "",
-                                            placeLatitude: lat,
-                                            placeLongitude: lng
-                                        };
-                                        updateSearchCardContent(el, place);
-                                        loadSearchPlacePreview(place.placeNo || null, el);
-                                    } else {
-                                        selectedPlace = {
-                                            placeNo: null,
-                                            placeName: name,
-                                            placeAddress: address,
-                                            placeLatitude: lat,
-                                            placeLongitude: lng
-                                        };
-                                        loadSearchPlacePreview(null, el);
-                                    }
-                                })
-                                .catch(function () {
-                                    selectedPlace = { placeNo: null, placeName: name, placeAddress: address, placeLatitude: lat, placeLongitude: lng };
-                                    loadSearchPlacePreview(null, el);
-                                });
+                            selectedPlace = {
+                                placeNo: null,
+                                placeName: name,
+                                placeAddress: address,
+                                placeLatitude: lat,
+                                placeLongitude: lng
+                            };
+                            loadSearchPlacePreview(enriched && enriched.placeNo ? enriched.placeNo : null, el);
                         }
                     });
                 });
@@ -716,6 +819,25 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
     }
+
+    function isValidImageUrl(url) {
+        if (!url) return false;
+        var s = String(url).trim();
+        return /^https?:\/\//.test(s) || s.charAt(0) === "/";
+    }
+
+    // 썸네일/프리뷰 이미지 로딩 실패 시 깨진 이미지를 숨김
+    document.addEventListener("error", function (e) {
+        var target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.tagName || target.tagName.toLowerCase() !== "img") return;
+        if (!target.classList) return;
+
+        if (target.classList.contains("planner-replace-thumb")
+            || target.classList.contains("planner-replace-preview-photo")) {
+            target.style.display = "none";
+        }
+    }, true);
 
     document.addEventListener("DOMContentLoaded", function () {
         init();

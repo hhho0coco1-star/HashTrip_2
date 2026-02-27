@@ -1,5 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -19,10 +18,7 @@
 
         <div class="result-box">
             <h2>${message}</h2>
-            <c:if test="${not empty temporaryPassword}">
-                <p class="result-value">${temporaryPassword}</p>
-                <p class="result-sub">로그인 후 반드시 비밀번호를 변경해 주세요.</p>
-            </c:if>
+            <p class="result-sub">보안을 위해 임시 비밀번호는 화면에 표시하지 않습니다.</p>
         </div>
 
         <div class="auth-links">

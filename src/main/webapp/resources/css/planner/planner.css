@@ -932,6 +932,12 @@
     align-items: center;
 }
 
+.planner-plan-created-at {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
 .planner-actions .btn-cta-outline,
 .planner-edit-actions .btn-cta-outline,
 .planner-edit-header .btn-cta-outline {
@@ -979,11 +985,24 @@
     box-shadow: var(--shadow-sm);
 }
 
+.planner-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
 .planner-day-title {
     font-size: 1.05rem;
     font-weight: 700;
-    margin: 0 0 12px;
+    margin: 0;
     color: var(--text-primary);
+}
+
+.planner-day-header .planner-day-add-btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
 }
 
 .planner-day-cards {
@@ -1139,9 +1158,13 @@
     border-radius: var(--radius);
     max-width: 560px;
     width: 100%;
-    max-height: 90vh;
-    overflow: auto;
+    max-height: 70vh;              /* 화면 높이 넘지 않도록 제한 (조금 더 위쪽 배치) */
+    overflow: auto;                /* 내용이 길면 모달 내부에서 스크롤 */
     box-shadow: var(--shadow-xl);
+    position: fixed;
+    left: 50%;
+    top: 15vh;                     /* 항상 화면 위쪽 15% 지점에 고정 */
+    transform: translateX(-50%);
 }
 
 .planner-modal-header {
@@ -1374,6 +1397,18 @@
 .planner-replace-expanded-reviews .planner-replace-review-item:last-child { border-bottom: none; }
 .planner-replace-expanded-reviews .planner-replace-review-meta { color: #64748b; }
 .planner-replace-expanded-reviews .planner-replace-review-item p { margin: 2px 0 0; color: #334155; }
+
+.planner-replace-expanded-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.planner-replace-expanded-header .planner-btn {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+}
 
 #replaceSearchBtn {
     margin-bottom: 8px;

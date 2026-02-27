@@ -264,6 +264,12 @@
 		AND USER_NO = #{userNo}
 	</delete>
 
+	<delete id="deleteWishlistByUserAndPlace" parameterType="map">
+		DELETE FROM WISHLIST
+		WHERE USER_NO = #{userNo}
+		AND PLACE_NO = #{placeNo}
+	</delete>
+
 	<delete id="deletePlaceReviewPhotosByOwner" parameterType="map">
 		DELETE FROM PHOTO_DATA
 		WHERE COMMENT_NO IN (

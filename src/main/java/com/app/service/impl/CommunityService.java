@@ -36,9 +36,9 @@ public class CommunityService {
 
         communityDAO.insertCommunityReview(dto);
 
-        List<CommunityDTO> reviews = communityDAO.getCommunityReviewsByPlanNo(planNo);
-        if (reviews != null && !reviews.isEmpty()) {
-            return reviews.get(0);
+        CommunityDTO saved = communityDAO.getCommunityReviewByPlanNoAndUserNo(planNo, userNo);
+        if (saved != null) {
+            return saved;
         }
         return dto;
     }
@@ -53,6 +53,16 @@ public class CommunityService {
         dto.setReviewContent(reviewContent.trim());
         dto.setRating(normalizeRating(rating));
         communityDAO.updateCommunityReview(dto);
+    }
+
+    public void deleteCommunityReview(Long reviewNo, Long userNo) {
+        if (reviewNo == null || userNo == null) {
+            throw new IllegalArgumentException("삭제할 리뷰 정보가 올바르지 않습니다.");
+        }
+        int deleted = communityDAO.deleteCommunityReview(reviewNo, userNo);
+        if (deleted <= 0) {
+            throw new IllegalArgumentException("삭제할 내 리뷰를 찾지 못했습니다.");
+        }
     }
 
     public int getMyCommunityReviewCount(String authId) {
