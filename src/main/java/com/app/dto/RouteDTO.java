@@ -14,6 +14,7 @@ public class RouteDTO {
     private String typeId;
     private String title;
     private String description;
+    private String planStatus;
     private Date planStartDate;
     private Date planEndDate;
     private List<String> steps;
@@ -122,6 +123,14 @@ public class RouteDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getPlanStatus() {
+        return planStatus;
+    }
+
+    public void setPlanStatus(String planStatus) {
+        this.planStatus = planStatus;
     }
 
     public Date getPlanStartDate() {

@@ -176,7 +176,17 @@
                             </c:if>
 
                             <div class="route-body">
-                                <div class="route-title">${route.title}</div>
+                                <div class="route-title-row">
+                                    <div class="route-title">${route.title}</div>
+                                    <c:if test="${route.planStatus eq 'PLANNING' || route.planStatus eq 'COMPLETED'}">
+                                        <span class="route-plan-status route-status-${route.planStatus}">
+                                            <c:choose>
+                                                <c:when test="${route.planStatus eq 'PLANNING'}">계획 중</c:when>
+                                                <c:otherwise>완료</c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                    </c:if>
+                                </div>
                                 <div class="route-desc">${route.description}</div>
                                 <div class="route-steps">
                                     <c:forEach var="step" items="${route.steps}" varStatus="st">
@@ -521,6 +531,59 @@
             .replace(/'/g, '&#39;');
     }
 
+    function normalizeRoutePlanStatus(rawStatus) {
+        if (rawStatus === null || rawStatus === undefined) {
+            return '';
+        }
+        return String(rawStatus).trim().toUpperCase();
+    }
+
+    function renderRoutePlanStatusBadgeHtml(rawStatus) {
+        const normalizedStatus = normalizeRoutePlanStatus(rawStatus);
+        if (normalizedStatus !== 'PLANNING' && normalizedStatus !== 'COMPLETED') {
+            return '';
+        }
+        const label = normalizedStatus === 'PLANNING' ? '계획 중' : '완료';
+        return '<span class="route-plan-status route-status-' + normalizedStatus + '">' + label + '</span>';
+    }
+
+    function renderRouteStepsHtml(rawSteps) {
+        const steps = Array.isArray(rawSteps) ? rawSteps.filter(step => step !== null && step !== undefined && String(step).trim()) : [];
+        if (steps.length === 0) {
+            return '<span class="route-step">등록된 코스 정보 없음</span>';
+        }
+        return steps.map((step, index) => {
+            const arrowHtml = index < steps.length - 1 ? '<span class="route-arrow">→</span>' : '';
+            return '<span class="route-step">' + escapeHtml(step) + '</span>' + arrowHtml;
+        }).join('');
+    }
+
+    function renderRouteTagsHtml(rawTags) {
+        const tags = [];
+
+        if (Array.isArray(rawTags)) {
+            rawTags.forEach(tag => {
+                if (tag !== null && tag !== undefined && String(tag).trim()) {
+                    tags.push(String(tag).trim());
+                }
+            });
+        } else if (rawTags && typeof rawTags === 'object') {
+            Object.keys(rawTags)
+                .sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}))
+                .forEach(key => {
+                    const value = rawTags[key];
+                    if (value !== null && value !== undefined && String(value).trim()) {
+                        tags.push(String(value).trim());
+                    }
+                });
+        }
+
+        if (tags.length === 0) {
+            return '';
+        }
+        return tags.map(tag => '<span class="tag tag-place">' + escapeHtml(tag) + '</span>').join('');
+    }
+
     function bindAvatarImageFallback(rootElement) {
         const root = rootElement && rootElement.querySelectorAll ? rootElement : document;
         root.querySelectorAll('.traveler-av.has-photo img').forEach(img => {
@@ -538,7 +601,7 @@
     function renderRouteGrid(routes) {
         const grid = document.getElementById('route-grid');
         if (!routes || routes.length === 0) {
-            grid.innerHTML = '<div class="empty-state"><p>조건에 맞는 루트가 없어요</p></div>';
+            grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺️</div><p>조건에 맞는 루트가 없어요</p></div>';
             return;
         }
 
@@ -562,9 +625,9 @@
             const safeUserName = escapeHtml(route.userName || 'Traveler');
             const safeTitle = escapeHtml(route.title || '제목 없음');
             const safeDescription = escapeHtml(route.description || '설명 정보 없음');
-            const safeSteps = Array.isArray(route.steps) && route.steps.length > 0
-                ? route.steps.map(step => escapeHtml(step)).join(' → ')
-                : '등록된 코스 정보 없음';
+            const routePlanStatusBadgeHtml = renderRoutePlanStatusBadgeHtml(route.planStatus);
+            const routeStepsHtml = renderRouteStepsHtml(route.steps);
+            const routeTagsHtml = renderRouteTagsHtml(route.tags);
             const savedCount = Number.isFinite(Number(route.savedCount)) ? Number(route.savedCount) : 0;
 
             return `
@@ -578,9 +641,13 @@
                 </div>
                 \${hasSim ? `<div class="match-bar-wrap"><div class="match-bar-bg"><div class="match-bar-fill" style="width:\${normalizedSim}%;background:\${barClr}"></div></div></div>` : ''}
                 <div class="route-body">
-                    <div class="route-title">\${safeTitle}</div>
+                    <div class="route-title-row">
+                        <div class="route-title">\${safeTitle}</div>
+                        \${routePlanStatusBadgeHtml}
+                    </div>
                     <div class="route-desc">\${safeDescription}</div>
-                    <div class="route-steps">\${safeSteps}</div>
+                    <div class="route-steps">\${routeStepsHtml}</div>
+                    <div class="tags">\${routeTagsHtml}</div>
                 </div>
                 <div class="route-foot">
                     <div class="route-stats">

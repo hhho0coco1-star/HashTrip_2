@@ -264,6 +264,7 @@ public class RouteService {
         route.setTitle(defaultIfBlank(travelPlan.getPlanTitle(), "Untitled Plan"));
         route.setTypeId(defaultIfBlank(travelPlan.getTypeId(), "adventurer"));
         route.setDescription(defaultIfBlank(travelPlan.getDescription(), buildDescription(travelPlan)));
+        route.setPlanStatus(normalizePlanStatus(travelPlan.getPlanStatus()));
         route.setPlanStartDate(travelPlan.getPlanStartDate());
         route.setPlanEndDate(travelPlan.getPlanEndDate());
         route.setLikeCount(defaultIfNull(travelPlan.getLikeCount(), 0));
@@ -536,6 +537,15 @@ public class RouteService {
                 }
                 return "adventurer";
         }
+    }
+
+    private String normalizePlanStatus(String rawPlanStatus) {
+        if (rawPlanStatus == null) {
+            return null;
+        }
+
+        String normalized = rawPlanStatus.trim().toUpperCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private String resolveEmoji(String typeId) {

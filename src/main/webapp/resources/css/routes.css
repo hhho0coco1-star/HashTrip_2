@@ -511,8 +511,42 @@ body {
 .route-title {
 	font-size: 1rem;
 	font-weight: 700;
-	margin-bottom: .4rem;
+	margin-bottom: 0;
+	flex: 1;
+	min-width: 0;
 	color: var(--text-primary)
+}
+
+.route-title-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: .4rem
+}
+
+.route-plan-status {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	font-size: .72rem;
+	font-weight: 700;
+	min-width: 62px;
+	height: 24px;
+	padding: 0 10px;
+	border-radius: 999px;
+	line-height: 1;
+	box-sizing: border-box
+}
+
+.route-status-PLANNING {
+	background: #e4eeff;
+	color: #4f74c4
+}
+
+.route-status-COMPLETED {
+	background: #f1f3f6;
+	color: #6e7685
 }
 
 .route-desc {
