@@ -22,5 +22,7 @@ public interface UserTagMapService {
      */
     List<UserTagMapDTO> getUserTagHistory(Long userNo);
     
+    	
+    
     
 }

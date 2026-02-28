@@ -68,19 +68,16 @@ public class AnalysisController {
     
     @GetMapping("/hashTrip/analysisResult")
     public String hashTrip_analysisResult(HttpSession session, Model model) {
-        // 세션에서 저장된 결과 꺼내기
         String finalResult = (String) session.getAttribute("finalResult");
         UsersDTO loginUser = (UsersDTO) session.getAttribute("loginUser");
 
-        // [디버깅] 콘솔에 결과값 출력해보기 (null인지 실제 문구인지 확인)
-        System.out.println(">>> 컨트롤러에서 확인한 분석 결과: " + finalResult);
-        
-        if (finalResult == null) {
-            return "redirect:/hashTrip/analysis"; // 결과 없으면 다시 테스트로
+        if (finalResult == null || loginUser == null) {
+            return "redirect:/hashTrip/analysis"; 
         }
-
+        
+        // 추가 메서드 없이 요약 문구(String)와 유저 정보만 전달
         model.addAttribute("travelType", finalResult);
-        model.addAttribute("isGuest", loginUser == null);
+        model.addAttribute("loginUser", loginUser);
         
         return "analysis/analysisResult";
     }
