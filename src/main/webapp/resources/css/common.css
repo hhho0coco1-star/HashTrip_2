@@ -68,14 +68,16 @@
 	color: #555;
 }
 
-.btn-signup {
-	background-color: #007bff;
-	color: #fff;
-}
-
 .user-info {
 	font-size: 14px;
 	color: #666;
+}
+
+.btn-logout,
+.btn-signup {
+	background-color: #007bff;
+	color: #fff;
+	border: none;
 }
 
 /* ================== footer ================== */

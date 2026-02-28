@@ -87,7 +87,8 @@
 }
 
 .btn-logout {
-	color: #555;
+	background-color: #007bff;
+	color: #fff;
 }
 
 .user-info {

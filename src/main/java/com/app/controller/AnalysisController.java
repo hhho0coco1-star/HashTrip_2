@@ -1,6 +1,7 @@
 package com.app.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -12,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.UserTagMapDTO;
@@ -47,21 +47,24 @@ public class AnalysisController {
     @ResponseBody 
     public String saveAnalysis(@RequestBody List<UserTagMapDTO> selections, HttpSession session) {
         
-        // 1. 세션에서 로그인한 유저 객체를 가져옵니다. (세션 키 이름 확인 필수: "loginUser")
-        UsersDTO loginUser = (UsersDTO) session.getAttribute("loginUser");
+        UsersDTO loginUser = (UsersDTO) session.getAttribute("loginUser");                
         
-        // 2. 유저가 로그인 상태라면, 전송받은 데이터의 userNo를 세션 값으로 덮어씁니다.
         if (loginUser != null) {
             Long realUserNo = loginUser.getUserNo();
             for (UserTagMapDTO dto : selections) {
-                dto.setUserNo(realUserNo); // 0으로 들어온 값을 진짜 유저번호로 변경
+                dto.setUserNo(realUserNo);
             }
         } else {
             return "fail"; 
         }
         
-        String finalResult = userTagMapService.processUserAnalysis((long)loginUser.getUserNo(), selections);
+        // 💡 수정: 서비스에서 문자열(finalSummary)만 반환받도록 이전 상태로 돌립니다.
+        String finalResult = userTagMapService.processUserAnalysis((long)loginUser.getUserNo(), selections);                
         
+        // 💡 디버깅: 문자열이 제대로 왔는지 확인
+        System.out.println(">>> 분석 결과 문자열: " + finalResult);                
+        
+        // 💡 세션 키를 'finalResult'로 설정
         session.setAttribute("finalResult", finalResult);
         return "success";
     }

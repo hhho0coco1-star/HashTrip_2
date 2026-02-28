@@ -43,7 +43,7 @@
 }
 
 .main-sentence {
-	font-size: 2.2rem;
+	font-size: 1.8 rem;
 	font-weight: 800;
 	line-height: 1.4;
 	color: #222;
@@ -74,10 +74,9 @@
 	justify-content: center;
 }
 
-@
-keyframes fadeInUp {to { transform:translateY(0);
-	opacity: 1;
-}
+@keyframes fadeInUp {
+	from { transform:translateY(30px); opacity: 0; }
+	to { transform:translateY(0); opacity: 1; }
 }
 </style>
 
@@ -85,38 +84,30 @@ keyframes fadeInUp {to { transform:translateY(0);
 
 	<section class="result-section">
 		<div class="result-card">
-			<p class="user-name">${analysis.USER_NO}님의여행 스타일은?</p>
+			<p class="user-name">여행 스타일은?</p>
 
-			<div class="type-badge-container">
-				<span class="type-badge">#${analysis.ENERGY_TEXT}</span> <span
-					class="type-badge">#${analysis.PLAN_TEXT}</span>
-			</div>
-
-			<h1 class="main-sentence" id="typeSentence">
-				${analysis.FINAL_FULL_SENTENCE}</h1>
+			<h3 class="main-sentence" id="typeSentence">
+				${finalResult}</h3>
 
 			<p style="color: #666; margin-top: 20px;">
-				${analysis.PLACE_TEXT} 유형에 해당하는 당신을 위해<br> 딱 맞는 여행지를 찾아보았어요!
+				당신을 위해 딱 맞는 여행지를 찾아보았어요!
 			</p>
 
 			<div class="action-buttons">
-				<a href="recommend" class="btn-analysis">맞춤 여행지 보러가기</a> <a
-					href="main"
-					style="text-decoration: none; color: #999; font-size: 0.9rem; align-self: center; margin-left: 20px;">다시
-					테스트하기</a>
+				<a href="recommend" class="btn-analysis" style="padding: 10px 20px; background-color: #007bff; color: white; border-radius: 10px; text-decoration: none;">추천 여행일정 보러가기</a>
+				<a href="/hashTrip/analysis" class="btn-analysis" style="padding: 10px 20px; background-color: #007bff; color: white; border-radius: 10px; text-decoration: none;">다시 테스트하기</a>
 			</div>
 		</div>
 	</section>
 
 	<script>
-    // 페이지 로드 시 문구에 간단한 타이핑 효과 체감 주기 (선택 사항)
     document.addEventListener('DOMContentLoaded', function() {
         const sentence = document.getElementById('typeSentence');
         sentence.style.opacity = '0';
         setTimeout(() => {
             sentence.style.transition = 'opacity 1.5s';
             sentence.style.opacity = '1';
-        }, 500);
+        }, 300);
     });
 	</script>
 
