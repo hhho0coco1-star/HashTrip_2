@@ -58,5 +58,8 @@ public interface UsersService {
     
     // 1:1 문의내역(관리자 페이지)
     List<InquiryDTO> getAllInquiries(Map<String, Object> params);
+    
+    // 1:1 문의답변
+    public void updateReply(InquiryDTO inquiryDTO);
 
 }

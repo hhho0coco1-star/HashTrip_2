@@ -102,7 +102,7 @@
 				method="get" class="search-form">
 				<div class="form-row">
 					<div class="form-group">
-						<label for="searchCategory">문의 유형</label> <select
+						<label for="searchCategory">문의 유형 : </label> <select
 							id="searchCategory" name="inquiryType">
 							<option value="">전체</option>
 							<option value="서비스"
@@ -120,7 +120,7 @@
 					</div>
 
 					<div class="form-group">
-						<label for="searchStatus">처리 상태</label> <select id="searchStatus"
+						<label for="searchStatus">처리 상태 : </label> <select id="searchStatus"
 							name="status">
 							<option value="">전체</option>
 							<option value="N" ${param.status == 'N' ? 'selected' : ''}>대기</option>
@@ -129,7 +129,7 @@
 					</div>
 
 					<div class="form-group">
-						<label for="searchType">검색 조건</label> <select name="searchType">
+						<label for="searchType">검색 조건 : </label> <select name="searchType">
 							<option value="title"
 								${param.searchType == 'title' ? 'selected' : ''}>제목</option>
 							<option value="authId"

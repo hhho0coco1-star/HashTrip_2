@@ -5,6 +5,7 @@
 <p><strong>이메일:</strong> ${inquiry.inquiryEmail}</p>                
 <hr>                
 <form action="${pageContext.request.contextPath}/admin/inquiry/reply" method="post">
+	<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
     <input type="hidden" name="inquiryNo" value="${inquiry.inquiryNo}">                
     <textarea name="replyContent" style="width:100%; height:100px;" placeholder="답변 내용을 입력하세요" required>${inquiry.replyContent}</textarea>                
     

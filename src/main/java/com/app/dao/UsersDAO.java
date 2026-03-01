@@ -74,4 +74,7 @@ public interface UsersDAO {
     // 1:1 문의 전체 조회(관리자 페이지 전용)
     List<InquiryDTO> selectAllInquiries(Map<String, Object> params);
     
+    // 💡 답변 저장 및 상태 업데이트 메서드
+    public int updateReply(InquiryDTO inquiryDTO);
+    
 }

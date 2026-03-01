@@ -678,29 +678,29 @@
 		<result property="status" column="STATUS" />
 	</resultMap>
 
-<!-- 	<select id="selectAllInquiries" resultMap="inquiryResultMap"> -->
-<!-- 		SELECT -->
-<!-- 		pi.INQUIRY_NO, -->
-<!-- 		pi.USER_NO, -->
-<!-- 		u.USER_NAME, -->
-<!-- 		ua.USER_AUTH_ID, -->
-<!-- 		pi.INQUIRY_TYPE, -->
-<!-- 		pi.INQUIRY_EMAIL, -->
-<!-- 		pi.INQUIRY_TITLE, -->
-<!-- 		pi.INQUIRY_CONTENT, -->
-<!-- 		pi.REPLY_CONTENT, -->
-<!-- 		pi.INQUIRY_DATE, -->
-<!-- 		pi.REPLY_DATE, -->
-<!-- 		pi.STATUS -->
-<!-- 		FROM -->
-<!-- 		PLACE_INQUIRY pi -->
-<!-- 		JOIN -->
-<!-- 		USERS u ON pi.USER_NO = u.USER_NO -->
-<!-- 		JOIN -->
-<!-- 		USER_AUTHENTICATION ua ON u.USER_NO = ua.USER_NO -->
-<!-- 		ORDER BY -->
-<!-- 		pi.INQUIRY_DATE DESC -->
-<!-- 	</select> -->
+	<!-- <select id="selectAllInquiries" resultMap="inquiryResultMap"> -->
+	<!-- SELECT -->
+	<!-- pi.INQUIRY_NO, -->
+	<!-- pi.USER_NO, -->
+	<!-- u.USER_NAME, -->
+	<!-- ua.USER_AUTH_ID, -->
+	<!-- pi.INQUIRY_TYPE, -->
+	<!-- pi.INQUIRY_EMAIL, -->
+	<!-- pi.INQUIRY_TITLE, -->
+	<!-- pi.INQUIRY_CONTENT, -->
+	<!-- pi.REPLY_CONTENT, -->
+	<!-- pi.INQUIRY_DATE, -->
+	<!-- pi.REPLY_DATE, -->
+	<!-- pi.STATUS -->
+	<!-- FROM -->
+	<!-- PLACE_INQUIRY pi -->
+	<!-- JOIN -->
+	<!-- USERS u ON pi.USER_NO = u.USER_NO -->
+	<!-- JOIN -->
+	<!-- USER_AUTHENTICATION ua ON u.USER_NO = ua.USER_NO -->
+	<!-- ORDER BY -->
+	<!-- pi.INQUIRY_DATE DESC -->
+	<!-- </select> -->
 
 	<!-- 1:1문의내역 검색(관리자 페이지) -->
 	<select id="selectAllInquiries" resultMap="inquiryResultMap"
@@ -747,5 +747,15 @@
 		ORDER BY
 		pi.INQUIRY_DATE DESC
 	</select>
+
+	<!-- 1:1 문의 답변 -->
+	<update id="updateReply" parameterType="com.app.dto.InquiryDTO">
+		UPDATE PLACE_INQUIRY
+		SET
+		REPLY_CONTENT = #{replyContent},
+		REPLY_DATE = #{replyDate},
+		STATUS = 'Y'
+		WHERE INQUIRY_NO = #{inquiryNo}
+	</update>
 
 </mapper>

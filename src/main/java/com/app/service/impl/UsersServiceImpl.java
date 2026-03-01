@@ -338,4 +338,13 @@ public class UsersServiceImpl implements UsersService {
         return usersDAO.selectAllInquiries(params);
     }
 	
+	@Override
+	public void updateReply(InquiryDTO inquiryDTO) {                
+	    
+	    inquiryDTO.setReplyDate(new java.util.Date()); // 💡 현재 시간 설정
+	    inquiryDTO.setStatus("Y");  // 💡 상태를 완료(Y)로 설정
+	    
+	    usersDAO.updateReply(inquiryDTO); // 💡 DB 업데이트 수행 (MyBatis Mapper 호출)
+	}
+	
 }

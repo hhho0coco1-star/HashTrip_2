@@ -116,15 +116,6 @@
 			<div class="search-area"
 				style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 
-				<div class="sort-area">
-					<a
-						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=desc"
-						style="text-decoration: none; font-weight: ${orderBy == 'desc' ? 'bold' : 'normal'}; color: ${orderBy == 'desc' ? '#007bff' : '#333'};">최신순</a>
-					| <a
-						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=asc"
-						style="text-decoration: none; font-weight: ${orderBy == 'asc' ? 'bold' : 'normal'}; color: ${orderBy == 'asc' ? '#007bff' : '#333'};">오래된순</a>
-				</div>
-
 				<form
 					action="${pageContext.request.contextPath}/hashTrip/admin/users"
 					method="get">
@@ -141,6 +132,17 @@
 					<%-- 					<a href="${pageContext.request.contextPath}/hashTrip/admin/users" --%>
 					<!-- 						style="margin-left: 10px; text-decoration: none; color: inherit;">전체보기</a> -->
 				</form>
+
+				<div class="sort-area">
+					<a
+						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=desc"
+						style="text-decoration: none; font-weight: ${orderBy == 'desc' ? 'bold' : 'normal'}; color: ${orderBy == 'desc' ? '#007bff' : '#333'};">최신순</a>
+					| <a
+						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=asc"
+						style="text-decoration: none; font-weight: ${orderBy == 'asc' ? 'bold' : 'normal'}; color: ${orderBy == 'asc' ? '#007bff' : '#333'};">오래된순</a>
+				</div>
+
+
 			</div>
 
 			<table>
@@ -177,22 +179,23 @@
 
 								<tr class="${rowClass}">
 									<td>${user.userNo}</td>
-							<td>
-							    <c:choose>
-							        <%-- 1. 마스터 관리자(4번)인 행은 수정 불가 --%>
-							        <c:when test="${user.userNo == 4}">
-							            <span class="badge-master" style="color: blue; font-weight: bold;">마스터</span>
-							        </c:when>
-							
-							        <%-- 2. 나머지 모든 행은 일단 SELECT 박스 노출 --%>
-							        <c:otherwise>
-							            <select onchange="changeType(${user.userNo}, this.value)">
-							                <option value="LOCAL" ${user.userType == 'LOCAL' ? 'selected' : ''}>사용자</option>
-							                <option value="ADMIN" ${user.userType == 'ADMIN' ? 'selected' : ''}>관리자</option>
-							            </select>
-							        </c:otherwise>
-							    </c:choose>
-							</td>
+									<td><c:choose>
+											<%-- 1. 마스터 관리자(4번)인 행은 수정 불가 --%>
+											<c:when test="${user.userNo == 4}">
+												<span class="badge-master"
+													style="color: blue; font-weight: bold;">마스터</span>
+											</c:when>
+
+											<%-- 2. 나머지 모든 행은 일단 SELECT 박스 노출 --%>
+											<c:otherwise>
+												<select onchange="changeType(${user.userNo}, this.value)">
+													<option value="LOCAL"
+														${user.userType == 'LOCAL' ? 'selected' : ''}>사용자</option>
+													<option value="ADMIN"
+														${user.userType == 'ADMIN' ? 'selected' : ''}>관리자</option>
+												</select>
+											</c:otherwise>
+										</c:choose></td>
 									<td>${user.userName}</td>
 									<td>${user.userNickName}</td>
 									<td title="${user.authEmail}">${user.authEmail}</td>

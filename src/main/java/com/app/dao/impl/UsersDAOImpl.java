@@ -193,4 +193,10 @@ public class UsersDAOImpl implements UsersDAO {
     public List<InquiryDTO> selectAllInquiries(Map<String, Object> params) {
         return sqlSessionTemplate.selectList("users_mapper.selectAllInquiries", params);
     }
+    
+    @Override
+    public int updateReply(InquiryDTO inquiryDTO) {
+        return sqlSessionTemplate.update("users_mapper.updateReply", inquiryDTO);
+    }
+    
 }
