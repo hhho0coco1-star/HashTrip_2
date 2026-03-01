@@ -103,5 +103,22 @@ public class AdminController {
 	    
 	    return "admin/inquiry"; // JSP 경로
 	}
+	
+	@PreAuthorize("hasRole('ADMIN')")                
+	@GetMapping("/admin/inquiry/detail")                
+	public String getInquiryDetail(@RequestParam("inquiryNo") Long inquiryNo, Model model) {
+	    InquiryDTO dto = usersService.getInquiryDetail(inquiryNo);
+	    model.addAttribute("inquiry", dto);
+	    
+	    // 💡 상세 내용만 보여줄 전용 JSP (예: /WEB-INF/views/admin/inquiryDetail.jsp)
+	    return "admin/inquiryDetail"; 
+	}
+
+	// 답변 저장
+	@PostMapping("/admin/inquiry/reply")
+	public String replyInquiry(InquiryDTO inquiryDTO) {
+	    usersService.updateReply(inquiryDTO); // 답변 내용 및 날짜, 상태 업데이트 서비스
+	    return "redirect:/hashTrip/admin/inquiry"; // 목록으로 리다이렉트
+	}
 
 }

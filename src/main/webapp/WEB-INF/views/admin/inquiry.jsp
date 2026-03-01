@@ -97,7 +97,8 @@
 		<div class="admin-content">
 			<h1>1:1 문의 내역</h1>
 
-			<form action="${pageContext.request.contextPath}/hashTrip/admin/inquiry"
+			<form
+				action="${pageContext.request.contextPath}/hashTrip/admin/inquiry"
 				method="get" class="search-form">
 				<div class="form-row">
 					<div class="form-group">
@@ -165,23 +166,35 @@
 								<tr>
 									<td>${inquiry.inquiryNo}</td>
 									<td>${inquiry.inquiryType}</td>
-									<td
-										style="text-align: left; overflow: hidden; text-overflow: ellipsis;">
-										<a
-										href="${pageContext.request.contextPath}/admin/inquiry/detail?no=${inquiry.inquiryNo}">
-											${inquiry.inquiryTitle} </a>
-									</td>
+									<td class="text-left"><a href="javascript:void(0);"
+										onclick="toggleDetail('${inquiry.inquiryNo}')">
+											${inquiry.inquiryTitle} </a></td>
 									<td>${inquiry.userName}</td>
 									<td>${inquiry.userAuthId}</td>
 									<td><fmt:formatDate value="${inquiry.inquiryDate}"
 											pattern="yyyy-MM-dd HH:mm" /></td>
-									<td><span
-										class="status-badge ${inquiry.status == '완료' ? 'status-completed' : 'status-pending'}">
-											${inquiry.status} </span></td>
+									<td><c:choose>
+											<c:when test="${inquiry.status == 'Y'}">
+												<span class="status-badge status-completed">완료</span>
+											</c:when>
+											<c:when test="${inquiry.status == 'N'}">
+												<span class="status-badge status-pending">대기</span>
+											</c:when>
+											<c:otherwise>
+												<span class="status-badge">${inquiry.status}</span>
+											</c:otherwise>
+										</c:choose></td>
 									<td><c:if test="${not empty inquiry.replyDate}">
 											<fmt:formatDate value="${inquiry.replyDate}"
 												pattern="yyyy-MM-dd HH:mm" />
 										</c:if> <c:if test="${empty inquiry.replyDate}">-</c:if></td>
+								</tr>
+
+								<tr id="detail-${inquiry.inquiryNo}" style="display: none;">
+									<td colspan="8"
+										style="text-align: left; padding: 20px; background-color: #f9f9f9;">
+										<div id="detailBody-${inquiry.inquiryNo}">로딩 중...</div>
+									</td>
 								</tr>
 							</c:forEach>
 						</c:otherwise>
@@ -190,6 +203,36 @@
 			</table>
 		</div>
 	</div>
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript">
+		// 💡 모달 함수 대신 아코디언 함수 사용
+		function toggleDetail(inquiryNo) {
+			let $detailRow = $('#detail-' + inquiryNo);
+			let $detailBody = $('#detailBody-' + inquiryNo);
+
+			// 이미 열려있으면 닫기
+			if ($detailRow.is(':visible')) {
+				$detailRow.hide();
+				return;
+			}
+
+			// AJAX 호출하여 상세 데이터 가져오기
+			$
+					.ajax({
+						url : '${pageContext.request.contextPath}/admin/inquiry/detail',
+						type : 'GET',
+						data : {
+							inquiryNo : inquiryNo
+						},
+						success : function(htmlData) {
+							// 💡 받은 HTML 데이터를 바로 적용
+							$detailBody.html(htmlData);
+							$detailRow.show();
+						}
+					});
+		}
+	</script>
 
 </body>
 </html>
