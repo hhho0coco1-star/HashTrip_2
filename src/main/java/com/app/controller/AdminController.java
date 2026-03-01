@@ -34,10 +34,11 @@ public class AdminController {
             @RequestParam(value = "size", defaultValue = "10") int size, // 페이지당 회원 수, 기본값 10
             @RequestParam(value = "searchType", required = false) String searchType,
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "orderBy", defaultValue = "desc") String orderBy, // 💡 정렬 기준 추가
             Model model) {
 
         // 1. 서비스에서 페이징 처리된 데이터와 페이징 정보를 가져옴
-        Map<String, Object> result = usersService.getPagedUsers(page, size, searchType, keyword);
+        Map<String, Object> result = usersService.getPagedUsers(page, size, searchType, keyword, orderBy);
 
         // 2. 모델에 결과 담기
         model.addAttribute("userList", result.get("userList"));

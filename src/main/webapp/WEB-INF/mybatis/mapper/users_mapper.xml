@@ -589,7 +589,8 @@
 	<select id="countUsers" resultType="int">
 		SELECT COUNT(*)
 		FROM users u
-		LEFT JOIN USER_AUTHENTICATION a ON u.USER_NO = a.USER_NO
+		LEFT JOIN USER_AUTHENTICATION a ON
+		u.USER_NO = a.USER_NO
 		<where>
 			<if test="keyword != null and keyword != ''">
 				<choose>
@@ -635,7 +636,13 @@
 				</choose>
 			</if>
 		</where>
-		ORDER BY u.USER_CREATED_AT DESC
+
+		ORDER BY u.USER_CREATED_AT
+		<choose>
+			<when test="orderBy == 'asc'">ASC</when>
+			<otherwise>DESC</otherwise>
+		</choose>
+
 		) sub
 		WHERE ROWNUM &lt;= #{endRow}
 		)

@@ -95,21 +95,28 @@
 			<h1>회원 목록</h1>
 
 			<div class="search-area"
-				style="text-align: right; margin-bottom: 10px;">
-				<form
-					action="${pageContext.request.contextPath}/hashTrip/admin/users"
-					method="get">
+				style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+				
+				<div class="sort-area">
+					<a href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=desc" 
+					   style="text-decoration: none; font-weight: ${orderBy == 'desc' ? 'bold' : 'normal'}; color: ${orderBy == 'desc' ? '#007bff' : '#333'};">최신순</a>
+					|
+					<a href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=asc" 
+					   style="text-decoration: none; font-weight: ${orderBy == 'asc' ? 'bold' : 'normal'}; color: ${orderBy == 'asc' ? '#007bff' : '#333'};">오래된순</a>
+				</div>
+				
+				<form action="${pageContext.request.contextPath}/hashTrip/admin/users" method="get">
 					<select name="searchType">
 						<option value="name" ${searchType == 'name' ? 'selected' : ''}>이름</option>
-						<option value="nickname"
-							${searchType == 'nickname' ? 'selected' : ''}>닉네임</option>
+						<option value="nickname" ${searchType == 'nickname' ? 'selected' : ''}>닉네임</option>
 						<option value="email" ${searchType == 'email' ? 'selected' : ''}>이메일</option>
 						<option value="phone" ${searchType == 'phone' ? 'selected' : ''}>전화번호</option>
-					</select> <input type="text" name="keyword" value="${keyword}"
-						placeholder="검색어를 입력하세요">
+					</select> 
+					<input type="text" name="keyword" value="${keyword}" placeholder="검색어를 입력하세요">
+					<input type="hidden" name="orderBy" value="${orderBy}">
 					<button type="submit">검색</button>
-					<a href="${pageContext.request.contextPath}/hashTrip/admin/users"
-						style="margin-left: 10px; text-decoration: none; color: inherit;">전체보기</a>
+<%-- 					<a href="${pageContext.request.contextPath}/hashTrip/admin/users" --%>
+<!-- 						style="margin-left: 10px; text-decoration: none; color: inherit;">전체보기</a> -->
 				</form>
 			</div>
 
@@ -163,13 +170,11 @@
 				</tbody>
 			</table>
 
-			<!-- 페이징 -->
 			<div class="paging-area"
 				style="text-align: center; margin-top: 20px;">
 				<c:if test="${currentPage > 1}">
-					<a href="?page=1&searchType=${searchType}&keyword=${keyword}">[처음]</a>
-					<a
-						href="?page=${currentPage - 1}&searchType=${searchType}&keyword=${keyword}">[이전]</a>
+					<a href="?page=1&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">[처음]</a>
+					<a href="?page=${currentPage - 1}&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">[이전]</a>
 				</c:if>
 
 				<c:forEach var="i" begin="1" end="${totalPage}">
@@ -178,16 +183,14 @@
 							<strong>${i}</strong>
 						</c:when>
 						<c:otherwise>
-							<a href="?page=${i}&searchType=${searchType}&keyword=${keyword}">${i}</a>
+							<a href="?page=${i}&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">${i}</a>
 						</c:otherwise>
 					</c:choose>
 				</c:forEach>
 
 				<c:if test="${currentPage < totalPage}">
-					<a
-						href="?page=${currentPage + 1}&searchType=${searchType}&keyword=${keyword}">[다음]</a>
-					<a
-						href="?page=${totalPage}&searchType=${searchType}&keyword=${keyword}">[끝]</a>
+					<a href="?page=${currentPage + 1}&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">[다음]</a>
+					<a href="?page=${totalPage}&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">[끝]</a>
 				</c:if>
 			</div>
 			

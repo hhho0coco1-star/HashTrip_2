@@ -279,7 +279,7 @@ public class UsersServiceImpl implements UsersService {
 	}
 
 	@Override
-    public Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword) {
+    public Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword, String orderBy) {
         
         // 1. DAO에 전달할 파라미터 맵 생성
         Map<String, Object> params = new HashMap<>();
@@ -297,6 +297,7 @@ public class UsersServiceImpl implements UsersService {
         // 4. 파라미터 맵에 페이징 정보 추가
         params.put("startRow", startRow);
         params.put("endRow", endRow);
+        params.put("orderBy", orderBy);
         
         // 5. 해당 페이지 데이터 조회
         List<UsersDTO> userList = usersDAO.findUsersPaged(params);
@@ -307,6 +308,7 @@ public class UsersServiceImpl implements UsersService {
         result.put("totalCount", totalCount);
         result.put("currentPage", page);
         result.put("totalPage", totalPage);
+       
         
         return result;
     }
