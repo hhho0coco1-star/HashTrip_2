@@ -50,5 +50,7 @@ public interface UsersService {
     
     // 관리자 페이지 회원목록 조회
     List<UsersDTO> findAllUsers();
+    
+    Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword);
 
 }

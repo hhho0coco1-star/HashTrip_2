@@ -173,4 +173,14 @@ public class UsersDAOImpl implements UsersDAO {
 	public List<UsersDTO> findAllUsers() {
 		return sqlSessionTemplate.selectList("users_mapper.selectAllUsers");
 	}
+	
+	@Override
+    public int countUsers(Map<String, Object> params) {
+        return sqlSessionTemplate.selectOne("users_mapper.countUsers", params);
+    }
+
+    @Override
+    public List<UsersDTO> findUsersPaged(Map<String, Object> params) {
+        return sqlSessionTemplate.selectList("users_mapper.findUsersPaged", params);
+    }
 }

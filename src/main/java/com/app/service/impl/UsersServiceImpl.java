@@ -1,5 +1,6 @@
 package com.app.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -277,4 +278,36 @@ public class UsersServiceImpl implements UsersService {
 		return usersDAO.findAllUsers();
 	}
 
+	@Override
+    public Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword) {
+        
+        // 1. DAO에 전달할 파라미터 맵 생성
+        Map<String, Object> params = new HashMap<>();
+        params.put("searchType", searchType);
+        params.put("keyword", keyword);
+        
+        // 2. 전체 데이터 개수 조회
+        int totalCount = usersDAO.countUsers(params);
+        
+        // 3. 페이징 계산
+        int totalPage = (int) Math.ceil((double) totalCount / size);
+        int startRow = (page - 1) * size + 1;
+        int endRow = page * size;
+        
+        // 4. 파라미터 맵에 페이징 정보 추가
+        params.put("startRow", startRow);
+        params.put("endRow", endRow);
+        
+        // 5. 해당 페이지 데이터 조회
+        List<UsersDTO> userList = usersDAO.findUsersPaged(params);
+        
+        // 6. 결과 맵에 데이터와 페이징 정보 담아서 반환
+        Map<String, Object> result = new HashMap<>();
+        result.put("userList", userList);
+        result.put("totalCount", totalCount);
+        result.put("currentPage", page);
+        result.put("totalPage", totalPage);
+        
+        return result;
+    }
 }

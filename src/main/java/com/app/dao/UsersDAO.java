@@ -61,5 +61,11 @@ public interface UsersDAO {
     
     // 관리자 페이지 회원목록 조회
     List<UsersDTO> findAllUsers();
+    
+    // 1. 전체 데이터 개수 조회
+    int countUsers(Map<String, Object> params);
+    
+    // 2. 페이징 데이터 조회
+    List<UsersDTO> findUsersPaged(Map<String, Object> params);
 
 }

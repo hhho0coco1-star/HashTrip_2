@@ -70,7 +70,6 @@
 	padding: 10px;
 	text-align: center;
 	font-size: 14px;
-	
 	/* 💡 텍스트 숨김 및 말줄임표 처리 */
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -94,6 +93,25 @@
 
 		<div class="admin-content">
 			<h1>회원 목록</h1>
+
+			<div class="search-area"
+				style="text-align: right; margin-bottom: 10px;">
+				<form
+					action="${pageContext.request.contextPath}/hashTrip/admin/users"
+					method="get">
+					<select name="searchType">
+						<option value="name" ${searchType == 'name' ? 'selected' : ''}>이름</option>
+						<option value="nickname"
+							${searchType == 'nickname' ? 'selected' : ''}>닉네임</option>
+						<option value="email" ${searchType == 'email' ? 'selected' : ''}>이메일</option>
+						<option value="phone" ${searchType == 'phone' ? 'selected' : ''}>전화번호</option>
+					</select> <input type="text" name="keyword" value="${keyword}"
+						placeholder="검색어를 입력하세요">
+					<button type="submit">검색</button>
+					<a href="${pageContext.request.contextPath}/hashTrip/admin/users"
+						style="margin-left: 10px; text-decoration: none; color: inherit;">전체보기</a>
+				</form>
+			</div>
 
 			<table>
 				<thead>
@@ -126,7 +144,7 @@
 								<c:if test="${user.userStatus == '탈퇴'}">
 									<c:set var="rowClass" value="row-deleted" />
 								</c:if>
-								
+
 								<tr class="${rowClass}">
 									<td>${user.userNo}</td>
 									<td>${user.userType}</td>
@@ -144,6 +162,35 @@
 					</c:choose>
 				</tbody>
 			</table>
+
+			<!-- 페이징 -->
+			<div class="paging-area"
+				style="text-align: center; margin-top: 20px;">
+				<c:if test="${currentPage > 1}">
+					<a href="?page=1&searchType=${searchType}&keyword=${keyword}">[처음]</a>
+					<a
+						href="?page=${currentPage - 1}&searchType=${searchType}&keyword=${keyword}">[이전]</a>
+				</c:if>
+
+				<c:forEach var="i" begin="1" end="${totalPage}">
+					<c:choose>
+						<c:when test="${i == currentPage}">
+							<strong>${i}</strong>
+						</c:when>
+						<c:otherwise>
+							<a href="?page=${i}&searchType=${searchType}&keyword=${keyword}">${i}</a>
+						</c:otherwise>
+					</c:choose>
+				</c:forEach>
+
+				<c:if test="${currentPage < totalPage}">
+					<a
+						href="?page=${currentPage + 1}&searchType=${searchType}&keyword=${keyword}">[다음]</a>
+					<a
+						href="?page=${totalPage}&searchType=${searchType}&keyword=${keyword}">[끝]</a>
+				</c:if>
+			</div>
+			
 		</div>
 	</div>
 </body>
