@@ -652,12 +652,100 @@
 		WHERE rn &gt;= #{startRow}
 	</select>
 
-	<!-- 관리자 권한 부여 or 취소  -->	
+	<!-- 관리자 권한 부여 or 취소 -->
 	<update id="updateUserType">
 		UPDATE users
 		SET USER_TYPE = #{userType}
-		WHERE USER_NO = #{userNo}
+		WHERE USER_NO
+		= #{userNo}
 		AND USER_NO != 4
 	</update>
+
+	<!-- 1:1 문의내역(관리자 페이지) -->
+	<resultMap id="inquiryResultMap"
+		type="com.app.dto.InquiryDTO">
+		<id property="inquiryNo" column="INQUIRY_NO" />
+		<result property="userNo" column="USER_NO" />
+		<result property="userName" column="USER_NAME" />
+		<result property="userAuthId" column="USER_AUTH_ID" />
+		<result property="inquiryType" column="INQUIRY_TYPE" />
+		<result property="inquiryEmail" column="INQUIRY_EMAIL" />
+		<result property="inquiryTitle" column="INQUIRY_TITLE" />
+		<result property="inquiryContent" column="INQUIRY_CONTENT" />
+		<result property="replyContent" column="REPLY_CONTENT" />
+		<result property="inquiryDate" column="INQUIRY_DATE" />
+		<result property="replyDate" column="REPLY_DATE" />
+		<result property="status" column="STATUS" />
+	</resultMap>
+
+<!-- 	<select id="selectAllInquiries" resultMap="inquiryResultMap"> -->
+<!-- 		SELECT -->
+<!-- 		pi.INQUIRY_NO, -->
+<!-- 		pi.USER_NO, -->
+<!-- 		u.USER_NAME, -->
+<!-- 		ua.USER_AUTH_ID, -->
+<!-- 		pi.INQUIRY_TYPE, -->
+<!-- 		pi.INQUIRY_EMAIL, -->
+<!-- 		pi.INQUIRY_TITLE, -->
+<!-- 		pi.INQUIRY_CONTENT, -->
+<!-- 		pi.REPLY_CONTENT, -->
+<!-- 		pi.INQUIRY_DATE, -->
+<!-- 		pi.REPLY_DATE, -->
+<!-- 		pi.STATUS -->
+<!-- 		FROM -->
+<!-- 		PLACE_INQUIRY pi -->
+<!-- 		JOIN -->
+<!-- 		USERS u ON pi.USER_NO = u.USER_NO -->
+<!-- 		JOIN -->
+<!-- 		USER_AUTHENTICATION ua ON u.USER_NO = ua.USER_NO -->
+<!-- 		ORDER BY -->
+<!-- 		pi.INQUIRY_DATE DESC -->
+<!-- 	</select> -->
+
+	<!-- 1:1문의내역 검색(관리자 페이지) -->
+	<select id="selectAllInquiries" resultMap="inquiryResultMap"
+		parameterType="map">
+		SELECT
+		pi.INQUIRY_NO,
+		pi.USER_NO,
+		u.USER_NAME,
+		ua.USER_AUTH_ID,
+		pi.INQUIRY_TYPE,
+		pi.INQUIRY_EMAIL,
+		pi.INQUIRY_TITLE,
+		pi.INQUIRY_CONTENT,
+		pi.REPLY_CONTENT,
+		pi.INQUIRY_DATE,
+		pi.REPLY_DATE,
+		pi.STATUS
+		FROM
+		PLACE_INQUIRY pi
+		JOIN
+		USERS u ON pi.USER_NO = u.USER_NO
+		JOIN
+		USER_AUTHENTICATION ua ON u.USER_NO = ua.USER_NO
+		<where>
+			<if test="inquiryType != null and inquiryType != ''">
+				AND pi.INQUIRY_TYPE = #{inquiryType}
+			</if>
+
+			<if test="status != null and status != ''">
+				AND pi.STATUS = #{status}
+			</if>
+
+			<if test="keyword != null and keyword != ''">
+				<choose>
+					<when test="searchType == 'title'">
+						AND pi.INQUIRY_TITLE LIKE '%' || #{keyword} || '%'
+					</when>
+					<when test="searchType == 'authId'">
+						AND ua.USER_AUTH_ID LIKE '%' || #{keyword} || '%'
+					</when>
+				</choose>
+			</if>
+		</where>
+		ORDER BY
+		pi.INQUIRY_DATE DESC
+	</select>
 
 </mapper>

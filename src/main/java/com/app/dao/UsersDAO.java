@@ -70,5 +70,8 @@ public interface UsersDAO {
     
     // 관리자 권한 부여/취소
     int updateUserType(Map<String, Object> params);
-
+    
+    // 1:1 문의 전체 조회(관리자 페이지 전용)
+    List<InquiryDTO> selectAllInquiries(Map<String, Object> params);
+    
 }

@@ -55,5 +55,8 @@ public interface UsersService {
     
     // 관리자 권한 부여/취소
     boolean changeUserType(int userNo, String userType, Integer loginUserNo);
+    
+    // 1:1 문의내역(관리자 페이지)
+    List<InquiryDTO> getAllInquiries(Map<String, Object> params);
 
 }

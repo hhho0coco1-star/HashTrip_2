@@ -188,4 +188,9 @@ public class UsersDAOImpl implements UsersDAO {
     public int updateUserType(Map<String, Object> params) {
         return sqlSessionTemplate.update("users_mapper.updateUserType", params);
     }
+    
+    @Override
+    public List<InquiryDTO> selectAllInquiries(Map<String, Object> params) {
+        return sqlSessionTemplate.selectList("users_mapper.selectAllInquiries", params);
+    }
 }

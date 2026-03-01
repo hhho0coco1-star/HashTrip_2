@@ -332,4 +332,10 @@ public class UsersServiceImpl implements UsersService {
 
 	    return usersDAO.updateUserType(params) > 0;
 	}
+	
+	@Override
+    public List<InquiryDTO> getAllInquiries(Map<String, Object> params) {
+        return usersDAO.selectAllInquiries(params);
+    }
+	
 }
