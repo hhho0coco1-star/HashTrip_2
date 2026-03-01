@@ -611,9 +611,11 @@
 		SELECT * FROM (
 		SELECT ROWNUM AS rn, sub.* FROM (
 		SELECT
-		u.USER_NO AS userNo,
+		u.USER_NO AS
+		userNo,
 		u.USER_TYPE AS userType,
-		TO_CHAR(u.USER_CREATED_AT, 'YYMMDD:HH24:MI:SS') AS userCreatedAt,
+		TO_CHAR(u.USER_CREATED_AT,
+		'YYMMDD:HH24:MI:SS') AS userCreatedAt,
 		u.USER_STATUS AS userStatus,
 		u.USER_NAME AS userName,
 		u.USER_NICKNAME AS userNickName,
@@ -621,7 +623,8 @@
 		u.USER_PHONENUMBER AS userPhoneNumber,
 		a.USER_AUTH_SNS_TYPE AS authSnsType
 		FROM users u
-		LEFT JOIN USER_AUTHENTICATION a ON u.USER_NO = a.USER_NO
+		LEFT JOIN
+		USER_AUTHENTICATION a ON u.USER_NO = a.USER_NO
 		<where>
 			<if test="keyword != null and keyword != ''">
 				<choose>
@@ -648,5 +651,13 @@
 		)
 		WHERE rn &gt;= #{startRow}
 	</select>
+
+	<!-- 관리자 권한 부여 or 취소  -->	
+	<update id="updateUserType">
+		UPDATE users
+		SET USER_TYPE = #{userType}
+		WHERE USER_NO = #{userNo}
+		AND USER_NO != 4
+	</update>
 
 </mapper>

@@ -52,5 +52,8 @@ public interface UsersService {
     List<UsersDTO> findAllUsers();
     
     Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword, String orderBy);
+    
+    // 관리자 권한 부여/취소
+    boolean changeUserType(int userNo, String userType, Integer loginUserNo);
 
 }

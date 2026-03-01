@@ -67,5 +67,8 @@ public interface UsersDAO {
     
     // 2. 페이징 데이터 조회
     List<UsersDTO> findUsersPaged(Map<String, Object> params);
+    
+    // 관리자 권한 부여/취소
+    int updateUserType(Map<String, Object> params);
 
 }

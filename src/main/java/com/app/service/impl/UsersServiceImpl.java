@@ -312,4 +312,24 @@ public class UsersServiceImpl implements UsersService {
         
         return result;
     }
+	
+	@Override
+	public boolean changeUserType(int targetUserNo, String userType, Integer loginUserNo) {
+	    // 1. 마스터 관리자(4번) 보호 로직
+	    if (targetUserNo == 4) {
+	        return false;
+	    }
+
+	    // 2. 본인 계정 셀프 수정 방어 로직 (추가)
+	    if (loginUserNo != null && targetUserNo == loginUserNo) {
+	        System.out.println("경고: 관리자가 자신의 권한을 변경하려 함.");
+	        return false; 
+	    }
+
+	    Map<String, Object> params = new HashMap<>();
+	    params.put("userNo", targetUserNo);
+	    params.put("userType", userType);
+
+	    return usersDAO.updateUserType(params) > 0;
+	}
 }

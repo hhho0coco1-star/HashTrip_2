@@ -183,4 +183,9 @@ public class UsersDAOImpl implements UsersDAO {
     public List<UsersDTO> findUsersPaged(Map<String, Object> params) {
         return sqlSessionTemplate.selectList("users_mapper.findUsersPaged", params);
     }
+
+    @Override
+    public int updateUserType(Map<String, Object> params) {
+        return sqlSessionTemplate.update("users_mapper.updateUserType", params);
+    }
 }

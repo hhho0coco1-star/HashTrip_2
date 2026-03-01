@@ -2,12 +2,16 @@ package com.app.controller;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.service.UsersService;
 
@@ -52,5 +56,25 @@ public class AdminController {
 
         return "admin/users";
     }
+	
+	// 관리자 권한 부여/취소
+	@PreAuthorize("hasRole('ADMIN')") // 보안을 위해 관리자 권한 체크 추가 권장
+	@PostMapping("/hashTrip/admin/updateType") // 💡 주소를 AJAX 호출 경로와 일치시킴
+	@ResponseBody
+	public String updateType(@RequestParam("userNo") int userNo, @RequestParam("userType") String userType,
+							HttpSession session) {
+		
+	    System.out.println("수정 요청 확인 - 번호: " + userNo + ", 타입: " + userType);
+	    
+	    // 세션에서 로그인한 관리자의 번호를 꺼냄
+	    Integer loginUserNo = (Integer) session.getAttribute("userNo");
+	    
+	    System.out.println("본인 번호(세션): " + loginUserNo); 
+	    System.out.println("변경 대상 번호: " + userNo);
+	    
+	    boolean isUpdated = usersService.changeUserType(userNo, userType, loginUserNo);
+	    
+	    return isUpdated ? "success" : "fail";
+	}
 	
 }
