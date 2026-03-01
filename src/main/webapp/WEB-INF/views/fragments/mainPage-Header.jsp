@@ -13,6 +13,7 @@
                 <li><a href="<c:url value='/routes' />">추천 루트</a></li>
                 <li><a href="<c:url value='/planner' />">여행 일정</a></li>
                 <li><a href="<c:url value='/mypage' />">마이페이지</a></li>
+                <c:if test="${usersDTO.userType == 'ADMIN'}"><li><a href="<c:url value='/hashTrip/admin' />">관리자 페이지</a></li></c:if>
             </ul>
 
             <div class="user-auth">

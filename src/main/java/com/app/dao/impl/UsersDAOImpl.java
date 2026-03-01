@@ -168,4 +168,9 @@ public class UsersDAOImpl implements UsersDAO {
     public InquiryDTO getInquiryDetail(Long inquiryNo) {
         return sqlSessionTemplate.selectOne("users_mapper.getInquiryDetail", inquiryNo);
     }
+
+	@Override
+	public List<UsersDTO> findAllUsers() {
+		return sqlSessionTemplate.selectList("users_mapper.selectAllUsers");
+	}
 }

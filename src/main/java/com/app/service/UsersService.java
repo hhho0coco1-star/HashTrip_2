@@ -47,5 +47,8 @@ public interface UsersService {
     
     // 1:1 문의 조회
     InquiryDTO getInquiryDetail(Long inquiryNo);
+    
+    // 관리자 페이지 회원목록 조회
+    List<UsersDTO> findAllUsers();
 
 }

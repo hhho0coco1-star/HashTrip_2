@@ -272,4 +272,9 @@ public class UsersServiceImpl implements UsersService {
         return usersDAO.getInquiryDetail(inquiryNo); // DAO와 이름 통일
     }
 
+	@Override
+	public List<UsersDTO> findAllUsers() {
+		return usersDAO.findAllUsers();
+	}
+
 }

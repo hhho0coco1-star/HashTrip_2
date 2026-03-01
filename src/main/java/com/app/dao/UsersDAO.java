@@ -9,6 +9,7 @@ import com.app.dto.UserTagMapDTO;
 import com.app.dto.UsersDTO;
 
 public interface UsersDAO {
+	
 	UsersDTO getUserByAuthId(String authId);
 
 	String getUserNickname(int userNo);
@@ -57,5 +58,8 @@ public interface UsersDAO {
     
     // 1:1 문의 조회
     InquiryDTO getInquiryDetail(Long inquiryNo);
+    
+    // 관리자 페이지 회원목록 조회
+    List<UsersDTO> findAllUsers();
 
 }
