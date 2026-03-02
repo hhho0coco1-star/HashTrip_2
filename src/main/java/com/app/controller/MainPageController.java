@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.UsersDTO;
+import com.app.service.FaqService;
 import com.app.service.PlaceService;
 import com.app.service.UserAuthenticationService;
 import com.app.service.UsersService;
@@ -31,6 +32,9 @@ public class MainPageController {
 	
 	@Autowired
 	private UsersService usersService;
+	
+	@Autowired
+    private FaqService faqService;
 	
 	@Autowired
 	private UserAuthenticationService userAuthenticationService;
@@ -76,9 +80,10 @@ public class MainPageController {
 	public String hashTrip_faq(Model model, Authentication authentication) {
 		
 		String currentAuthId = resolveAuthenticatedAuthId(authentication);
-		
 		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		
 		model.addAttribute("usersDTO", usersDTO);
+		model.addAttribute("faqList", faqService.getFaqList());
 		
 	    return "mainPage/mainPage-faq"; 
 	}

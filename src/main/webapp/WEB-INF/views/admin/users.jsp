@@ -142,7 +142,6 @@
 						style="text-decoration: none; font-weight: ${orderBy == 'asc' ? 'bold' : 'normal'}; color: ${orderBy == 'asc' ? '#007bff' : '#333'};">오래된순</a>
 				</div>
 
-
 			</div>
 
 			<table>

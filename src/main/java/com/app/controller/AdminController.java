@@ -15,17 +15,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.app.dto.FaqDTO;
 import com.app.dto.InquiryDTO;
+import com.app.service.FaqService;
 import com.app.service.UsersService;
 
 @Controller
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
 	@Autowired
 	UsersService usersService;
+	
+	@Autowired
+    private FaqService faqService;
 
 	// 관리자 전용 페이지
-	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/hashTrip/admin")
 	public String admin() {
 
@@ -34,7 +39,6 @@ public class AdminController {
 	}
 
 	// 회원 목록 페이지 (페이징 및 검색 기능 포함)
-	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/hashTrip/admin/users")
 	public String userList(@RequestParam(value = "page", defaultValue = "1") int page, // 현재 페이지, 기본값 1
 			@RequestParam(value = "size", defaultValue = "10") int size, // 페이지당 회원 수, 기본값 10
@@ -60,7 +64,6 @@ public class AdminController {
 	}
 
 	// 관리자 권한 부여/취소
-	@PreAuthorize("hasRole('ADMIN')") // 보안을 위해 관리자 권한 체크 추가 권장
 	@PostMapping("/hashTrip/admin/updateType") // 💡 주소를 AJAX 호출 경로와 일치시킴
 	@ResponseBody
 	public String updateType(@RequestParam("userNo") int userNo, @RequestParam("userType") String userType,
@@ -80,7 +83,6 @@ public class AdminController {
 	}
 
 	// 1:1 문의
-	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/hashTrip/admin/inquiry")
 	public String inquiry(
 	        @RequestParam(value = "inquiryType", required = false) String inquiryType,
@@ -104,7 +106,6 @@ public class AdminController {
 	    return "admin/inquiry"; // JSP 경로
 	}
 	
-	@PreAuthorize("hasRole('ADMIN')")                
 	@GetMapping("/admin/inquiry/detail")                
 	public String getInquiryDetail(@RequestParam("inquiryNo") Long inquiryNo, Model model) {
 	    InquiryDTO dto = usersService.getInquiryDetail(inquiryNo);
@@ -117,8 +118,63 @@ public class AdminController {
 	// 답변 저장
 	@PostMapping("/admin/inquiry/reply")
 	public String replyInquiry(InquiryDTO inquiryDTO) {
+		
 	    usersService.updateReply(inquiryDTO); // 답변 내용 및 날짜, 상태 업데이트 서비스
+	    
 	    return "redirect:/hashTrip/admin/inquiry"; // 목록으로 리다이렉트
 	}
+	
+	// 관리자 전용 페이지(1:1 문의)
+	@GetMapping("/hashTrip/admin/faq")
+	public String faq(Model model) {
 
+		model.addAttribute("faqList", faqService.getFaqList());
+		
+		return "admin/faq";
+	}
+	
+
+    
+	// FAQ 등록 폼 이동
+    @GetMapping("/admin/faq/registerForm")
+    public String registerForm() {
+        return "admin/faqRegister";
+    }
+    
+	// FAQ 등록 처리
+    @PostMapping("/admin/faq/register")
+    public String registerFaq(FaqDTO faqDTO) {
+    	
+        faqService.registerFaq(faqDTO);
+        
+        return "redirect:/hashTrip/admin/faq";
+    }
+
+
+    // FAQ 수정 화면 이동
+    @GetMapping("/admin/faq/modify")
+    public String modifyForm(@RequestParam("faqNo") int faqNo, Model model) {
+    	
+        model.addAttribute("faq", faqService.getFaqDetail(faqNo));
+        
+        return "admin/faqModify"; // 수정 JSP 경로
+    }
+    
+    // FAQ 수정 처리
+    @PostMapping("/admin/faq/modify")
+    public String modifyFaq(FaqDTO faqDTO) {
+    	
+        faqService.modifyFaq(faqDTO);
+
+        return "redirect:/hashTrip/admin/faq";
+    }
+    
+    // FAQ 삭제 처리
+    @GetMapping("admin/faq/remove")
+    public String removeFaq(@RequestParam("faqNo") int faqNo) {
+    	
+        faqService.removeFaq(faqNo);
+        
+        return "redirect:/hashTrip/admin/faq";
+    }
 }

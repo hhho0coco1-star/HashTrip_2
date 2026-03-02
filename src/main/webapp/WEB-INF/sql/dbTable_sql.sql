@@ -565,3 +565,49 @@ INSERT INTO TAG_WEIGHT_MASTER VALUES ('PLAN', 'STRICT_PLAN', 1);
 INSERT INTO TAG_WEIGHT_MASTER VALUES ('PLAN', 'SPOT_PLAN', 2);
 INSERT INTO TAG_WEIGHT_MASTER VALUES ('PLAN', 'IMPROMPTU', 4);
 INSERT INTO TAG_WEIGHT_MASTER VALUES ('PLAN', 'DEPENDENT', 8);
+
+-- 1. FAQ 테이블 생성
+CREATE TABLE faq (
+    faq_no      NUMBER PRIMARY KEY,          -- 고유 번호
+    category    VARCHAR2(50) NOT NULL,       -- 카테고리
+    question    VARCHAR2(500) NOT NULL,      -- 질문
+    answer      CLOB NOT NULL,               -- 답변 (긴 텍스트를 위해 CLOB 사용)
+    order_no    NUMBER DEFAULT 0,            -- 노출 순서
+    created_at  DATE DEFAULT SYSDATE,
+    updated_at  DATE DEFAULT SYSDATE
+);
+
+-- 2. 자동 증가 시퀀스 생성
+CREATE SEQUENCE faq_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+-- 3. INSERT 시 faq_no 자동 증가 트리거 생성
+CREATE OR REPLACE TRIGGER trg_faq_no
+BEFORE INSERT ON faq
+FOR EACH ROW
+BEGIN
+    SELECT faq_seq.NEXTVAL INTO :new.faq_no FROM DUAL;
+END;
+/
+
+-- 자주 묻는 질문(테이블) : 기본값
+-- 1. 카테고리: 서비스 이용
+INSERT INTO faq (category, question, answer, order_no)
+VALUES ('서비스 이용', '#Trip은 어떤 서비스인가요?', ' #Trip은 사용자의 여행 취향을 분석하여 최적의 여행지와 코스를 제안하는 취향 기반 여행 분석 플랫폼입니다. 간단한 테스트를 통해 나만의 여행 스타일을 확인해 보세요!', 1);
+
+-- 2. 카테고리: 분석 결과
+INSERT INTO faq (category, question, answer, order_no)
+VALUES ('분석 결과', '여행 성향 결과는 어디서 다시 볼 수 있나요?', '로그인 후 ''마이페이지 > 나의 분석 이력'' 메뉴에서 언제든지 과거에 진행했던 성향 테스트 결과를 다시 확인하고 비교해 보실 수 있습니다.', 2);
+
+-- 3. 카테고리: 계정
+INSERT INTO faq (category, question, answer, order_no)
+VALUES ('계정', '회원 탈퇴는 어떻게 하나요?', '''마이페이지 > 회원 정보 수정'' 하단의 ''회원 탈퇴'' 버튼을 통해 진행하실 수 있습니다. 탈퇴 시 기존의 분석 데이터는 모두 삭제되며 복구가 불가능하니 유의해 주세요.', 3);
+
+-- 4. 카테고리: 위치 정보
+INSERT INTO faq (category, question, answer, order_no)
+VALUES ('위치 정보', '위치 정보 권한이 꼭 필요한가요?', '필수는 아니지만, 위치 권한을 허용하시면 현재 계신 곳을 중심으로 실시간 주변 여행지 및 맛집 추천 서비스를 더욱 정확하게 받아보실 수 있습니다.', 4);
+
+-- 데이터 확정
+COMMIT;
