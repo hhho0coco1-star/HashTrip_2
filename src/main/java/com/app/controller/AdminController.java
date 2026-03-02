@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.app.dto.FaqDTO;
 import com.app.dto.InquiryDTO;
+import com.app.dto.NoticeDTO;
 import com.app.service.FaqService;
+import com.app.service.NoticeService;
 import com.app.service.UsersService;
 
 @Controller
@@ -30,6 +32,9 @@ public class AdminController {
 	@Autowired
     private FaqService faqService;
 
+	@Autowired
+    private NoticeService noticeService;
+	
 	// 관리자 전용 페이지
 	@GetMapping("/hashTrip/admin")
 	public String admin() {
@@ -176,5 +181,47 @@ public class AdminController {
         faqService.removeFaq(faqNo);
         
         return "redirect:/hashTrip/admin/faq";
+    }
+    
+    // 1. 공지사항 관리 페이지 이동 (목록 조회)
+    @GetMapping("/hashTrip/admin/notice")
+    public String noticeManagementPage(Model model) {
+        model.addAttribute("noticeList", noticeService.getNoticeList());
+        return "admin/notice"; // JSP 파일 위치: /WEB-INF/views/admin/noticeManagement.jsp
+    }
+
+    // 2. 공지사항 등록 폼 페이지 이동
+    @GetMapping("/admin/notice/registerForm")
+    public String registerForm2() {
+    	return "admin/noticeRegister";
+    }
+
+    // 3. 공지사항 등록 처리
+    @PostMapping("/admin/notice/registerForm")
+    public String registerNotice(NoticeDTO noticeDTO) {
+        noticeService.registerNotice(noticeDTO);
+        return "redirect:/hashTrip/admin/notice";
+    }
+
+    // 4. 공지사항 수정 폼 페이지 이동
+    @GetMapping("/admin/notice/modify")
+    public String modifyForm2(@RequestParam("noticeNo") int noticeNo, Model model) {
+        model.addAttribute("notice", noticeService.getNoticeDetail(noticeNo));
+        
+        return "admin/noticeModify"; // JSP 파일 위치: /WEB-INF/views/admin/noticeModify.jsp
+    }
+
+    // 5. 공지사항 수정 처리
+    @PostMapping("/admin/notice/modify")
+    public String modifyNotice(NoticeDTO noticeDTO) {
+        noticeService.modifyNotice(noticeDTO);
+        return "redirect:/hashTrip/admin/notice";
+    }
+
+    // 6. 공지사항 삭제 처리
+    @GetMapping("/admin/notice/remove")
+    public String removeNotice(@RequestParam("noticeNo") int noticeNo) {
+        noticeService.removeNotice(noticeNo);
+        return "redirect:/hashTrip/admin/notice";
     }
 }

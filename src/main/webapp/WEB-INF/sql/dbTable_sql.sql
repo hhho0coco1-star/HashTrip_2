@@ -611,3 +611,40 @@ VALUES ('위치 정보', '위치 정보 권한이 꼭 필요한가요?', '필수
 
 -- 데이터 확정
 COMMIT;
+
+-- 공지사항 테이블 생성
+CREATE TABLE notice (
+    notice_no   NUMBER PRIMARY KEY,          -- 공지사항 고유 번호
+    title       VARCHAR2(200) NOT NULL,      -- 제목
+    content     CLOB NOT NULL,               -- 내용 (긴 텍스트 처리를 위해 CLOB 사용)
+    view_count  NUMBER DEFAULT 0,            -- 조회수
+    created_at  DATE DEFAULT SYSDATE,        -- 작성일
+    updated_at  DATE DEFAULT SYSDATE         -- 수정일
+);
+
+CREATE SEQUENCE notice_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+    
+CREATE OR REPLACE TRIGGER trg_notice_no
+BEFORE INSERT ON notice
+FOR EACH ROW
+BEGIN
+    SELECT notice_seq.NEXTVAL INTO :new.notice_no FROM DUAL;
+END;
+/
+
+-- 1. 신규 여행 성향 테스트 질문 업데이트
+INSERT INTO notice (title, content)
+VALUES ('신규 여행 성향 테스트 질문 업데이트', '안녕하세요. #Trip 팀입니다. <br><br> 겨울 시즌을 맞아 새로운 성향 분석 알고리즘이 업데이트되었습니다. 더욱 정교해진 질문들로 나만의 겨울 여행지를 찾아보세요!');
+
+-- 2. 시스템 점검 작업 안내
+INSERT INTO notice (title, content)
+VALUES ('시스템 점검 작업 안내 (01월 05일 02:00 ~ 04:00)', '안정적인 서비스 제공을 위해 서버 점검이 진행될 예정입니다.<br> 해당 시간에는 서비스 접속이 원활하지 않을 수 있으니 양해 부탁드립니다.');
+
+-- 3. ☀️ 2026 새해 맞이
+INSERT INTO notice (title, content)
+VALUES ('☀️ 2026 새해 맞이, #Trip과 함께하는 새로운 여정', '안녕하세요, <strong>#Trip</strong>입니다. 어느덧 새로운 한 해가 밝았습니다! <br><br> 새해를 맞아 본인의 여행 취향을 다시 한번 점검해 보실 수 있도록 <strong>''신년 맞이 성향 분석 알고리즘''</strong>을 정교하게 업데이트했습니다.<br> 올 한 해, 여러분의 발길이 닿는 곳마다 행복이 가득하기를 #Trip이 응원하겠습니다.<br><br> 지금 바로 새로워진 질문들로 2026년 첫 여행지를 발견해 보세요!');
+
+COMMIT;

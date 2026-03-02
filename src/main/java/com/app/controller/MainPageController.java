@@ -19,6 +19,7 @@ import com.app.dto.InquiryDTO;
 import com.app.dto.PlaceDTO;
 import com.app.dto.UsersDTO;
 import com.app.service.FaqService;
+import com.app.service.NoticeService;
 import com.app.service.PlaceService;
 import com.app.service.UserAuthenticationService;
 import com.app.service.UsersService;
@@ -38,6 +39,9 @@ public class MainPageController {
 	
 	@Autowired
 	private UserAuthenticationService userAuthenticationService;
+	
+	@Autowired
+    private NoticeService noticeService;
 	
 	@GetMapping({"/", "/main", "/hashTrip"}) // 메인 페이지
 	public String hashTag(Model model, Authentication authentication) {
@@ -107,7 +111,10 @@ public class MainPageController {
 	}
 	
 	@GetMapping("/hashTrip/notice") // 메인 페이지 공지사항
-	public String hashTrip_notice() {
+	public String hashTrip_notice(Model model) {
+		
+		model.addAttribute("noticeList", noticeService.getNoticeList());
+		
 	    return "mainPage/mainPage-notice"; 
 	}
 	
