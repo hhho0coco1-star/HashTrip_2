@@ -338,6 +338,12 @@
                 qsAll(".planner-replace-item", list).forEach(function (el) {
                     var idx = parseInt(el.getAttribute("data-idx"), 10);
                     el.addEventListener("click", function () {
+                        if (el.classList.contains("card-expanded")) {
+                            el.classList.remove("card-expanded");
+                            return;
+                        }
+                        qsAll(".planner-replace-item", list).forEach(function (x) { x.classList.remove("card-expanded"); });
+                        el.classList.add("card-expanded");
                         selectedReplaceIdx = idx;
                         qsAll(".planner-replace-item", list).forEach(function (x) { x.classList.remove("selected"); });
                         el.classList.add("selected");
@@ -768,7 +774,28 @@
         var expanded = cardEl.querySelector(".planner-replace-card-expanded");
         if (!expanded) return;
         if (!placeNo) {
-            expanded.innerHTML = "<p class=\"planner-replace-msg\">등록된 상세 정보가 없습니다.</p>";
+            // DB에 등록된 상세 정보는 없지만, 현재 선택된 장소 자체는 사용할 수 있도록 선택 버튼 제공
+            expanded.innerHTML =
+                "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                        "<span class=\"planner-replace-detail-text\">등록된 상세 정보가 없습니다.</span>" +
+                        "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                "</div>";
+            var selectBtnNoDetail = expanded.querySelector(".planner-expanded-select-btn");
+            if (selectBtnNoDetail) {
+                selectBtnNoDetail.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    if (typeof confirmPlace === "function") {
+                        confirmPlace();
+                    } else {
+                        var footerBtn = typeof id === "function" ? id("confirmPlace") : document.getElementById("confirmPlace");
+                        if (footerBtn && !footerBtn.disabled) {
+                            footerBtn.click();
+                        }
+                    }
+                });
+            }
             return;
         }
         expanded.innerHTML = "<span class=\"planner-replace-msg\">로딩 중...</span>";
@@ -936,6 +963,29 @@
         return kakaoName === dbName;
     }
 
+    /** 근처 장소 목록에서 카카오 검색 결과(장소명)와 가장 잘 맞는 한 건 선택. 지도 검색 결과별로 올바른 이미지 매핑용. */
+    function pickBestMatchingPlaceFromNearby(nearbyList, kakaoItem) {
+        if (!Array.isArray(nearbyList) || nearbyList.length === 0 || !kakaoItem) return null;
+        var kakaoName = normalizePlaceName(kakaoItem.place_name || "");
+        if (!kakaoName) return nearbyList[0];
+
+        var exactMatch = null;
+        var containsMatch = null;
+        for (var i = 0; i < nearbyList.length; i++) {
+            var p = nearbyList[i];
+            var dbName = normalizePlaceName(p.placeName || "");
+            if (!dbName) continue;
+            if (kakaoName === dbName) {
+                exactMatch = p;
+                break;
+            }
+            if (kakaoName.indexOf(dbName) !== -1 || dbName.indexOf(kakaoName) !== -1) {
+                if (!containsMatch) containsMatch = p;
+            }
+        }
+        return exactMatch || containsMatch || nearbyList[0];
+    }
+
     function searchPlace() {
         const q = (id("placeSearch") && id("placeSearch").value) || "";
         if (!q.trim()) return;
@@ -966,6 +1016,12 @@
                 }).join("");
                 qsAll(".planner-search-card", res).forEach(function (el) {
                     el.addEventListener("click", function () {
+                        if (el.classList.contains("card-expanded")) {
+                            el.classList.remove("card-expanded");
+                            return;
+                        }
+                        qsAll(".planner-search-card", res).forEach(function (x) { x.classList.remove("card-expanded"); });
+                        el.classList.add("card-expanded");
                         qsAll(".planner-search-card", res).forEach(function (x) { x.classList.remove("selected"); });
                         el.classList.add("selected");
                         var idx = parseInt(el.getAttribute("data-idx"), 10);
@@ -1000,7 +1056,8 @@
                                 placeLatitude: lat,
                                 placeLongitude: lng
                             };
-                            loadSearchPlacePreview(enriched && enriched.placeNo ? enriched.placeNo : null, el);
+                            // 근처 다른 장소 이미지는 사용하지 않고, 상세 미리보기도 호출하지 않음
+                            loadSearchPlacePreview(null, el);
                         }
                     });
                 });
@@ -1012,10 +1069,19 @@
                     fetch(url, { credentials: "same-origin" })
                         .then(function (r) { return r.ok ? r.json() : []; })
                         .then(function (arr) {
-                            var place = (Array.isArray(arr) && arr.length > 0) ? arr[0] : null;
-                            mapSearchEnriched[idx] = place;
-                            var cardEl = res.querySelector(".planner-search-card[data-idx=\"" + idx + "\"]");
-                            if (cardEl && place) updateSearchCardContent(cardEl, place);
+                            var place = pickBestMatchingPlaceFromNearby(Array.isArray(arr) ? arr : [], item);
+                            var kakaoItem = item;
+
+                            // 이름+좌표가 같은 곳으로 판단되는 경우에만 보강 정보 사용
+                            if (place && kakaoItem && isSamePlace(kakaoItem, place)) {
+                                mapSearchEnriched[idx] = place;
+                                var cardEl = res.querySelector(".planner-search-card[data-idx=\"" + idx + "\"]");
+                                if (cardEl) {
+                                    updateSearchCardContent(cardEl, place);
+                                }
+                            } else {
+                                mapSearchEnriched[idx] = null;
+                            }
                         })
                         .catch(function () {});
                 });

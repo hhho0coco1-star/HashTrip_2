@@ -111,14 +111,17 @@
 
 /* 일정 순서 + 썸네일 */
 .planner-plan-steps {
-    padding: 0 1.08rem 1.08rem;
+    padding: 0 1.08rem 0.7rem;
+    max-height: 110px;
+    overflow: hidden;
 }
 
 .planner-step-thumbs {
     display: flex;
     align-items: center;
     gap: 5px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     margin-bottom: 7px;
 }
 
@@ -150,6 +153,16 @@
     font-weight: 700;
     color: #9aa4b2;
     background: #f3f5f8;
+}
+
+.planner-step-thumb-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #4b5563;
+    background: #e5e7eb;
 }
 
 .planner-step-thumb .planner-step-order {
@@ -199,6 +212,13 @@
     color: var(--text-tertiary);
 }
 
+.planner-plan-meta-dates {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: auto;
+}
+
 .planner-plan-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -213,6 +233,9 @@
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(31, 41, 55, 0.06);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 230px;
 }
 
 .planner-plan-card:hover {
@@ -221,7 +244,9 @@
 }
 
 .planner-plan-card-link {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     text-decoration: none;
     color: inherit;
 }

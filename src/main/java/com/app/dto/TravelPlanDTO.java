@@ -16,6 +16,10 @@ public class TravelPlanDTO {
     private Date planStartDate;
     private Date planEndDate;
 
+    /** 일정 메타: 생성일/수정일 */
+    private Date createdAt;
+    private Date updatedAt;
+
     /** 일정 목록용: 방문 순서·썸네일 등 */
     private List<PlanDetailDTO> planDetails;
 
