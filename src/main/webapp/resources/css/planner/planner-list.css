@@ -199,6 +199,12 @@
     color: var(--text-tertiary);
 }
 
+.planner-plan-meta-dates {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .planner-plan-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

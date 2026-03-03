@@ -12,6 +12,8 @@
 			tp.plan_status,
 			tp.plan_start_date,
 			tp.plan_end_date,
+			tp.created_date AS createdAt,
+			tp.updated_date AS updatedAt,
 			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
 			NVL(ts.travel_type_name, 'adventurer') AS type_id,
 			NVL(
@@ -63,6 +65,8 @@
 			tp.plan_status,
 			tp.plan_start_date,
 			tp.plan_end_date,
+			tp.created_date AS createdAt,
+			tp.updated_date AS updatedAt,
 			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
 			NVL(ts.travel_type_name, 'adventurer') AS type_id,
 			NVL(
@@ -113,6 +117,8 @@
 			tp.plan_status,
 			tp.plan_start_date,
 			tp.plan_end_date,
+			tp.created_date AS createdAt,
+			tp.updated_date AS updatedAt,
 			NVL(u.user_nickName, NVL(u.user_name, 'Traveler')) AS user_name,
 			NVL(ts.travel_type_name, 'adventurer') AS type_id,
 			NVL(
@@ -159,10 +165,25 @@
 			SELECT SEQ_PLAN_NO.NEXTVAL FROM DUAL
 		</selectKey>
 		INSERT INTO TRAVEL_PLANS (
-			PLAN_NO, USER_NO, PLAN_TITLE, PLAN_IS_PUBLIC, PLAN_STATUS, PLAN_START_DATE, PLAN_END_DATE
+			PLAN_NO,
+			USER_NO,
+			PLAN_TITLE,
+			PLAN_IS_PUBLIC,
+			PLAN_STATUS,
+			PLAN_START_DATE,
+			PLAN_END_DATE,
+			CREATED_DATE,
+			UPDATED_DATE
 		) VALUES (
-			#{planNo}, #{userNo}, #{planTitle}, #{planIsPublic}, #{planStatus},
-        #{planStartDate}, #{planEndDate}
+			#{planNo},
+			#{userNo},
+			#{planTitle},
+			#{planIsPublic},
+			#{planStatus},
+			#{planStartDate},
+			#{planEndDate},
+			SYSDATE,
+			SYSDATE
 		)
 	</insert>
 
@@ -173,7 +194,8 @@
 			PLAN_IS_PUBLIC = #{planIsPublic},
 			PLAN_STATUS = #{planStatus},
 			PLAN_START_DATE = #{planStartDate},
-			PLAN_END_DATE = #{planEndDate}
+			PLAN_END_DATE = #{planEndDate},
+			UPDATED_DATE = SYSDATE
 		WHERE PLAN_NO = #{planNo}
 		  AND USER_NO = #{userNo}
 	</update>

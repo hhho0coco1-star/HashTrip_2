@@ -122,10 +122,9 @@
                                             </div>
                                         </div>
                                     </c:if>
-                                    <c:if test="${not empty plan.planStartDate}">
-                                        <div class="planner-plan-meta">
-                                            작성일
-                                            <fmt:formatDate value="${plan.planStartDate}" pattern="dd.MM.yy"/>
+                                    <c:if test="${not empty plan.createdAt or not empty plan.updatedAt}">
+                                        <div class="planner-plan-meta planner-plan-meta-dates">
+                                            <c:if test="${not empty plan.createdAt}">작성 <fmt:formatDate value="${plan.createdAt}" pattern="dd.MM.yy"/></c:if><c:if test="${not empty plan.createdAt and not empty plan.updatedAt}"> · </c:if><c:if test="${not empty plan.updatedAt}">수정 <fmt:formatDate value="${plan.updatedAt}" pattern="dd.MM.yy"/></c:if>
                                         </div>
                                     </c:if>
                                 </a>
