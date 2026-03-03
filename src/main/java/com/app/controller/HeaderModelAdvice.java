@@ -42,7 +42,7 @@ public class HeaderModelAdvice {
 
         UsersDTO usersDTO = usersService.getUserByAuthId(authId.trim());
         if (usersDTO == null) {
-            model.addAttribute("headerDisplayName", "여행자");
+            model.addAttribute("headerDisplayName", "Traveler");
             return;
         }
 
@@ -62,7 +62,7 @@ public class HeaderModelAdvice {
         if (StringUtils.hasText(usersDTO.getUserName())) {
             return usersDTO.getUserName().trim();
         }
-        return "여행자";
+        return "Traveler";
     }
 
     private String normalizeUserType(String userType) {
