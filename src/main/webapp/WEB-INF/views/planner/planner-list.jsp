@@ -96,25 +96,47 @@
                                     </div>
                                     <%-- 일정 순서 + 썸네일 --%>
                                     <c:if test="${not empty plan.planDetails}">
+                                        <c:set var="detailCount" value="${fn:length(plan.planDetails)}"/>
+                                        <c:set var="maxThumbSlots" value="5"/>
+                                        <c:choose>
+                                            <c:when test="${detailCount <= maxThumbSlots}">
+                                                <c:set var="visibleRealThumbs" value="${detailCount}"/>
+                                                <c:set var="hasMoreThumb" value="false"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:set var="visibleRealThumbs" value="${maxThumbSlots - 1}"/>
+                                                <c:set var="hasMoreThumb" value="true"/>
+                                            </c:otherwise>
+                                        </c:choose>
                                         <div class="planner-plan-steps">
                                             <div class="planner-step-thumbs">
+                                                <%-- 썸네일: 최대 visibleRealThumbs 개 + 필요 시 마지막 슬롯에 +N 표시, 사이에는 화살표 --%>
                                                 <c:forEach var="detail" items="${plan.planDetails}" varStatus="st">
-                                                    <div class="planner-step-thumb" title="<c:out value='${detail.placeName}' default='장소'/>">
-                                                        <c:choose>
-                                                            <c:when test="${not empty detail.placeThumbnailUrl}">
-                                                                <img src="${detail.placeThumbnailUrl}" alt="" />
-                                                                <span class="planner-step-order">${st.index + 1}</span>
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <div class="planner-step-thumb-placeholder">${st.index + 1}</div>
-                                                            </c:otherwise>
-                                                        </c:choose>
-                                                    </div>
-                                                    <c:if test="${!st.last}">
-                                                        <span class="planner-step-arrow">→</span>
+                                                    <c:if test="${st.index lt visibleRealThumbs}">
+                                                        <div class="planner-step-thumb" title="<c:out value='${detail.placeName}' default='장소'/>">
+                                                            <c:choose>
+                                                                <c:when test="${not empty detail.placeThumbnailUrl}">
+                                                                    <img src="${detail.placeThumbnailUrl}" alt="" />
+                                                                    <span class="planner-step-order">${st.index + 1}</span>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <div class="planner-step-thumb-placeholder">${st.index + 1}</div>
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </div>
+                                                        <c:if test="${st.index lt visibleRealThumbs - 1}">
+                                                            <span class="planner-step-arrow">→</span>
+                                                        </c:if>
                                                     </c:if>
                                                 </c:forEach>
+                                                <c:if test="${hasMoreThumb}">
+                                                    <span class="planner-step-arrow">→</span>
+                                                    <div class="planner-step-thumb planner-step-thumb-more" title="추가 여행지">
+                                                        +${detailCount - visibleRealThumbs}
+                                                    </div>
+                                                </c:if>
                                             </div>
+                                            <%-- 텍스트 경로는 기존처럼 전체 여행지 이름을 모두 표시 --%>
                                             <div class="planner-step-names">
                                                 <c:forEach var="detail" items="${plan.planDetails}" varStatus="st">
                                                     <span class="planner-step-name"><c:out value="${detail.placeName}" default="장소"/></span><c:if test="${!st.last}"><span class="planner-step-arrow">→</span></c:if>
@@ -124,7 +146,14 @@
                                     </c:if>
                                     <c:if test="${not empty plan.createdAt or not empty plan.updatedAt}">
                                         <div class="planner-plan-meta planner-plan-meta-dates">
-                                            <c:if test="${not empty plan.createdAt}">작성 <fmt:formatDate value="${plan.createdAt}" pattern="dd.MM.yy"/></c:if><c:if test="${not empty plan.createdAt and not empty plan.updatedAt}"> · </c:if><c:if test="${not empty plan.updatedAt}">수정 <fmt:formatDate value="${plan.updatedAt}" pattern="dd.MM.yy"/></c:if>
+                                            <c:choose>
+                                                <c:when test="${not empty plan.updatedAt}">
+                                                    <fmt:formatDate value="${plan.updatedAt}" pattern="dd.MM.yy"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatDate value="${plan.createdAt}" pattern="dd.MM.yy"/>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </c:if>
                                 </a>

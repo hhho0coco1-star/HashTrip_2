@@ -774,7 +774,28 @@
         var expanded = cardEl.querySelector(".planner-replace-card-expanded");
         if (!expanded) return;
         if (!placeNo) {
-            expanded.innerHTML = "<p class=\"planner-replace-msg\">등록된 상세 정보가 없습니다.</p>";
+            // DB에 등록된 상세 정보는 없지만, 현재 선택된 장소 자체는 사용할 수 있도록 선택 버튼 제공
+            expanded.innerHTML =
+                "<div class=\"planner-replace-expanded-inner\">" +
+                    "<div class=\"planner-replace-expanded-header\">" +
+                        "<span class=\"planner-replace-detail-text\">등록된 상세 정보가 없습니다.</span>" +
+                        "<button type=\"button\" class=\"planner-btn planner-btn-primary planner-expanded-select-btn\">여행지 선택</button>" +
+                    "</div>" +
+                "</div>";
+            var selectBtnNoDetail = expanded.querySelector(".planner-expanded-select-btn");
+            if (selectBtnNoDetail) {
+                selectBtnNoDetail.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    if (typeof confirmPlace === "function") {
+                        confirmPlace();
+                    } else {
+                        var footerBtn = typeof id === "function" ? id("confirmPlace") : document.getElementById("confirmPlace");
+                        if (footerBtn && !footerBtn.disabled) {
+                            footerBtn.click();
+                        }
+                    }
+                });
+            }
             return;
         }
         expanded.innerHTML = "<span class=\"planner-replace-msg\">로딩 중...</span>";
