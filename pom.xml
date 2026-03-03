@@ -197,6 +197,11 @@ https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
 			<artifactId>spring-security-oauth2-client</artifactId>
 			<version>5.8.9</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
+			<version>5.8.9</version>
+		</dependency>
 
 
 	</dependencies>

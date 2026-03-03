@@ -12,6 +12,8 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,7 @@ import com.app.service.UserAuthenticationService;
 import com.app.service.UsersService;
 import com.app.service.WishListService;
 import com.app.service.impl.RouteService;
+import com.app.service.impl.SocialUserProvisionService;
 import com.app.util.ApiResponse;
 
 @Controller
@@ -58,6 +61,9 @@ public class MainPageController {
 
     @Autowired
     private WishListService wishListService;
+
+    @Autowired
+    private SocialUserProvisionService socialUserProvisionService;
 
     // 메인 페이지Preference 카테고리 정의
     private static final Set<String> MAIN_PREF_CATEGORY_KEYS = new LinkedHashSet<>(
@@ -230,8 +236,8 @@ public class MainPageController {
     @GetMapping("/hashTrip/contact")
     public String hashTripContact(Authentication authentication, Model model) {
         String defaultEmail = "";
-        if (authentication != null && authentication.isAuthenticated()) {
-            String userAuthId = authentication.getName();
+        String userAuthId = resolveAuthenticatedAuthId(authentication);
+        if (userAuthId != null) {
             defaultEmail = userAuthenticationService.getUserEmailByAuthId(userAuthId);
         }
         model.addAttribute("defaultEmail", defaultEmail);
@@ -345,6 +351,27 @@ public class MainPageController {
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
             return null;
+        }
+
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+            Object principal = token.getPrincipal();
+            if (principal instanceof OAuth2User) {
+                OAuth2User oAuth2User = (OAuth2User) principal;
+                try {
+                    socialUserProvisionService.provisionIfMissing(
+                            token.getAuthorizedClientRegistrationId(),
+                            oAuth2User.getAttributes());
+                } catch (Exception ignored) {
+                    // Ignore provisioning errors here and try resolving existing auth id.
+                }
+                String socialAuthId = socialUserProvisionService.resolveSocialAuthId(
+                        token.getAuthorizedClientRegistrationId(),
+                        oAuth2User.getAttributes());
+                if (socialAuthId != null && !socialAuthId.trim().isEmpty()) {
+                    return socialAuthId.trim();
+                }
+            }
         }
 
         String authId = authentication.getName();

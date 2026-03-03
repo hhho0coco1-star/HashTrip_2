@@ -142,3 +142,4 @@ $RECYCLE.BIN/
 
 # Local secret overrides
 src/main/resources/mail-local.properties
+src/main/resources/oauth2-local.properties

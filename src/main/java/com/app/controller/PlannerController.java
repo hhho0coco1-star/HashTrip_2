@@ -11,6 +11,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -44,6 +47,7 @@ import com.app.service.PlaceService;
 import com.app.service.TravelPlanService;
 import com.app.service.UsersService;
 import com.app.service.impl.CommunityService;
+import com.app.service.impl.SocialUserProvisionService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -57,16 +61,16 @@ public class PlannerController {
     private static final String COOKIE_LAST_PLAN = "lastPlannerPlanNo";
     private static final int COOKIE_AGE_DAYS = 30;
 
-    private static final String MSG_LOGIN = "로그인이 필요합니다.";
-    private static final String MSG_NOT_FOUND = "해당 일정을 찾을 수 없습니다.";
-    private static final String MSG_FORBIDDEN = "수정 권한이 없습니다.";
-    private static final String MSG_SAVE_FAIL = "저장 중 오류가 발생했습니다.";
-    private static final String MSG_UPDATE_FAIL = "수정 중 오류가 발생했습니다.";
-    private static final String MSG_DELETE_FAIL = "삭제 중 오류가 발생했습니다.";
-    private static final String MSG_DETAIL_REQUIRED = "장소를 최소 1개 이상 추가해 주세요.";
-    private static final String MSG_JSON_INVALID = "일정 데이터 형식이 올바르지 않습니다.";
-    private static final String MSG_PLACE_RESOLVE = "장소 정보 조회에 실패했습니다.";
-    private static final String MSG_REVIEW_CONTENT = "리뷰 내용을 입력해 주세요.";
+    private static final String MSG_LOGIN = "Login is required.";
+    private static final String MSG_NOT_FOUND = "Plan not found.";
+    private static final String MSG_FORBIDDEN = "You do not have permission to modify this plan.";
+    private static final String MSG_SAVE_FAIL = "Failed to save the plan.";
+    private static final String MSG_UPDATE_FAIL = "Failed to update the plan.";
+    private static final String MSG_DELETE_FAIL = "Failed to delete the plan.";
+    private static final String MSG_DETAIL_REQUIRED = "Add at least one place to the plan.";
+    private static final String MSG_JSON_INVALID = "Invalid plan detail payload.";
+    private static final String MSG_PLACE_RESOLVE = "Failed to resolve place information.";
+    private static final String MSG_REVIEW_CONTENT = "Please enter review content.";
 
     @Autowired
     private TravelPlanService travelPlanService;
@@ -78,6 +82,8 @@ public class PlannerController {
     private PlaceService placeService;
     @Autowired
     private CommunityService communityService;
+    @Autowired
+    private SocialUserProvisionService socialUserProvisionService;
 
     @GetMapping
     public String list(Authentication auth, RedirectAttributes ra, Model model,
@@ -101,7 +107,7 @@ public class PlannerController {
         return "planner/planner-list";
     }
 
-    /** 근처 여행지 검색 (다른 여행지로 교체용). 로그인 필요. */
+    /** Search nearby places for replacement suggestions. Requires login. */
     @GetMapping("/nearby-places")
     @ResponseBody
     public List<PlaceDTO> nearbyPlaces(Authentication auth,
@@ -116,7 +122,7 @@ public class PlannerController {
         return placeService.getPlacesNearby(lat, lng, safeRadius, excludePlaceNo);
     }
 
-    /** 장소 미리보기(사진·리뷰). 교체 모달 선택 시 사용. */
+    /** Place preview data (photos + reviews) for replacement modal. */
     @GetMapping("/place-preview")
     @ResponseBody
     public Map<String, Object> placePreview(Authentication auth, @RequestParam Long placeNo) {
@@ -227,7 +233,7 @@ public class PlannerController {
             }
             Long planNo = travelPlanService.insertTravelPlanWithDetails(dto, details);
             writeCookie(response, COOKIE_LAST_PLAN, String.valueOf(planNo), COOKIE_AGE_DAYS * 24 * 60 * 60);
-            ra.addFlashAttribute("plannerMessage", "일정이 저장되었습니다.");
+            ra.addFlashAttribute("plannerMessage", "Plan saved.");
             return "redirect:/planner/" + planNo + "/edit";
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("plannerError", e.getMessage());
@@ -270,7 +276,7 @@ public class PlannerController {
             }
             travelPlanService.updateTravelPlanWithDetails(dto, details, user.getUserNo());
             writeCookie(response, COOKIE_LAST_PLAN, String.valueOf(planNo), COOKIE_AGE_DAYS * 24 * 60 * 60);
-            ra.addFlashAttribute("plannerMessage", "일정이 수정되었습니다.");
+            ra.addFlashAttribute("plannerMessage", "Plan updated.");
             return "redirect:/planner/" + planNo + "/edit";
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("plannerError", e.getMessage());
@@ -282,8 +288,8 @@ public class PlannerController {
     }
 
     /**
-     * 여행 완료 처리 + 리뷰·별점·공개 여부 저장.
-     * 공개 시 추천 루트(공개 일정)에 노출됩니다.
+     * Complete trip and save review/rating/public flag.
+     * Public trips are exposed to route recommendation.
      */
     @PostMapping("/{planNo}/complete-review")
     public String completeReview(
@@ -318,10 +324,10 @@ public class PlannerController {
         CommunityDTO existingReview = communityService.getCommunityReviewByPlanNoAndUserNo(planNo, user.getUserNo());
         if (existingReview != null && existingReview.getReviewNo() != null) {
             communityService.updateCommunityReview(existingReview.getReviewNo(), user.getUserNo(), reviewContent.trim(), r);
-            ra.addFlashAttribute("plannerMessage", "리뷰가 수정되었습니다." + ("Y".equals(isPublic) ? " 공개되어 추천 루트에 노출됩니다." : ""));
+            ra.addFlashAttribute("plannerMessage", "Review updated." + ("Y".equals(isPublic) ? " Public route recommendation enabled." : ""));
         } else {
             communityService.addCommunityReview(planNo, user.getUserNo(), reviewContent.trim(), r);
-            ra.addFlashAttribute("plannerMessage", "여행을 완료했고 리뷰가 등록되었습니다." + ("Y".equals(isPublic) ? " 공개되어 추천 루트에 노출됩니다." : ""));
+            ra.addFlashAttribute("plannerMessage", "Trip completed and review created." + ("Y".equals(isPublic) ? " Public route recommendation enabled." : ""));
         }
         return "redirect:/planner/" + planNo + "/edit";
     }
@@ -337,7 +343,7 @@ public class PlannerController {
         try {
             travelPlanService.deleteTravelPlan(planNo, user.getUserNo());
             removeCookie(response, COOKIE_LAST_PLAN);
-            ra.addFlashAttribute("plannerMessage", "일정이 삭제되었습니다.");
+            ra.addFlashAttribute("plannerMessage", "Plan deleted.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("plannerError", e.getMessage());
         } catch (Exception e) {
@@ -350,9 +356,49 @@ public class PlannerController {
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             return null;
         }
-        String authId = auth.getName();
-        if (!StringUtils.hasText(authId)) return null;
-        return usersService.getUserByAuthId(authId.trim());
+
+        String authId = null;
+        if (auth instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
+            Object principal = token.getPrincipal();
+            if (principal instanceof OAuth2User) {
+                OAuth2User oAuth2User = (OAuth2User) principal;
+                try {
+                    socialUserProvisionService.provisionIfMissing(
+                            token.getAuthorizedClientRegistrationId(),
+                            oAuth2User.getAttributes());
+                } catch (Exception ignored) {
+                    // Ignore provisioning errors here and try resolving existing user.
+                }
+                authId = socialUserProvisionService.resolveSocialAuthId(
+                        token.getAuthorizedClientRegistrationId(),
+                        oAuth2User.getAttributes());
+            }
+        }
+
+        if (!StringUtils.hasText(authId)) {
+            authId = auth.getName();
+        }
+        if (!StringUtils.hasText(authId)) {
+            return null;
+        }
+        UsersDTO user = usersService.getUserByAuthId(authId.trim());
+        if (user != null) {
+            return user;
+        }
+
+        if (auth instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
+            String provider = token.getAuthorizedClientRegistrationId();
+            String principalName = auth.getName();
+            if (StringUtils.hasText(provider) && StringUtils.hasText(principalName)) {
+                String candidateAuthId = provider.trim().toLowerCase(Locale.ROOT)
+                        + "_" + principalName.trim();
+                return usersService.getUserByAuthId(candidateAuthId);
+            }
+        }
+
+        return null;
     }
 
     private void ensurePlanDates(TravelPlanDTO dto) {
@@ -365,32 +411,35 @@ public class PlannerController {
     }
 
     private String buildAutoTitle(Date start, Date end, List<PlanDetailDTO> details) {
-        String datePart = "";
+        String datePart;
         if (start != null && end != null) {
             LocalDate s = start.toLocalDate();
             LocalDate e = end.toLocalDate();
             datePart = s.getMonthValue() + "/" + s.getDayOfMonth() + "~" + e.getMonthValue() + "/" + e.getDayOfMonth();
         } else {
-            datePart = "여행";
+            datePart = "Trip";
         }
-        String region = "";
+
+        String placeHint = "";
         if (details != null && !details.isEmpty()) {
             PlanDetailDTO first = details.get(0);
-            String name = first.getPlaceName();
-            String addr = first.getPlaceAddress();
-            if (StringUtils.hasText(name) && (name.contains("제주") || name.contains("서울") || name.contains("부산") || name.contains("강릉"))) {
-                region = name.contains("제주") ? "제주" : (name.contains("서울") ? "서울" : (name.contains("부산") ? "부산" : (name.contains("강릉") ? "강릉" : "")));
-            }
-            if (region.isEmpty() && StringUtils.hasText(addr)) {
-                if (addr.contains("제주")) region = "제주";
-                else if (addr.contains("서울")) region = "서울";
-                else if (addr.contains("부산")) region = "부산";
-                else if (addr.contains("강릉")) region = "강릉";
+            if (first != null) {
+                if (StringUtils.hasText(first.getPlaceName())) {
+                    placeHint = first.getPlaceName().trim();
+                } else if (StringUtils.hasText(first.getPlaceAddress())) {
+                    placeHint = first.getPlaceAddress().trim();
+                }
             }
         }
-        return (datePart + " " + (region.isEmpty() ? "여행" : region + " 여행")).trim();
-    }
 
+        if (StringUtils.hasText(placeHint)) {
+            if (placeHint.length() > 20) {
+                placeHint = placeHint.substring(0, 20);
+            }
+            return (datePart + " " + placeHint + " Trip").trim();
+        }
+        return (datePart + " Trip").trim();
+    }
     private List<PlannerDetailView> toDetailViews(List<PlanDetailDTO> details, LocalDate planStartDate) {
         List<PlannerDetailView> list = new ArrayList<>();
         if (details == null) return list;
