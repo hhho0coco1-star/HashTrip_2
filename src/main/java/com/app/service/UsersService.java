@@ -11,6 +11,7 @@ import com.app.dto.UsersDTO;
 public interface UsersService {
 	
 	UsersDTO getUserByAuthId(String authId);
+	UsersDTO getUserProfileImageByUserNo(Long userNo);
 
 	UsersDTO updateProfileByAuthId(String authId, UsersDTO users);
 
@@ -53,8 +54,8 @@ public interface UsersService {
     
     Map<String, Object> getPagedUsers(int page, int size, String searchType, String keyword, String orderBy);
     
-    // 관리자 권한 부여/취소
-    boolean changeUserType(int userNo, String userType, Integer loginUserNo);
+    // 관리자 권한 부여/취소 (MASTER만 가능)
+    boolean changeUserType(int userNo, String userType, String loginAuthId);
     
     // 1:1 문의내역(관리자 페이지)
     List<InquiryDTO> getAllInquiries(Map<String, Object> params);

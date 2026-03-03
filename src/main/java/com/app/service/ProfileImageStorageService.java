@@ -1,121 +1,122 @@
 package com.app.service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
-import javax.servlet.ServletContext;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.app.dto.UsersDTO;
 
 @Service
 public class ProfileImageStorageService {
 
 	private static final long MAX_PROFILE_IMAGE_SIZE_BYTES = 5L * 1024L * 1024L;
-	private static final String PROFILE_UPLOAD_WEB_PATH = "/resources/uploads/profile";
 	private static final Set<String> ALLOWED_EXTENSIONS = buildAllowedExtensions();
+	private static final Set<String> ALLOWED_MIME_TYPES = buildAllowedMimeTypes();
 
-	@Autowired
-	private ServletContext servletContext;
-
-	public String store(MultipartFile profileImage) throws IOException {
+	public ProfileImageData parse(MultipartFile profileImage) throws IOException {
 		if (profileImage == null || profileImage.isEmpty()) {
 			return null;
 		}
 
 		validateProfileImage(profileImage);
 
-		String extension = resolveExtension(profileImage.getOriginalFilename(), profileImage.getContentType());
-		String savedName = UUID.randomUUID().toString().replace("-", "") + extension;
+		String mimeType = normalizeMimeType(profileImage.getContentType());
+		String extension = resolveExtension(profileImage.getOriginalFilename(), mimeType);
+		String safeFileName = resolveSafeFileName(profileImage.getOriginalFilename(), extension);
+		byte[] binary = profileImage.getBytes();
 
-		String uploadRoot = servletContext.getRealPath(PROFILE_UPLOAD_WEB_PATH);
-		if (!StringUtils.hasText(uploadRoot)) {
-			throw new IllegalStateException("프로필 업로드 경로를 확인할 수 없습니다.");
-		}
-
-		Path uploadDir = Paths.get(uploadRoot);
-		Files.createDirectories(uploadDir);
-
-		Path targetPath = uploadDir.resolve(savedName);
-		profileImage.transferTo(targetPath.toFile());
-
-		return PROFILE_UPLOAD_WEB_PATH + "/" + savedName;
+		return new ProfileImageData(binary, mimeType, safeFileName);
 	}
 
-	public void deleteIfManaged(String imagePath) {
-		if (!StringUtils.hasText(imagePath)) {
-			return;
+	public void applyToUser(UsersDTO usersDTO, MultipartFile profileImage) throws IOException {
+		if (usersDTO == null) {
+			throw new IllegalArgumentException("프로필 대상 사용자 정보가 없습니다.");
 		}
-		String trimmed = imagePath.trim();
-		if (!trimmed.startsWith(PROFILE_UPLOAD_WEB_PATH + "/")) {
-			return;
-		}
-
-		String realPath = servletContext.getRealPath(trimmed);
-		if (!StringUtils.hasText(realPath)) {
+		ProfileImageData profileImageData = parse(profileImage);
+		if (profileImageData == null) {
 			return;
 		}
 
-		try {
-			Files.deleteIfExists(Paths.get(realPath));
-		} catch (IOException ignored) {
-			// Ignore cleanup failures to avoid breaking user update flow.
-		}
+		usersDTO.setUserProfileBinary(profileImageData.getBinary());
+		usersDTO.setUserProfileMimeType(profileImageData.getMimeType());
+		usersDTO.setUserProfileFileName(profileImageData.getFileName());
+		// BLOB 저장 우선.
+		usersDTO.setUserProfileImg(null);
 	}
 
 	private void validateProfileImage(MultipartFile profileImage) {
-		String contentType = profileImage.getContentType();
-		if (!StringUtils.hasText(contentType) || !contentType.toLowerCase().startsWith("image/")) {
-			throw new IllegalArgumentException("프로필 이미지는 이미지 파일만 업로드할 수 있습니다.");
+		String mimeType = normalizeMimeType(profileImage.getContentType());
+		if (!StringUtils.hasText(mimeType) || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+			throw new IllegalArgumentException("프로필 이미지는 JPG, PNG, GIF, WEBP만 업로드할 수 있습니다.");
 		}
 		if (profileImage.getSize() > MAX_PROFILE_IMAGE_SIZE_BYTES) {
 			throw new IllegalArgumentException("프로필 이미지는 5MB 이하만 업로드할 수 있습니다.");
 		}
 	}
 
-	private String resolveExtension(String originalFilename, String contentType) {
+	private String normalizeMimeType(String mimeType) {
+		if (!StringUtils.hasText(mimeType)) {
+			return null;
+		}
+		return mimeType.trim().toLowerCase();
+	}
+
+	private String resolveExtension(String originalFilename, String mimeType) {
 		String extension = "";
 		if (StringUtils.hasText(originalFilename)) {
-			int dotIndex = originalFilename.lastIndexOf('.');
-			if (dotIndex > -1 && dotIndex < originalFilename.length() - 1) {
-				extension = originalFilename.substring(dotIndex).toLowerCase();
+			String cleaned = StringUtils.cleanPath(originalFilename);
+			int dotIndex = cleaned.lastIndexOf('.');
+			if (dotIndex > -1 && dotIndex < cleaned.length() - 1) {
+				extension = cleaned.substring(dotIndex).toLowerCase();
 			}
 		}
 
 		if (!StringUtils.hasText(extension)) {
-			extension = fromContentType(contentType);
+			extension = extensionFromMimeType(mimeType);
 		}
+
 		if (!ALLOWED_EXTENSIONS.contains(extension)) {
 			throw new IllegalArgumentException("지원하지 않는 이미지 확장자입니다.");
 		}
 		return extension;
 	}
 
-	private String fromContentType(String contentType) {
-		if (!StringUtils.hasText(contentType)) {
+	private String extensionFromMimeType(String mimeType) {
+		if (!StringUtils.hasText(mimeType)) {
 			return "";
 		}
-		String lowered = contentType.toLowerCase();
-		if ("image/jpeg".equals(lowered) || "image/jpg".equals(lowered)) {
+		if ("image/jpeg".equals(mimeType) || "image/jpg".equals(mimeType)) {
 			return ".jpg";
 		}
-		if ("image/png".equals(lowered)) {
+		if ("image/png".equals(mimeType)) {
 			return ".png";
 		}
-		if ("image/gif".equals(lowered)) {
+		if ("image/gif".equals(mimeType)) {
 			return ".gif";
 		}
-		if ("image/webp".equals(lowered)) {
+		if ("image/webp".equals(mimeType)) {
 			return ".webp";
 		}
 		return "";
+	}
+
+	private String resolveSafeFileName(String originalFilename, String extension) {
+		if (!StringUtils.hasText(originalFilename)) {
+			return "profile" + extension;
+		}
+		String cleaned = StringUtils.cleanPath(originalFilename);
+		int slash = Math.max(cleaned.lastIndexOf('/'), cleaned.lastIndexOf('\\'));
+		if (slash >= 0) {
+			cleaned = cleaned.substring(slash + 1);
+		}
+		if (!StringUtils.hasText(cleaned)) {
+			return "profile" + extension;
+		}
+		return cleaned.length() > 255 ? cleaned.substring(0, 255) : cleaned;
 	}
 
 	private static Set<String> buildAllowedExtensions() {
@@ -127,5 +128,38 @@ public class ProfileImageStorageService {
 		extensions.add(".webp");
 		return extensions;
 	}
-}
 
+	private static Set<String> buildAllowedMimeTypes() {
+		Set<String> mimeTypes = new HashSet<>();
+		mimeTypes.add("image/jpeg");
+		mimeTypes.add("image/jpg");
+		mimeTypes.add("image/png");
+		mimeTypes.add("image/gif");
+		mimeTypes.add("image/webp");
+		return mimeTypes;
+	}
+
+	public static final class ProfileImageData {
+		private final byte[] binary;
+		private final String mimeType;
+		private final String fileName;
+
+		public ProfileImageData(byte[] binary, String mimeType, String fileName) {
+			this.binary = binary;
+			this.mimeType = mimeType;
+			this.fileName = fileName;
+		}
+
+		public byte[] getBinary() {
+			return binary;
+		}
+
+		public String getMimeType() {
+			return mimeType;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
+	}
+}

@@ -43,6 +43,9 @@ public class LoginServiceImpl implements LoginService {
                             String userPhoneNumber,
                             String userRegistrationNo,
                             String userProfileImg,
+                            byte[] userProfileBinary,
+                            String userProfileMimeType,
+                            String userProfileFileName,
                             String userZipCode,
                             String userBaseAddress,
                             String userDetailAddress) {
@@ -84,6 +87,9 @@ public class LoginServiceImpl implements LoginService {
         newUser.setUserRegistrationNo(normalizeBlank(userRegistrationNo));
         newUser.setUserNickName(resolvedNickName);
         newUser.setUserProfileImg(normalizeBlank(userProfileImg));
+        newUser.setUserProfileBinary(userProfileBinary);
+        newUser.setUserProfileMimeType(normalizeBlank(userProfileMimeType));
+        newUser.setUserProfileFileName(normalizeBlank(userProfileFileName));
         newUser.setUserZipCode(normalizeBlank(userZipCode));
         newUser.setUserBaseAddress(normalizeBlank(userBaseAddress));
         newUser.setUserDetailAddress(normalizeBlank(userDetailAddress));

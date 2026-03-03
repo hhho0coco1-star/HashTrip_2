@@ -10,111 +10,22 @@
 <title>관리자 페이지(회원목록)</title>
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
-<style>
-/* 관리자 페이지 레이아웃 스타일 */
-.admin-wrapper {
-	display: flex;
-	min-height: 100vh;
-}
-
-.admin-sidebar {
-	width: 250px;
-	background-color: #f8f9fa;
-	padding: 20px;
-	border-right: 1px solid #ddd;
-}
-
-.admin-content {
-	flex: 1;
-	padding: 20px;
-}
-
-.admin-sidebar ul {
-	list-style: none;
-	padding: 0;
-}
-
-.admin-sidebar ul li {
-	margin-bottom: 15px;
-}
-
-.admin-sidebar ul li a {
-	text-decoration: none;
-	color: #333;
-	font-weight: bold;
-}
-
-.admin-sidebar ul li a:hover {
-	color: #007bff;
-}
-
-/* 회원 상태에 따른 행 색상 구분 */
-.row-normal {
-	background-color: #ffffff;
-} /* 정상 */
-.row-suspended {
-	background-color: #fff3cd;
-} /* 정지 (연한 노랑) */
-.row-deleted {
-	background-color: #f8d7da;
-} /* 탈퇴 (연한 빨강) */
-
-/* 테이블 스타일 */
-.admin-content table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 20px;
-	table-layout: fixed; /* 💡 셀 너비 고정 */
-}
-
-.admin-content th, .admin-content td {
-	border: 1px solid #ddd;
-	padding: 10px;
-	text-align: center;
-	font-size: 14px;
-	/* 💡 텍스트 숨김 및 말줄임표 처리 */
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.admin-content th {
-	background-color: #f8f9fa;
-}
-
-/* 💡 이메일 열 특별 처리 (너비 조정) */
-.col-email {
-	width: 20%;
-}
-
-/* 스타일 추가 예시 */
-.badge-master {
-	background-color: #e7f0ff;
-	color: #007bff;
-	padding: 3px 8px;
-	border-radius: 4px;
-	font-size: 12px;
-}
-
-.badge-me {
-	background-color: #eee;
-	color: #555;
-	padding: 3px 8px;
-	border-radius: 4px;
-	font-size: 12px;
-}
-</style>
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/admin.css">
 </head>
 <body>
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
-	<div class="admin-wrapper">
-		<jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+	<div class="admin-page">
+		<div class="admin-shell">
+			<jsp:include page="/WEB-INF/views/fragments/admin-top-nav.jsp">
+				<jsp:param name="activeMenu" value="users" />
+			</jsp:include>
 
+		<div class="admin-wrapper">
 		<div class="admin-content">
 			<h1>회원 목록</h1>
 
-			<div class="search-area"
-				style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+			<div class="search-area">
 
 				<form
 					action="${pageContext.request.contextPath}/hashTrip/admin/users"
@@ -129,17 +40,14 @@
 						placeholder="검색어를 입력하세요"> <input type="hidden"
 						name="orderBy" value="${orderBy}">
 					<button type="submit">검색</button>
-					<%-- 					<a href="${pageContext.request.contextPath}/hashTrip/admin/users" --%>
-					<!-- 						style="margin-left: 10px; text-decoration: none; color: inherit;">전체보기</a> -->
 				</form>
 
 				<div class="sort-area">
-					<a
-						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=desc"
-						style="text-decoration: none; font-weight: ${orderBy == 'desc' ? 'bold' : 'normal'}; color: ${orderBy == 'desc' ? '#007bff' : '#333'};">최신순</a>
-					| <a
-						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=asc"
-						style="text-decoration: none; font-weight: ${orderBy == 'asc' ? 'bold' : 'normal'}; color: ${orderBy == 'asc' ? '#007bff' : '#333'};">오래된순</a>
+					<a class="sort-link ${orderBy == 'desc' ? 'is-active' : ''}"
+						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=desc">최신순</a>
+					<span class="sort-divider">|</span>
+					<a class="sort-link ${orderBy == 'asc' ? 'is-active' : ''}"
+						href="?page=${currentPage}&searchType=${searchType}&keyword=${keyword}&orderBy=asc">오래된순</a>
 				</div>
 
 			</div>
@@ -147,15 +55,15 @@
 			<table>
 				<thead>
 					<tr>
-						<th style="width: 5%;">No</th>
-						<th style="width: 10%;">Type</th>
-						<th style="width: 10%;">이름</th>
-						<th style="width: 10%;">닉네임</th>
+						<th class="col-no">No</th>
+						<th class="col-type">Type</th>
+						<th class="col-name">이름</th>
+						<th class="col-nick">닉네임</th>
 						<th class="col-email">이메일</th>
-						<th style="width: 15%;">전화번호</th>
-						<th style="width: 8%;">SNS</th>
-						<th style="width: 8%;">상태</th>
-						<th style="width: 12%;">가입일</th>
+						<th class="col-phone">전화번호</th>
+						<th class="col-sns">SNS</th>
+						<th class="col-status">상태</th>
+						<th class="col-date">가입일</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -179,20 +87,31 @@
 								<tr class="${rowClass}">
 									<td>${user.userNo}</td>
 									<td><c:choose>
-											<%-- 1. 마스터 관리자(4번)인 행은 수정 불가 --%>
-											<c:when test="${user.userNo == 4}">
-												<span class="badge-master"
-													style="color: blue; font-weight: bold;">마스터</span>
+											<%-- 1. MASTER 계정은 수정 불가 --%>
+											<c:when test="${user.userType == 'MASTER'}">
+												<span class="badge-master">마스터</span>
 											</c:when>
 
-											<%-- 2. 나머지 모든 행은 일단 SELECT 박스 노출 --%>
-											<c:otherwise>
+											<%-- 2. 로그인 사용자가 MASTER일 때만 사용자/관리자 전환 가능 --%>
+											<c:when test="${canChangeUserType}">
 												<select onchange="changeType(${user.userNo}, this.value)">
 													<option value="LOCAL"
 														${user.userType == 'LOCAL' ? 'selected' : ''}>사용자</option>
 													<option value="ADMIN"
 														${user.userType == 'ADMIN' ? 'selected' : ''}>관리자</option>
 												</select>
+											</c:when>
+
+											<%-- 3. MASTER가 아닌 관리자는 조회만 가능 --%>
+											<c:otherwise>
+												<c:choose>
+													<c:when test="${user.userType == 'ADMIN'}">
+														<span>관리자</span>
+													</c:when>
+													<c:otherwise>
+														<span>사용자</span>
+													</c:otherwise>
+												</c:choose>
 											</c:otherwise>
 										</c:choose></td>
 									<td>${user.userName}</td>
@@ -209,8 +128,7 @@
 				</tbody>
 			</table>
 
-			<div class="paging-area"
-				style="text-align: center; margin-top: 20px;">
+			<div class="paging-area">
 				<c:if test="${currentPage > 1}">
 					<a
 						href="?page=1&searchType=${searchType}&keyword=${keyword}&orderBy=${orderBy}">[처음]</a>
@@ -238,6 +156,8 @@
 				</c:if>
 			</div>
 
+		</div>
+		</div>
 		</div>
 	</div>
 

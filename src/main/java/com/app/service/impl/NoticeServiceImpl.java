@@ -20,6 +20,8 @@ public class NoticeServiceImpl implements NoticeService{
     @Override
     public NoticeDTO getNoticeDetail(int noticeNo) { return noticeDAO.selectNoticeByNo(noticeNo); }
     @Override
+    public boolean increaseViewCount(int noticeNo) { return noticeDAO.increaseViewCount(noticeNo) > 0; }
+    @Override
     public void registerNotice(NoticeDTO noticeDTO) { noticeDAO.insertNotice(noticeDTO); }
     @Override
     public void modifyNotice(NoticeDTO noticeDTO) { noticeDAO.updateNotice(noticeDTO); }

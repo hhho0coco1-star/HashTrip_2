@@ -94,7 +94,7 @@
 			</p>
 
 			<div class="action-buttons">
-				<a href="recommend" class="btn-analysis" style="padding: 10px 20px; background-color: #007bff; color: white; border-radius: 10px; text-decoration: none;">추천 여행일정 보러가기</a>
+				<a href="/routes" class="btn-analysis" style="padding: 10px 20px; background-color: #007bff; color: white; border-radius: 10px; text-decoration: none;">추천 여행일정 보러가기</a>
 				<a href="/hashTrip/analysis" class="btn-analysis" style="padding: 10px 20px; background-color: #007bff; color: white; border-radius: 10px; text-decoration: none;">다시 테스트하기</a>
 			</div>
 		</div>

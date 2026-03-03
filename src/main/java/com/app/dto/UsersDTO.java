@@ -16,6 +16,9 @@ public class UsersDTO {
     private String userRegistrationNo;
     private String userNickName;
     private String userProfileImg;
+    private byte[] userProfileBinary;
+    private String userProfileMimeType;
+    private String userProfileFileName;
     private Long userAddressNo;
     private String userZipCode;
     private String userBaseAddress;

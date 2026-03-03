@@ -9,92 +9,20 @@
 <title>관리자 페이지 - 1:1 문의 관리</title>
 <link rel="stylesheet"
 	href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
-<style>
-/* 관리자 페이지 레이아웃 스타일 */
-.admin-wrapper {
-	display: flex;
-	min-height: 100vh;
-}
-
-.admin-sidebar {
-	width: 250px;
-	background-color: #f8f9fa;
-	padding: 20px;
-	border-right: 1px solid #ddd;
-}
-
-.admin-content {
-	flex: 1;
-	padding: 20px;
-}
-
-.admin-sidebar ul {
-	list-style: none;
-	padding: 0;
-}
-
-.admin-sidebar ul li {
-	margin-bottom: 15px;
-}
-
-.admin-sidebar ul li a {
-	text-decoration: none;
-	color: #333;
-	font-weight: bold;
-}
-
-.admin-sidebar ul li a:hover {
-	color: #007bff;
-}
-
-/* 문의 테이블 스타일 */
-.admin-content table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 20px;
-	table-layout: fixed; /* 셀 너비 고정 */
-}
-
-.admin-content th, .admin-content td {
-	border: 1px solid #ddd;
-	padding: 12px;
-	text-align: center;
-	font-size: 14px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.admin-content th {
-	background-color: #f8f9fa;
-}
-
-/* 상태별 배지 스타일 */
-.status-badge {
-	padding: 5px 10px;
-	border-radius: 4px;
-	font-size: 12px;
-	font-weight: bold;
-}
-
-.status-pending {
-	background-color: #ffeeba;
-	color: #856404;
-} /* 대기 */
-.status-completed {
-	background-color: #d4edda;
-	color: #155724;
-} /* 완료 */
-</style>
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/admin.css">
 </head>
 <body>
 
 	<jsp:include page="/WEB-INF/views/fragments/mainPage-Header.jsp" />
-	<div class="admin-wrapper">
-		<%-- 관리자 전용 메뉴바 (사이드바) --%>
-		<jsp:include page="/WEB-INF/views/admin/sidebar.jsp" />
+	<div class="admin-page">
+		<div class="admin-shell">
+			<jsp:include page="/WEB-INF/views/fragments/admin-top-nav.jsp">
+				<jsp:param name="activeMenu" value="inquiry" />
+			</jsp:include>
 
-		<div class="admin-content">
+		<div class="admin-wrapper">
+			<div class="admin-content">
 			<h1>1:1 문의 내역</h1>
 
 			<form
@@ -144,14 +72,14 @@
 			<table>
 				<thead>
 					<tr>
-						<th style="width: 5%;">No</th>
-						<th style="width: 10%;">문의유형</th>
-						<th style="width: 15%;">제목</th>
-						<th style="width: 10%;">작성자</th>
-						<th style="width: 10%;">아이디</th>
-						<th style="width: 15%;">문의일</th>
-						<th style="width: 10%;">상태</th>
-						<th style="width: 15%;">답변일</th>
+						<th class="col-no">No</th>
+						<th class="col-inquiry-type">문의유형</th>
+						<th class="col-title">제목</th>
+						<th class="col-writer">작성자</th>
+						<th class="col-auth-id">아이디</th>
+						<th class="col-inquiry-date">문의일</th>
+						<th class="col-state">상태</th>
+						<th class="col-reply-date">답변일</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -190,9 +118,8 @@
 										</c:if> <c:if test="${empty inquiry.replyDate}">-</c:if></td>
 								</tr>
 
-								<tr id="detail-${inquiry.inquiryNo}" style="display: none;">
-									<td colspan="8"
-										style="text-align: left; padding: 20px; background-color: #f9f9f9;">
+								<tr id="detail-${inquiry.inquiryNo}" class="inquiry-detail-row">
+									<td colspan="8" class="inquiry-detail-cell">
 										<div id="detailBody-${inquiry.inquiryNo}">로딩 중...</div>
 									</td>
 								</tr>
@@ -201,6 +128,8 @@
 					</c:choose>
 				</tbody>
 			</table>
+			</div>
+		</div>
 		</div>
 	</div>
 
@@ -232,6 +161,13 @@
 						}
 					});
 		}
+
+		$(function() {
+			const openInquiryNo = '${openInquiryNo}';
+			if (openInquiryNo) {
+				toggleDetail(openInquiryNo);
+			}
+		});
 	</script>
 
 </body>

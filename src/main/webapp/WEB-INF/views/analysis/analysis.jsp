@@ -7,6 +7,7 @@
 <title>#Trip</title>
 	<meta name="_csrf" content="${_csrf.token}"/>
     <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fragments/main-layout.css">
 <style>
 /* 1. 기본 스타일 */
 * {
@@ -19,84 +20,6 @@ body {
 	font-family: 'Pretendard', -apple-system, sans-serif;
 	background-color: #f8f9fa;
 	color: #333;
-}
-
-/* ================== 1. 상단 헤더바 영역 ================== */
-.main-header {
-	background-color: #ffffff;
-	border-bottom: 1px solid #eee;
-	padding: 10px 0;
-	position: sticky;
-	top: 0;
-	z-index: 1000;
-}
-
-.header-container {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 0 20px;
-}
-
-.header-logo {
-	font-size: 24px;
-	text-decoration: none;
-	flex: 1;
-}
-
-.header-menu-wrapper {
-	flex: 2;
-	display: flex;
-	justify-content: center;
-}
-
-.nav-menu {
-	display: flex;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	gap: 30px;
-}
-
-.nav-menu li a {
-	text-decoration: none;
-	color: #333;
-	font-weight: 500;
-}
-
-.nav-menu li a:hover {
-	color: #007bff;
-}
-
-.user-auth {
-	flex: 1;
-	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 15px;
-}
-
-.btn-login, .btn-signup, .btn-logout {
-	text-decoration: none;
-	font-size: 14px;
-	padding: 6px 12px;
-	border-radius: 4px;
-}
-
-.btn-login {
-	color: #555;
-}
-
-.btn-signup {
-	background-color: #007bff;
-	color: #fff;
-}
-
-.user-info {
-	font-size: 14px;
-	color: #666;
 }
 
 /* 2. 테스트 영역 */

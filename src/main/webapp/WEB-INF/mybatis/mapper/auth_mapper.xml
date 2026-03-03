@@ -15,6 +15,9 @@
         <result property="userRegistrationNo" column="USER_REGISTRATION_NO" />
         <result property="userNickName" column="USER_NICKNAME" />
         <result property="userProfileImg" column="USER_PROFILE_IMG" />
+        <result property="userProfileBinary" column="USER_PROFILE_BLOB" />
+        <result property="userProfileMimeType" column="USER_PROFILE_MIME_TYPE" />
+        <result property="userProfileFileName" column="USER_PROFILE_FILE_NAME" />
         <result property="authId" column="AUTH_ID" />
         <result property="authPassword" column="AUTH_PASSWORD" />
         <result property="authEmail" column="AUTH_EMAIL" />
@@ -91,7 +94,10 @@
             USER_PHONENUMBER,
             USER_REGISTRATION_NO,
             USER_NICKNAME,
-            USER_PROFILE_IMG
+            USER_PROFILE_IMG,
+            USER_PROFILE_BLOB,
+            USER_PROFILE_MIME_TYPE,
+            USER_PROFILE_FILE_NAME
         )
         VALUES
         (
@@ -105,7 +111,10 @@
             #{userPhoneNumber},
             #{userRegistrationNo},
             #{userNickName},
-            #{userProfileImg}
+            #{userProfileImg},
+            #{userProfileBinary,jdbcType=BLOB},
+            #{userProfileMimeType},
+            #{userProfileFileName}
         )
     </insert>
 

@@ -1,7 +1,12 @@
 package com.app.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,6 +20,8 @@ import com.app.dto.UsersDTO;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private static final String ACTIVE_STATUS = "A";
+    private static final String USER_TYPE_ADMIN = "ADMIN";
+    private static final String USER_TYPE_MASTER = "MASTER";
 
     private final AuthDAO authDAO;
 
@@ -38,7 +45,30 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return User.withUsername(user.getAuthId())
                 .password(user.getAuthPassword())
-                .roles("USER")
+                .authorities(resolveAuthorities(user))
                 .build();
+    }
+
+    private List<GrantedAuthority> resolveAuthorities(UsersDTO user) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+        String userType = user.getUserType();
+        if (userType == null) {
+            return authorities;
+        }
+
+        String normalizedUserType = userType.trim().toUpperCase();
+        if (USER_TYPE_ADMIN.equals(normalizedUserType)) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            return authorities;
+        }
+
+        if (USER_TYPE_MASTER.equals(normalizedUserType)) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_MASTER"));
+            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+
+        return authorities;
     }
 }

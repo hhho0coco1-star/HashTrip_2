@@ -23,19 +23,10 @@
 			<c:if test="${empty displayName}">
 				<c:set var="displayName" value="${currentAuthId}" />
 			</c:if>
-			<c:set var="profileImageUrl" value="${usersDTO.userProfileImg}" />
-			<c:if
-				test="${not empty profileImageUrl and fn:startsWith(profileImageUrl, '/')}">
-				<c:choose>
-					<c:when
-						test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and !fn:startsWith(profileImageUrl, pageContext.request.contextPath)}">
-						<c:set var="profileImageUrl"
-							value="${pageContext.request.contextPath}${profileImageUrl}" />
-					</c:when>
-					<c:otherwise>
-						<c:set var="profileImageUrl" value="${profileImageUrl}" />
-					</c:otherwise>
-				</c:choose>
+			<c:set var="profileImageUrl" value="" />
+			<c:if test="${not empty usersDTO.userNo and (not empty usersDTO.userProfileImg or not empty usersDTO.userProfileMimeType)}">
+				<c:set var="profileImageUrl"
+					value="${pageContext.request.contextPath}/mypage/profile-image/${usersDTO.userNo}" />
 			</c:if>
 
 			<section class="profile-card">
@@ -435,6 +426,25 @@
 											<p
 												style="white-space: pre-wrap; line-height: 1.6; color: #333;">${inquiry.inquiryContent}</p>
 										</div>
+										<c:if test="${inquiry.status eq 'Y' and not empty inquiry.replyContent}">
+											<div
+												style="margin-bottom: 20px; padding: 14px; border-radius: 10px; background: #f5f9ff; border: 1px solid #dbeafe;">
+												<strong
+													style="display: block; margin-bottom: 10px; color: #1d4ed8;">[답변
+													내용]</strong>
+												<p
+													style="line-height: 1.6; color: #1f2937; margin: 0;">
+													<c:out value="${inquiry.replyContent}" />
+												</p>
+												<c:if test="${not empty inquiry.replyDate}">
+													<div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+														답변일:
+														<fmt:formatDate value="${inquiry.replyDate}"
+															pattern="yyyy-MM-dd HH:mm" />
+													</div>
+												</c:if>
+											</div>
+										</c:if>
 
 										<div class="inquiry-actions"
 											style="text-align: right; margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 15px;">

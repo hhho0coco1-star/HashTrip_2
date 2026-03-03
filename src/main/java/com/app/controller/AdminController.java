@@ -4,10 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpSession;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +17,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.app.dto.FaqDTO;
 import com.app.dto.InquiryDTO;
 import com.app.dto.NoticeDTO;
+import com.app.dto.UsersDTO;
 import com.app.service.FaqService;
 import com.app.service.NoticeService;
 import com.app.service.UsersService;
 
 @Controller
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','MASTER')")
 public class AdminController {
 
 	@Autowired
@@ -38,8 +38,7 @@ public class AdminController {
 	// 관리자 전용 페이지
 	@GetMapping("/hashTrip/admin")
 	public String admin() {
-
-		return "admin/adminpage";
+		return "redirect:/hashTrip/admin/users";
 
 	}
 
@@ -50,7 +49,8 @@ public class AdminController {
 			@RequestParam(value = "searchType", required = false) String searchType,
 			@RequestParam(value = "keyword", required = false) String keyword,
 			@RequestParam(value = "orderBy", defaultValue = "desc") String orderBy, // 💡 정렬 기준 추가
-			Model model) {
+			Model model,
+			Authentication authentication) {
 
 		// 1. 서비스에서 페이징 처리된 데이터와 페이징 정보를 가져옴
 		Map<String, Object> result = usersService.getPagedUsers(page, size, searchType, keyword, orderBy);
@@ -65,6 +65,13 @@ public class AdminController {
 		model.addAttribute("searchType", searchType);
 		model.addAttribute("keyword", keyword);
 
+		UsersDTO loginUser = null;
+		if (authentication != null && authentication.isAuthenticated()) {
+			loginUser = usersService.getUserByAuthId(authentication.getName());
+		}
+		boolean canChangeUserType = loginUser != null && "MASTER".equalsIgnoreCase(loginUser.getUserType());
+		model.addAttribute("canChangeUserType", canChangeUserType);
+
 		return "admin/users";
 	}
 
@@ -72,17 +79,12 @@ public class AdminController {
 	@PostMapping("/hashTrip/admin/updateType") // 💡 주소를 AJAX 호출 경로와 일치시킴
 	@ResponseBody
 	public String updateType(@RequestParam("userNo") int userNo, @RequestParam("userType") String userType,
-			HttpSession session) {
+			Authentication authentication) {
 
 		System.out.println("수정 요청 확인 - 번호: " + userNo + ", 타입: " + userType);
 
-		// 세션에서 로그인한 관리자의 번호를 꺼냄
-		Integer loginUserNo = (Integer) session.getAttribute("userNo");
-
-		System.out.println("본인 번호(세션): " + loginUserNo);
-		System.out.println("변경 대상 번호: " + userNo);
-
-		boolean isUpdated = usersService.changeUserType(userNo, userType, loginUserNo);
+		String loginAuthId = authentication == null ? null : authentication.getName();
+		boolean isUpdated = usersService.changeUserType(userNo, userType, loginAuthId);
 
 		return isUpdated ? "success" : "fail";
 	}
@@ -93,6 +95,7 @@ public class AdminController {
 	        @RequestParam(value = "inquiryType", required = false) String inquiryType,
 	        @RequestParam(value = "status", required = false) String status,
 	        @RequestParam(value = "searchType", required = false) String searchType,
+	        @RequestParam(value = "openInquiryNo", required = false) Long openInquiryNo,
 	        @RequestParam(value = "keyword", required = false) String keyword,
 	        Model model) {
 
@@ -107,6 +110,7 @@ public class AdminController {
 	    List<InquiryDTO> inquiryList = usersService.getAllInquiries(params);
 	    
 	    model.addAttribute("inquiryList", inquiryList);
+	    model.addAttribute("openInquiryNo", openInquiryNo);
 	    
 	    return "admin/inquiry"; // JSP 경로
 	}
@@ -125,7 +129,11 @@ public class AdminController {
 	public String replyInquiry(InquiryDTO inquiryDTO) {
 		
 	    usersService.updateReply(inquiryDTO); // 답변 내용 및 날짜, 상태 업데이트 서비스
-	    
+
+	    if (inquiryDTO.getInquiryNo() != null) {
+	    	return "redirect:/hashTrip/admin/inquiry?openInquiryNo=" + inquiryDTO.getInquiryNo();
+	    }
+
 	    return "redirect:/hashTrip/admin/inquiry"; // 목록으로 리다이렉트
 	}
 	

@@ -22,6 +22,8 @@ public class NoticeDAOImpl implements NoticeDAO{
     @Override
     public NoticeDTO selectNoticeByNo(int noticeNo) { return sqlSessionTemplate.selectOne(NS + "selectByNo", noticeNo); }
     @Override
+    public int increaseViewCount(int noticeNo) { return sqlSessionTemplate.update(NS + "increaseViewCount", noticeNo); }
+    @Override
     public int insertNotice(NoticeDTO noticeDTO) { return sqlSessionTemplate.insert(NS + "insert", noticeDTO); }
     @Override
     public int updateNotice(NoticeDTO noticeDTO) { return sqlSessionTemplate.update(NS + "update", noticeDTO); }

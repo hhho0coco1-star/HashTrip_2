@@ -4,12 +4,12 @@
 <p><strong>내용:</strong> <br> ${inquiry.inquiryContent}</p>
 <p><strong>이메일:</strong> ${inquiry.inquiryEmail}</p>                
 <hr>                
-<form action="${pageContext.request.contextPath}/admin/inquiry/reply" method="post">
+<form class="admin-reply-form" action="${pageContext.request.contextPath}/admin/inquiry/reply" method="post">
 	<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
     <input type="hidden" name="inquiryNo" value="${inquiry.inquiryNo}">                
-    <textarea name="replyContent" style="width:100%; height:100px;" placeholder="답변 내용을 입력하세요" required>${inquiry.replyContent}</textarea>                
+    <textarea name="replyContent" placeholder="답변 내용을 입력하세요" required><c:out value="${inquiry.replyContent}" /></textarea>                
     
-    <div style="text-align: right; margin-top:5px;">                
-        <button type="submit">답변 저장</button>                
+    <div class="form-actions-right">                
+        <button type="submit" class="btn btn-submit">답변 저장</button>                
     </div>
 </form>

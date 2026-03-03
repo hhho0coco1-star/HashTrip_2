@@ -22,6 +22,7 @@ public class UsersDAOImpl implements UsersDAO {
 	private static final String INSERT_USER_ANALYSIS_TAGS_STATEMENT_ID = "users_mapper.insertUserAnalysisTags";
 	
 	private static final String GET_USER_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserByAuthId";
+	private static final String GET_USER_PROFILE_IMAGE_BY_USER_NO_STATEMENT_ID = "users_mapper.getUserProfileImageByUserNo";
 	private static final String GET_USER_NICKNAME_STATEMENT_ID = "users_mapper.getUserNickname";
 	private static final String GET_USER_TAGS_BY_AUTH_ID_STATEMENT_ID = "users_mapper.getUserTagsByAuthId";
 	private static final String GET_USER_TAGS_BY_USER_NO_STATEMENT_ID = "users_mapper.findUserTagsByUserNo";
@@ -40,6 +41,11 @@ public class UsersDAOImpl implements UsersDAO {
 	@Override
 	public UsersDTO getUserByAuthId(String authId) {
 		return sqlSessionTemplate.selectOne(GET_USER_BY_AUTH_ID_STATEMENT_ID, authId);
+	}
+
+	@Override
+	public UsersDTO getUserProfileImageByUserNo(Long userNo) {
+		return sqlSessionTemplate.selectOne(GET_USER_PROFILE_IMAGE_BY_USER_NO_STATEMENT_ID, userNo);
 	}
 
 	@Override
@@ -90,6 +96,9 @@ public class UsersDAOImpl implements UsersDAO {
 		params.put("userGender", usersDTO.getUserGender());
 		params.put("userPhoneNumber", usersDTO.getUserPhoneNumber());
 		params.put("userProfileImg", usersDTO.getUserProfileImg());
+		params.put("userProfileBinary", usersDTO.getUserProfileBinary());
+		params.put("userProfileMimeType", usersDTO.getUserProfileMimeType());
+		params.put("userProfileFileName", usersDTO.getUserProfileFileName());
 		return sqlSessionTemplate.update(UPDATE_USER_PROFILE_BY_AUTH_ID_STATEMENT_ID, params);
 	}
 

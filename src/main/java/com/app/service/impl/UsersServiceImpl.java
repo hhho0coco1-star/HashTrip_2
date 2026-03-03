@@ -29,6 +29,21 @@ public class UsersServiceImpl implements UsersService {
 	@Override
 	public UsersDTO getUserByAuthId(String authId) {
 		UsersDTO usersDTO = usersDAO.getUserByAuthId(authId);
+		if (usersDTO != null) {
+			usersDTO.setUserProfileImg(normalizeProfileImagePath(usersDTO.getUserProfileImg()));
+		}
+		return usersDTO;
+	}
+
+	@Override
+	public UsersDTO getUserProfileImageByUserNo(Long userNo) {
+		if (userNo == null || userNo <= 0) {
+			return null;
+		}
+		UsersDTO usersDTO = usersDAO.getUserProfileImageByUserNo(userNo);
+		if (usersDTO != null) {
+			usersDTO.setUserProfileImg(normalizeProfileImagePath(usersDTO.getUserProfileImg()));
+		}
 		return usersDTO;
 	}
 
@@ -150,9 +165,12 @@ public class UsersServiceImpl implements UsersService {
 	private UsersDTO sanitizeProfileInput(UsersDTO users) {
 		UsersDTO normalized = new UsersDTO();
 
-		String userNickName = safeText(users.getUserNickName(), 50);
+		String userNickName = safeText(users.getUserNickName(), 20);
 		String userPhone = safeText(users.getUserPhoneNumber(), 50);
-		String userProfileImg = safeText(users.getUserProfileImg(), 255);
+		String userProfileImg = normalizeProfileImagePath(safeText(users.getUserProfileImg(), 255));
+		byte[] userProfileBinary = users.getUserProfileBinary();
+		String userProfileMimeType = normalizeMimeType(safeText(users.getUserProfileMimeType(), 100));
+		String userProfileFileName = safeText(users.getUserProfileFileName(), 255);
 		String zipCode = safeText(users.getUserZipCode(), 6);
 		String baseAddress = safeText(users.getUserBaseAddress(), 255);
 		String detailAddress = safeText(users.getUserDetailAddress(), 255);
@@ -164,10 +182,54 @@ public class UsersServiceImpl implements UsersService {
 		normalized.setUserNickName(userNickName);
 		normalized.setUserPhoneNumber(userPhone);
 		normalized.setUserProfileImg(userProfileImg);
+		if (userProfileBinary != null && userProfileBinary.length > 0) {
+			normalized.setUserProfileBinary(userProfileBinary);
+			normalized.setUserProfileMimeType(userProfileMimeType);
+			normalized.setUserProfileFileName(userProfileFileName);
+			normalized.setUserProfileImg(null);
+		}
 		normalized.setUserZipCode(zipCode);
 		normalized.setUserBaseAddress(baseAddress);
 		normalized.setUserDetailAddress(detailAddress);
 		return normalized;
+	}
+
+	private String normalizeProfileImagePath(String imagePath) {
+		if (!StringUtils.hasText(imagePath)) {
+			return null;
+		}
+
+		String normalized = imagePath.trim().replace('\\', '/');
+		if (!StringUtils.hasText(normalized)) {
+			return null;
+		}
+
+		if (normalized.startsWith("http://")
+				|| normalized.startsWith("https://")
+				|| normalized.startsWith("data:image/")) {
+			return normalized;
+		}
+
+		// Local absolute paths cannot be served via web URL.
+		if (normalized.matches("^[A-Za-z]:/.*")) {
+			return null;
+		}
+
+		if (normalized.startsWith("../")) {
+			normalized = normalized.substring(2);
+		}
+		if (!normalized.startsWith("/")) {
+			normalized = "/" + normalized;
+		}
+		return normalized;
+	}
+
+	private String normalizeMimeType(String mimeType) {
+		if (!StringUtils.hasText(mimeType)) {
+			return null;
+		}
+		String normalized = mimeType.trim().toLowerCase();
+		return normalized.startsWith("image/") ? normalized : null;
 	}
 
 	private String resolveGenderForUpdate(String currentGender, String requestedGender) {
@@ -314,23 +376,51 @@ public class UsersServiceImpl implements UsersService {
     }
 	
 	@Override
-	public boolean changeUserType(int targetUserNo, String userType, Integer loginUserNo) {
-	    // 1. 마스터 관리자(4번) 보호 로직
-	    if (targetUserNo == 4) {
+	public boolean changeUserType(int targetUserNo, String userType, String loginAuthId) {
+	    if (!StringUtils.hasText(loginAuthId)) {
 	        return false;
 	    }
 
-	    // 2. 본인 계정 셀프 수정 방어 로직 (추가)
-	    if (loginUserNo != null && targetUserNo == loginUserNo) {
-	        System.out.println("경고: 관리자가 자신의 권한을 변경하려 함.");
-	        return false; 
+	    UsersDTO loginUser = usersDAO.getUserByAuthId(loginAuthId.trim());
+	    if (loginUser == null || loginUser.getUserNo() == null) {
+	        return false;
+	    }
+
+	    String loginUserType = loginUser.getUserType();
+	    if (!"MASTER".equalsIgnoreCase(loginUserType)) {
+	        return false;
+	    }
+
+	    if (targetUserNo <= 0) {
+	        return false;
+	    }
+
+	    if (loginUser.getUserNo().intValue() == targetUserNo) {
+	        System.out.println("경고: 마스터 관리자가 자신의 권한을 변경하려 함.");
+	        return false;
+	    }
+
+	    String normalizedTargetType = normalizeUserTypeForAdmin(userType);
+	    if (normalizedTargetType == null) {
+	        return false;
 	    }
 
 	    Map<String, Object> params = new HashMap<>();
 	    params.put("userNo", targetUserNo);
-	    params.put("userType", userType);
+	    params.put("userType", normalizedTargetType);
 
 	    return usersDAO.updateUserType(params) > 0;
+	}
+
+	private String normalizeUserTypeForAdmin(String userType) {
+	    if (!StringUtils.hasText(userType)) {
+	        return null;
+	    }
+	    String normalized = userType.trim().toUpperCase();
+	    if ("LOCAL".equals(normalized) || "ADMIN".equals(normalized)) {
+	        return normalized;
+	    }
+	    return null;
 	}
 	
 	@Override

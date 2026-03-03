@@ -9,6 +9,8 @@ public interface NoticeService {
 	List<NoticeDTO> getNoticeList();
 	
     NoticeDTO getNoticeDetail(int noticeNo);
+
+    boolean increaseViewCount(int noticeNo);
     
     void registerNotice(NoticeDTO noticeDTO);
     

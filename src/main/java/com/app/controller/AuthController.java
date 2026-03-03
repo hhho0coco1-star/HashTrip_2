@@ -83,25 +83,28 @@ public class AuthController {
                                 @RequestParam(value = "userDetailAddress", required = false) String userDetailAddress,
                                 @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
                                 RedirectAttributes redirectAttributes) {
-        String savedProfileImagePath = null;
+        String userProfileImg = null;
+        byte[] userProfileBinary = null;
+        String userProfileMimeType = null;
+        String userProfileFileName = null;
         try {
-            savedProfileImagePath = profileImageStorageService.store(profileImage);
+            ProfileImageStorageService.ProfileImageData profileImageData = profileImageStorageService.parse(profileImage);
+            if (profileImageData != null) {
+                userProfileBinary = profileImageData.getBinary();
+                userProfileMimeType = profileImageData.getMimeType();
+                userProfileFileName = profileImageData.getFileName();
+            }
 
             loginService.register(userId, email, password, userName, userNickName, userGender, userPhoneNumber,
-                    userRegistrationNo, savedProfileImagePath, userZipCode, userBaseAddress, userDetailAddress);
+                    userRegistrationNo, userProfileImg, userProfileBinary, userProfileMimeType, userProfileFileName,
+                    userZipCode, userBaseAddress, userDetailAddress);
 
             redirectAttributes.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해 주세요.");
             return "redirect:/auth/login?signupSuccess=true";
         } catch (IllegalArgumentException e) {
-            if (StringUtils.hasText(savedProfileImagePath)) {
-                profileImageStorageService.deleteIfManaged(savedProfileImagePath);
-            }
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/auth/signup";
         } catch (Exception e) {
-            if (StringUtils.hasText(savedProfileImagePath)) {
-                profileImageStorageService.deleteIfManaged(savedProfileImagePath);
-            }
             Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
             String reason = root != null && root.getMessage() != null ? root.getMessage() : e.getMessage();
             log.error("회원가입 실패 userId={}, email={}", userId, email, e);

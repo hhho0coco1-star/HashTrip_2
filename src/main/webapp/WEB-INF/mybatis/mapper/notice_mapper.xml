@@ -10,6 +10,12 @@
         SELECT * FROM notice WHERE notice_no = #{noticeNo}
     </select>
 
+    <update id="increaseViewCount">
+        UPDATE notice
+        SET view_count = NVL(view_count, 0) + 1
+        WHERE notice_no = #{noticeNo}
+    </update>
+
     <insert id="insert">
         INSERT INTO notice (title, content)
         VALUES (#{title}, #{content})

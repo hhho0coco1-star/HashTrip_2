@@ -11,6 +11,7 @@ import com.app.dto.UsersDTO;
 public interface UsersDAO {
 	
 	UsersDTO getUserByAuthId(String authId);
+	UsersDTO getUserProfileImageByUserNo(Long userNo);
 
 	String getUserNickname(int userNo);
 

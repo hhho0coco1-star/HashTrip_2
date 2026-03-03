@@ -21,6 +21,8 @@
 		u.USER_NICKNAME AS
 		userNickName,
 		u.USER_PROFILE_IMG AS userProfileImg,
+		u.USER_PROFILE_MIME_TYPE AS userProfileMimeType,
+		u.USER_PROFILE_FILE_NAME AS userProfileFileName,
 		ua2.USER_ADDRESS_NO
 		AS userAddressNo,
 		ua2.USER_ZIP_CODE AS userZipCode,
@@ -35,6 +37,18 @@
 		ON ua2.USER_NO = u.USER_NO
 		WHERE
 		ua.USER_AUTH_ID = #{value}
+	</select>
+
+	<select id="getUserProfileImageByUserNo" resultType="UsersDTO"
+		parameterType="long">
+		SELECT
+		u.USER_NO AS userNo,
+		u.USER_PROFILE_IMG AS userProfileImg,
+		u.USER_PROFILE_BLOB AS userProfileBinary,
+		u.USER_PROFILE_MIME_TYPE AS userProfileMimeType,
+		u.USER_PROFILE_FILE_NAME AS userProfileFileName
+		FROM USERS u
+		WHERE u.USER_NO = #{value}
 	</select>
 
 	<select id="getUserTagsByAuthId" resultType="UserTagMapDTO"
@@ -112,26 +126,34 @@
 	</delete>
 
 	<update id="updateUserProfileByAuthId" parameterType="map">
-		UPDATE
-		USERS u
-		SET
-		u.USER_NICKNAME = #{userNickName},
-		u.USER_GENDER = CASE
-		WHEN
-		u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
-		ELSE
-		u.USER_GENDER
-		END,
-		u.USER_PHONENUMBER = #{userPhoneNumber},
-		u.USER_PROFILE_IMG = NVL(#{userProfileImg}, u.USER_PROFILE_IMG),
-		u.USER_UPDATED_AT = SYSTIMESTAMP
+		UPDATE USERS u
+		<trim prefix="SET" suffixOverrides=",">
+			u.USER_NICKNAME = #{userNickName},
+			u.USER_GENDER = CASE
+				WHEN u.USER_GENDER IS NULL THEN NVL(#{userGender}, u.USER_GENDER)
+				ELSE u.USER_GENDER
+			END,
+			u.USER_PHONENUMBER = #{userPhoneNumber},
+			<choose>
+				<when test="userProfileBinary != null">
+					u.USER_PROFILE_IMG = NULL,
+					u.USER_PROFILE_BLOB = #{userProfileBinary,jdbcType=BLOB},
+					u.USER_PROFILE_MIME_TYPE = #{userProfileMimeType},
+					u.USER_PROFILE_FILE_NAME = #{userProfileFileName},
+				</when>
+				<otherwise>
+					<if test="userProfileImg != null and userProfileImg != ''">
+						u.USER_PROFILE_IMG = #{userProfileImg},
+					</if>
+				</otherwise>
+			</choose>
+			u.USER_UPDATED_AT = SYSTIMESTAMP,
+		</trim>
 		WHERE EXISTS (
-		SELECT 1
-		FROM
-		USER_AUTHENTICATION ua
-		WHERE ua.USER_NO = u.USER_NO
-		AND ua.USER_AUTH_ID
-		= #{authId}
+			SELECT 1
+			FROM USER_AUTHENTICATION ua
+			WHERE ua.USER_NO = u.USER_NO
+			  AND ua.USER_AUTH_ID = #{authId}
 		)
 	</update>
 
@@ -363,6 +385,9 @@
 		INQUIRY_TITLE AS inquiryTitle,
 		INQUIRY_CONTENT AS inquiryContent,
 		INQUIRY_EMAIL AS inquiryEmail,
+		INQUIRY_DATE AS inquiryDate,
+		REPLY_CONTENT AS replyContent,
+		REPLY_DATE AS replyDate,
 		STATUS AS status
 		FROM PLACE_INQUIRY
 		WHERE
@@ -658,7 +683,7 @@
 		SET USER_TYPE = #{userType}
 		WHERE USER_NO
 		= #{userNo}
-		AND USER_NO != 4
+		AND UPPER(NVL(USER_TYPE, 'LOCAL')) != 'MASTER'
 	</update>
 
 	<!-- 1:1 문의내역(관리자 페이지) -->

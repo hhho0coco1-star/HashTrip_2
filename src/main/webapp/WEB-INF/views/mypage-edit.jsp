@@ -24,7 +24,12 @@
 				<div class="alert success"><c:out value="${message}" /></div>
 			</c:if>
 			<c:if test="${not empty errorMessage}">
-				<div class="alert error"><c:out value="${errorMessage}" /></div>
+				<div class="alert error">
+					<div><c:out value="${errorMessage}" /></div>
+					<c:if test="${not empty errorDetail}">
+						<div style="margin-top:4px;font-size:12px;opacity:0.85;"><c:out value="${errorDetail}" /></div>
+					</c:if>
+				</div>
 			</c:if>
 
 			<form class="edit-form-grid" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/mypage/edit">
@@ -32,16 +37,10 @@
 					<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 				</c:if>
 
-				<c:set var="profileImageUrl" value="${usersDTO.userProfileImg}" />
-				<c:if test="${not empty profileImageUrl and fn:startsWith(profileImageUrl, '/')}">
-					<c:choose>
-						<c:when test="${not empty pageContext.request.contextPath and pageContext.request.contextPath ne '/' and !fn:startsWith(profileImageUrl, pageContext.request.contextPath)}">
-							<c:set var="profileImageUrl" value="${pageContext.request.contextPath}${profileImageUrl}" />
-						</c:when>
-						<c:otherwise>
-							<c:set var="profileImageUrl" value="${profileImageUrl}" />
-						</c:otherwise>
-					</c:choose>
+				<c:set var="profileImageUrl" value="" />
+				<c:if test="${not empty usersDTO.userNo and (not empty usersDTO.userProfileImg or not empty usersDTO.userProfileMimeType)}">
+					<c:set var="profileImageUrl"
+						value="${pageContext.request.contextPath}/mypage/profile-image/${usersDTO.userNo}" />
 				</c:if>
 
 				<c:if test="${not empty profileImageUrl}">
@@ -64,7 +63,7 @@
 
 				<div class="edit-field">
 					<label for="userNickName">닉네임</label>
-					<input id="userNickName" name="userNickName" type="text" value="<c:out value='${usersDTO.userNickName}' />" required>
+					<input id="userNickName" name="userNickName" type="text" maxlength="20" value="<c:out value='${usersDTO.userNickName}' />" required>
 				</div>
 
 				<div class="edit-field">

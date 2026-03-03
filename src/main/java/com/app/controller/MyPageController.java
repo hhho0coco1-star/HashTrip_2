@@ -4,8 +4,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -36,6 +45,7 @@ import com.app.service.impl.CommunityService;
 @Controller
 public class MyPageController {
 
+	private static final Logger log = LoggerFactory.getLogger(MyPageController.class);
 	private static final int REVIEW_PAGE_SIZE = 10;
 	private static final int REVIEW_PREVIEW_SIZE = 4;
 
@@ -164,27 +174,14 @@ public class MyPageController {
 			return "redirect:/auth/login";
 		}
 
-		UsersDTO currentUsersDTO = usersService.getUserByAuthId(currentAuthId);
-		String savedProfileImagePath = null;
 		try {
-			savedProfileImagePath = profileImageStorageService.store(profileImage);
-			if (StringUtils.hasText(savedProfileImagePath)) {
-				usersDTO.setUserProfileImg(savedProfileImagePath);
-			}
+			profileImageStorageService.applyToUser(usersDTO, profileImage);
 
 			usersService.updateProfileByAuthId(currentAuthId, usersDTO);
-			if (StringUtils.hasText(savedProfileImagePath)
-					&& currentUsersDTO != null
-					&& StringUtils.hasText(currentUsersDTO.getUserProfileImg())
-					&& !savedProfileImagePath.equals(currentUsersDTO.getUserProfileImg())) {
-				profileImageStorageService.deleteIfManaged(currentUsersDTO.getUserProfileImg());
-			}
 			redirectAttributes.addFlashAttribute("message", "회원 정보가 수정되었습니다.");
 			return "redirect:/mypage";
 		} catch (IllegalArgumentException e) {
-			if (StringUtils.hasText(savedProfileImagePath)) {
-				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
-			}
+			log.warn("Profile update validation failed. authId={}, reason={}", currentAuthId, e.getMessage());
 			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
 				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
 				if (fallbackUser != null) {
@@ -196,9 +193,16 @@ public class MyPageController {
 			model.addAttribute("currentAuthId", currentAuthId);
 			return "mypage-edit";
 		} catch (Exception e) {
-			if (StringUtils.hasText(savedProfileImagePath)) {
-				profileImageStorageService.deleteIfManaged(savedProfileImagePath);
-			}
+			String errorCode = "MP-EDIT-" + System.currentTimeMillis();
+			String causeMessage = resolveRootCauseMessage(e);
+			log.error("Profile update failed. code={}, authId={}, nickName={}, hasImage={}, imageSize={}",
+					errorCode,
+					currentAuthId,
+					usersDTO == null ? null : usersDTO.getUserNickName(),
+					profileImage != null && !profileImage.isEmpty(),
+					profileImage == null ? 0L : profileImage.getSize(),
+					e);
+
 			if (!StringUtils.hasText(usersDTO.getUserProfileImg())) {
 				UsersDTO fallbackUser = usersService.getUserByAuthId(currentAuthId);
 				if (fallbackUser != null) {
@@ -206,10 +210,48 @@ public class MyPageController {
 				}
 			}
 			model.addAttribute("usersDTO", usersDTO);
-			model.addAttribute("errorMessage", "회원정보 수정 중 오류가 발생했습니다.");
+			model.addAttribute("errorMessage", "회원정보 수정 중 오류가 발생했습니다. 오류코드: " + errorCode);
+			if (StringUtils.hasText(causeMessage)) {
+				model.addAttribute("errorDetail", causeMessage);
+			}
 			model.addAttribute("currentAuthId", currentAuthId);
 			return "mypage-edit";
 		}
+	}
+
+	@GetMapping("/mypage/profile-image/{userNo}")
+	@ResponseBody
+	public ResponseEntity<byte[]> getProfileImage(@PathVariable Long userNo, HttpServletRequest request) {
+		UsersDTO usersDTO = usersService.getUserProfileImageByUserNo(userNo);
+		if (usersDTO == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		byte[] profileBinary = usersDTO.getUserProfileBinary();
+		if (profileBinary != null && profileBinary.length > 0) {
+			MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			if (StringUtils.hasText(usersDTO.getUserProfileMimeType())) {
+				try {
+					mediaType = MediaType.parseMediaType(usersDTO.getUserProfileMimeType());
+				} catch (IllegalArgumentException ignored) {
+					mediaType = MediaType.APPLICATION_OCTET_STREAM;
+				}
+			}
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(mediaType);
+			headers.setContentLength(profileBinary.length);
+			headers.setCacheControl("no-cache, no-store, must-revalidate");
+			return ResponseEntity.ok().headers(headers).body(profileBinary);
+		}
+
+		String fallbackPath = resolveFallbackImageLocation(request, usersDTO.getUserProfileImg());
+		if (StringUtils.hasText(fallbackPath)) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setLocation(URI.create(fallbackPath));
+			return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
+		}
+
+		return ResponseEntity.notFound().build();
 	}
 
 	@PostMapping("/mypage/password")
@@ -319,6 +361,51 @@ public class MyPageController {
 
 	private boolean isExpanded(String expanded) {
 		return "Y".equalsIgnoreCase(expanded);
+	}
+
+	private String resolveFallbackImageLocation(HttpServletRequest request, String rawPath) {
+		if (!StringUtils.hasText(rawPath)) {
+			return null;
+		}
+
+		String normalized = rawPath.trim().replace('\\', '/');
+		if (!StringUtils.hasText(normalized)) {
+			return null;
+		}
+		if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+			return normalized;
+		}
+
+		String contextPath = request == null ? "" : request.getContextPath();
+		if (!StringUtils.hasText(contextPath) || "/".equals(contextPath)) {
+			contextPath = "";
+		}
+
+		if (normalized.startsWith("../")) {
+			normalized = normalized.substring(2);
+		}
+		if (normalized.startsWith("/")) {
+			if (StringUtils.hasText(contextPath) && !normalized.startsWith(contextPath + "/")) {
+				return contextPath + normalized;
+			}
+			return normalized;
+		}
+		return contextPath + "/" + normalized;
+	}
+
+	private String resolveRootCauseMessage(Throwable throwable) {
+		if (throwable == null) {
+			return null;
+		}
+		Throwable root = throwable;
+		while (root.getCause() != null && root.getCause() != root) {
+			root = root.getCause();
+		}
+		String message = root.getMessage();
+		if (!StringUtils.hasText(message)) {
+			return root.getClass().getSimpleName();
+		}
+		return message.length() > 300 ? message.substring(0, 300) : message;
 	}
 	
 	@PostMapping("/contact/inquiry/delete")

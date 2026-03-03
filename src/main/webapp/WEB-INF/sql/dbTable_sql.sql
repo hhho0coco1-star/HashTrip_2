@@ -81,7 +81,10 @@ CREATE TABLE Users (
     user_phoneNumber VARCHAR2(50),
     user_registration_no VARCHAR2(100),
     user_nickName VARCHAR2(20),
-    user_profile_img VARCHAR2(255)
+    user_profile_img VARCHAR2(255),
+    user_profile_blob BLOB,
+    user_profile_mime_type VARCHAR2(100),
+    user_profile_file_name VARCHAR2(255)
 );
 
 COMMENT ON COLUMN Users.user_status IS 'A:활성, S:휴면, W:탈퇴';

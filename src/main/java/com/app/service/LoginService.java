@@ -12,6 +12,9 @@ public interface LoginService {
                      String userPhoneNumber,
                      String userRegistrationNo,
                      String userProfileImg,
+                     byte[] userProfileBinary,
+                     String userProfileMimeType,
+                     String userProfileFileName,
                      String userZipCode,
                      String userBaseAddress,
                      String userDetailAddress);

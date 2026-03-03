@@ -244,6 +244,19 @@ public class MainPageController {
         return "mainPage/mainPage-notice";
     }
 
+    @PostMapping("/hashTrip/notice/view")
+    @ResponseBody
+    public ApiResponse<String> increaseNoticeViewCount(@RequestParam("noticeNo") int noticeNo) {
+        ApiResponse<String> response = new ApiResponse<>();
+        if (noticeNo <= 0) {
+            response.setBody("INVALID_REQUEST");
+            return response;
+        }
+        boolean updated = noticeService.increaseViewCount(noticeNo);
+        response.setBody(updated ? "SUCCESS" : "FAIL");
+        return response;
+    }
+
     // --- 4. 문의사항 제출 ---
     
     @PostMapping("/contact/submit")
