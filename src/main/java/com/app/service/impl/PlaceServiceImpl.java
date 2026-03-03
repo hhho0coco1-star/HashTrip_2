@@ -835,7 +835,12 @@ public class PlaceServiceImpl implements PlaceService {
 	// mainPage 추천 여행지 검색
 	@Override
 	public List<PlaceDTO> searchPlaces(String keyword) {
-		return placeDAO.searchPlaces(keyword);
+		return placeDAO.searchPlaces(keyword, null, null, null);
+	}
+
+	@Override
+	public List<PlaceDTO> searchPlaces(String keyword, String prefCategory, String prefTagCode, String authId) {
+		return placeDAO.searchPlaces(keyword, prefCategory, prefTagCode, authId);
 	}
 
 	@Override

@@ -61,6 +61,7 @@ public class PlaceDAOImpl implements PlaceDAO {
 	private static final String SELECT_PLACE_REVIEWS_BY_CREATED_BY_PAGED_SORTED_STATEMENT_ID = "place_mapper.selectPlaceReviewsByCreatedByPagedSorted";
 	private static final String SELECT_PLACE_HOURS_BY_PLACE_NO_STATEMENT_ID = "place_mapper.selectPlaceHoursByPlaceNo";
 	private static final String SELECT_PLACES_NEARBY_STATEMENT_ID = "place_mapper.selectPlacesNearby";
+	private static final String SEARCH_PLACES_FOR_MAIN_STATEMENT_ID = "place_mapper.searchPlacesForMain";
 	private static final String DROP_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.dropSeqHoursId";
 	private static final String CREATE_SEQ_HOURS_ID_STATEMENT_ID = "place_mapper.createSeqHoursId";
 
@@ -299,7 +300,17 @@ public class PlaceDAOImpl implements PlaceDAO {
 	// mainPage 인기 추천 여행지 검색
 	@Override
 	public List<PlaceDTO> searchPlaces(String keyword) {
-		return sqlSessionTemplate.selectList("place_mapper.searchPlaces", keyword);
+		return searchPlaces(keyword, null, null, null);
+	}
+
+	@Override
+	public List<PlaceDTO> searchPlaces(String keyword, String prefCategory, String prefTagCode, String authId) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("keyword", keyword);
+		params.put("prefCategory", prefCategory);
+		params.put("prefTagCode", prefTagCode);
+		params.put("authId", authId);
+		return sqlSessionTemplate.selectList(SEARCH_PLACES_FOR_MAIN_STATEMENT_ID, params);
 	}
 
 	@Override

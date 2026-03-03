@@ -69,10 +69,12 @@ public interface PlaceDAO {
 	public int insertPlaceHoursBatch(List<PlaceHoursDTO> placeHoursDTOList) throws Exception;
 
 	public List<PlaceDTO> selectPlacesForHoursImport() throws Exception;
-	
+
 	public List<PlaceDTO> searchPlaces(String keyword);
 
-	/** 위경도 기준 반경(km) 내 장소 목록 (현재 장소 제외 가능) */
+	public List<PlaceDTO> searchPlaces(String keyword, String prefCategory, String prefTagCode, String authId);
+
+	/** 반경 기준 주변(km) 내 근처 장소 목록 (현재 장소 제외 가능) */
 	List<PlaceDTO> selectPlacesNearby(@Param("lat") double lat, @Param("lng") double lng, @Param("radiusKm") int radiusKm, @Param("excludePlaceNo") Long excludePlaceNo);
 
 }

@@ -1,9 +1,9 @@
 @charset "UTF-8";
 
 .analysis-image {
-    position: relative; /* 자식 요소인 floating-card들의 기준점이 됨 */
+    position: relative; /* ?癒?뻼 ?遺용꺖??floating-card??쇱벥 疫꿸퀣??癒?뵠 ??*/
     width: 100%;
-    max-width: 600px; /* 지도의 적절한 크기 설정 */
+    max-width: 600px; /* 筌왖?袁⑹벥 ?怨몄쟿????由???쇱젟 */
     height: 600px;
     margin: 0 auto;
 }
@@ -30,7 +30,7 @@
 }
 
 
-.floating-card {
+.analysis-image .floating-card {
 display: inline-block;
 padding: 10px 20px;
 border-radius: 20px;
@@ -40,26 +40,26 @@ font-weight: bold;
 animation: float 3s ease-in-out infinite;
 }
 
-/* 3. 개별 설정: 움직임이 겹치지 않도록 시작 시간(delay)과 속도를 다르게 조절 */
-.type-1 {
+/* 3. 揶쏆뮆????쇱젟: ??筌욊낯???野껊??귨쭪? ??낅즲嚥???뽰삂 ??볦퍢(delay)????얜즲????삘뀮野?鈺곌퀣??*/
+.analysis-image .type-1 {
 animation-duration: 3s;
 animation-delay: 0s;
 }
 
-.type-2 {
+.analysis-image .type-2 {
 animation-duration: 3.5s;
 animation-delay: 0.5s;  
 }
 
-.type-3 {
+.analysis-image .type-3 {
 animation-duration: 2.8s; 
 animation-delay: 1s;   
 }
 
-/* 1. 스크롤 스냅 활성화 */
+/* 1. ??쎄쾿嚥???산퉬 ??뽮쉐??*/
 html {
-	scroll-snap-type: y proximity; /* 강제 고정 대신 근접했을 때만 고정 */
-	scroll-behavior: smooth; /* 부드러운 스크롤 */
+	scroll-snap-type: y proximity; /* 揶쏅벡???⑥쥙??????域뱀눘???됱뱽 ???춸 ?⑥쥙??*/
+	scroll-behavior: smooth; /* ?봔??뺤쑎????쎄쾿嚥?*/
 }
 
 body {
@@ -67,24 +67,24 @@ body {
 	padding: 0;
 }
 
-/* 2. 각 섹션을 화면 전체 크기로 설정 */
+/* 2. 揶??諭????遺얇늺 ?袁⑷퍥 ??由경에???쇱젟 */
 section {
 	scroll-snap-align: start;
-	scroll-snap-stop: always; /* 스크롤 한 번에 여러 섹션을 지나치지 않도록 방지 */
+	scroll-snap-stop: always; /* ??쎄쾿嚥???甕곕뜆肉??????諭???筌왖??륂뒄筌왖 ??낅즲嚥?獄쎻뫗? */
 	height: 100vh;
 	width: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	box-sizing: border-box;
-	/* [추가] 헤더 높이가 보통 60px 정도이므로 그만큼 위쪽 여백을 줍니다 */
+	/* [?곕떽?] ??삳쐭 ?誘れ뵠揶쎛 癰귣똾??60px ?類ｋ즲???嚥?域밸챶彛???袁⒲걹 ??媛??餓λ씭???*/
 	padding-top: 60px;
 }
 
-/* 헤더가 고정(sticky)되어 있다면 스냅 위치가 어긋날 수 있으므로 
-   헤더 높이만큼 여백을 고려하거나, 헤더를 제외하고 구성하는 것이 좋습니다. */
+/* ??삳쐭揶쎛 ?⑥쥙??sticky)??뤿선 ??덈뼄筌???산퉬 ?袁⑺뒄揶쎛 ??욱닎??????됱몵沃샕嚥?
+   ??삳쐭 ?誘れ뵠筌띾슦寃???媛???⑥쥓???띻탢?? ??삳쐭????뽰뇚??랁??닌딄쉐??롫뮉 野껉퍔???ル뿭???덈뼄. */
    
-/* ================== 2. 성향 분석 영역 ================== */
+/* ================== 2. ?源딅샨 ?브쑴苑??怨몃열 ================== */
 .analysis-section {
 	background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
 	padding: 80px 0;
@@ -154,9 +154,9 @@ section {
 	color: #999;
 }
 
-/* ================== 3. 플로팅 카드 애니메이션 ================== */
+/* ================== 3. ???쨮??燁삳?諭??醫딅빍筌롫뗄???================== */
 
-.floating-card {
+.analysis-image .floating-card {
 	position: absolute;
 	background: white;
 	padding: 12px 22px;
@@ -167,52 +167,54 @@ section {
 	z-index: 10;
 }
 
-/* 개별 카드 위치 설정 - 지도 레이아웃에 맞춰 분산 */
-.solo {
+/* 揶쏆뮆??燁삳?諭??袁⑺뒄 ??쇱젟 - 筌왖????됱뵠?袁⑹뜍??筌띿쉸???브쑴沅?*/
+.analysis-image .floating-card.solo {
 	top: 15%;
 	left: 15%;
+	right: auto;
+	bottom: auto;
 	color: #007bff;
 }
 
-.floating-card:nth-of-type(2) {
+.analysis-image .floating-card:nth-of-type(2) {
 	top: 35%;
 	right: 5%;
 	color: #ff4757;
 	font-size: 18px;
 }
 
-.floating-card:nth-of-type(3) {
+.analysis-image .floating-card:nth-of-type(3) {
 	bottom: 20%;
 	left: 15%;
 	color: #2ed573;
 }
 
-.floating-card:nth-of-type(4) {
+.analysis-image .floating-card:nth-of-type(4) {
 	top: 25%;
 	left: 45%;
 	color: #ffa502;
 }
 
-.floating-card:nth-of-type(5) {
+.analysis-image .floating-card:nth-of-type(5) {
 	bottom: 45%;
 	left: 5%;
 	color: #747d8c;
 	font-size: 13px;
 }
 
-.floating-card:nth-of-type(6) {
+.analysis-image .floating-card:nth-of-type(6) {
 	top: 65%;
 	right: 20%;
 	color: #a4b0be;
 }
 
-.floating-card:nth-of-type(7) {
+.analysis-image .floating-card:nth-of-type(7):not(.solo) {
 	bottom: 5%;
 	right: 30%;
 	color: #5352ed;
 }
 
-/* 애니메이션 키프레임 (하나로 통합) */
+/* ?醫딅빍筌롫뗄?????쎈늄??됱뿫 (??롪돌嚥?????) */
 
 @keyframes map-fade {
 	from { opacity:0; transform: translate(-50%, -48%); }
@@ -220,21 +222,21 @@ to {
 	opacity: 0.2;
 	transform: translate(-50%, -50%); }}
 .sub-text {
-	/* 기존에 가지고 계신 스타일 코드들... (font-size, color 등) */
-	transition: opacity 0.5s ease-in-out; /* 이 줄만 추가해 주세요! */
+	/* 疫꿸퀣???揶쎛筌왖???④쑴????????꾨뗀諭??.. (font-size, color ?? */
+	transition: opacity 0.5s ease-in-out; /* ??餓κ쑬彛??곕떽???雅뚯눘苑?? */
 	opacity: 1;
 }
 
-/* 페이드 아웃 상태를 위한 클래스 */
+/* ??륁뵠???袁⑹뜍 ?怨밴묶???袁る립 ?????*/
 .fade-out {
 	opacity: 0;
 }
 
-/* ================== 4. 여행지 추천 영역 ================== */
-/* 검색창 스타일 */
+/* ================== 4. ??六억쭪? ?곕뗄荑??怨몃열 ================== */
+/* 野꺜??깃갯 ?????*/
 .search-bar-wrapper {
 	max-width: 500px;
-	margin: 0 auto 50px auto; /* 중앙 정렬 및 하단 여백 */
+	margin: 0 auto 50px auto; /* 餓λ쵐釉??類ｌ졊 獄???롫뼊 ??媛?*/
 }
 
 .search-input-box {
@@ -268,7 +270,7 @@ to {
 	margin-right: 10px;
 }
 
-/* ================== 4. 여행지 추천 영역 (슬라이더 통합) ================== */
+/* ================== 4. ??六억쭪? ?곕뗄荑??怨몃열 (???????????) ================== */
 .recommend-section {
 	padding-top: 30px !important;
 	padding-bottom: 80px;
@@ -283,34 +285,34 @@ to {
 	box-sizing: border-box;
 }
 
-/* 슬라이더 외부 감싸기 */
+/* ????????紐? 揶쏅Ŋ?ζ묾?*/
 .recommend-wrapper {
 	position: relative;
 	width: 100%;
-	overflow: hidden; /* 영역 밖 카드 숨김 */
+	overflow: hidden; /* ?怨몃열 獄?燁삳?諭???? */
 	padding: 10px 5px;
 }
 
-/* 1. 창문 역할: 넘치는 카드를 가립니다 */
+/* 1. 筌≪럥揆 ??釉? ??륂뒄??燁삳?諭띄몴?揶쎛?깆럥???*/
 .recommend-wrapper {
     position: relative;
     width: 100%;
-    overflow: hidden; /* [필수] 이게 없으면 카드가 옆으로 무한히 보입니다 */
+    overflow: hidden; /* [?袁⑸땾] ??우쓺 ??곸몵筌?燁삳?諭뜹첎? ??곸몵嚥??얜똾釉??癰귣똻???덈뼄 */
     padding: 20px 0;
 }
 
-/* 2. 기차 트랙: 카드들이 한 줄로 서게 합니다 */
+/* 2. 疫꿸퀣媛??紐껋삌: 燁삳?諭??쇱뵠 ??餓κ쑬以???볦쓺 ??몃빍??*/
 .recommend-cards {
     display: flex;
-    flex-wrap: nowrap; /* [필수] 카드가 아래로 안 떨어지게 */
-    width: max-content; /* [필수] 내용물만큼 옆으로 길어지게 */
+    flex-wrap: nowrap; /* [?袁⑸땾] 燁삳?諭뜹첎? ?袁⑥삋嚥?????λ선筌왖野?*/
+    width: max-content; /* [?袁⑸땾] ??곸뒠?얠눖彛????곸몵嚥?疫뀀챷堉깍쭪?野?*/
     transition: transform 0.5s ease-out;
     gap: 20px;
 }
 
-/* 3. 카드 자체: 뒤지게 커지지 않도록 너비를 딱 고정합니다 */
+/* 3. 燁삳?諭??癒?퍥: ???野??뚣끉?筌왖 ??낅즲嚥???덊돩?????⑥쥙???몃빍??*/
 .travel-card {
-    /* 1200px 컨테이너에서 3개를 보여주려면 한 카드당 386px 정도가 적당합니다 */
+    /* 1200px ?뚢뫂???瑗?癒?퐣 3揶쏆뮆? 癰귣똻肉т틠?곗젻筌???燁삳?諭??386px ?類ｋ즲揶쎛 ?怨룸뼣??몃빍??*/
 	flex: 0 0 calc(33.333% - 14px);
     width: 386px; 
     background: #fff;
@@ -319,7 +321,7 @@ to {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* 4. 아까 성공한 이미지 높이 유지 */
+/* 4. ?袁㏉돱 ?源껊궗?????筌왖 ?誘れ뵠 ?醫? */
 .card-image {
     height: 220px;
     background-size: cover;
@@ -342,7 +344,7 @@ to {
 }
 
 
-/* 슬라이더 컨트롤 버튼 */
+/* ????????뚢뫂?껅에?甕곌쑵??*/
 .slider-btn {
 	position: absolute;
 	top: 50%;
@@ -372,34 +374,34 @@ to {
 	right: -10px;
 }
 
-/* 추천 섹션 전체의 상단 여백 줄이기 */
+/* ?곕뗄荑??諭???袁⑷퍥???怨룸뼊 ??媛?餓κ쑴?졿묾?*/
 .recommend-section {
-	/* 기존 80px에서 20px~40px 정도로 대폭 줄임 */
+	/* 疫꿸퀣??80px?癒?퐣 20px~40px ?類ｋ즲嚥?????餓κ쑴??*/
 	padding-top: 30px !important;
 	padding-bottom: 80px;
 	background-color: #ffffff;
 	scroll-snap-align: start;
-	height: 100vh; /* 전체 화면 높이 유지 */
+	height: 100vh; /* ?袁⑷퍥 ?遺얇늺 ?誘れ뵠 ?醫? */
 	box-sizing: border-box;
 }
 
 .recommend-container {
-	max-width: 1200px; /* 부모 넓이를 충분히 넓게 잡아주세요 */
+	max-width: 1200px; /* ?봔筌??蹂?뵠???겸뫖????蹂ㅼ쓺 ??る툡雅뚯눘苑??*/
 	width: 100%;
 	margin: 0 auto;
 	padding: 0 20px;
-	box-sizing: border-box; /* 패딩이 넓이에 영향을 주지 않도록 설정 */
+	box-sizing: border-box; /* ??ㅻ뎃???蹂?뵠???怨밸샨??雅뚯눘? ??낅즲嚥???쇱젟 */
 }
 
-/* 제목 영역의 위쪽 마진 제거 */
+/* ??뺛걠 ?怨몃열???袁⒲걹 筌띾뜆彛???볤탢 */
 .section-title {
 	text-align: center;
-	margin-top: 0; /* 위쪽 마진을 아예 없앰 */
-	margin-bottom: 30px; /* 검색창과의 간격 */
+	margin-top: 0; /* ?袁⒲걹 筌띾뜆彛???袁⑹굙 ??곷퉲 */
+	margin-bottom: 30px; /* 野꺜??깃갯?⑥눘??揶쏄쑨爰?*/
 }
 
 .section-title h2 {
-	margin-top: 0; /* h2 태그 자체의 기본 마진 제거 */
+	margin-top: 0; /* h2 ??볥젃 ?癒?퍥??疫꿸퀡??筌띾뜆彛???볤탢 */
 	font-size: 32px;
 	line-height: 1.2;
 }
@@ -408,13 +410,13 @@ to {
 	display: flex;
 	transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 	gap: 20px;
-	flex-wrap: nowrap; /* 카드가 아래로 떨어지지 않게 고정 */
-	width: max-content; /* [이게 없으면 절대 안 움직여!] */
+	flex-wrap: nowrap; /* 燁삳?諭뜹첎? ?袁⑥삋嚥???λ선筌왖筌왖 ??꾩쓺 ?⑥쥙??*/
+	width: max-content; /* [??우쓺 ??곸몵筌???? ????筌욊낯肉?] */
 }
 
-/* 카드 너비 고정 */
+/* 燁삳?諭???덊돩 ?⑥쥙??*/
 .travel-card {
-	flex: 0 0 370px; /* 한 화면에 3개 유지 */
+	flex: 0 0 370px; /* ???遺얇늺??3揶??醫? */
 	box-sizing: border-box;
 }
 
@@ -445,13 +447,312 @@ to {
     background: #fff;
 }
 
-/* 좋아요 눌렸을 때 상태 (JS에서 클래스 추가 예정) */
+/* ?ル뿭釉?????죬?????怨밴묶 (JS?癒?퐣 ??????곕떽? ??됱젟) */
 .like-btn.active {
     background: #ff4d4d;
     color: #fff;
 }
 .like-btn.active .heart-icon {
-    content: '♥'; /* 꽉 찬 하트로 변경 */
-    color: #ffffff; /* 빨간 배경에 흰색 하트 */
+    color: #ffffff;
 }
 /* ============ heart css ============ */
+/* ===== Main page preference filter ===== */
+.main-pref-filter-panel {
+	background: #fff;
+	border: 1.5px solid #e5e7eb;
+	border-radius: 16px;
+	padding: 14px;
+	margin: -8px auto 24px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.main-pref-filter-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.main-pref-filter-title {
+	font-size: 0.95rem;
+	font-weight: 800;
+	color: #1f2937;
+}
+
+.main-pref-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.main-pref-action-btn {
+	padding: 0.5rem 0.95rem;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	font-weight: 700;
+	cursor: pointer;
+	font-family: 'Pretendard', sans-serif;
+	transition: all 0.2s;
+}
+
+.main-pref-apply {
+	background: #5b8dee;
+	border: 1.5px solid #5b8dee;
+	color: #fff;
+}
+
+.main-pref-apply:hover {
+	background: #3b5bdb;
+	border-color: #3b5bdb;
+}
+
+.main-pref-reset {
+	background: #fff;
+	border: 1.5px solid #e5e7eb;
+	color: #4b5563;
+}
+
+.main-pref-reset:hover {
+	border-color: #c7d2e5;
+	background: #f8fafc;
+}
+
+.main-pref-top {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.main-pref-sub-wrap {
+	margin-top: 10px;
+}
+
+.main-pref-sub {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.main-pref-sub-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.main-pref-sub-group-title {
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: #64748b;
+}
+
+.main-pref-sub-group-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.main-pref-chip {
+	padding: 0.5rem 0.9rem;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	font-weight: 600;
+	background: #fff;
+	border: 1.5px solid #e5e7eb;
+	color: #4b5563;
+	cursor: pointer;
+	transition: all 0.2s;
+	font-family: 'Pretendard', sans-serif;
+}
+
+.main-pref-chip:hover {
+	border-color: #5b8dee;
+	color: #5b8dee;
+}
+
+.main-pref-chip.active {
+	background: rgba(91, 141, 238, 0.1);
+	border-color: #5b8dee;
+	color: #5b8dee;
+}
+
+.main-pref-empty {
+	font-size: 0.8rem;
+	color: #94a3b8;
+}
+
+.main-pref-summary {
+	margin-top: 10px;
+	padding: 8px 10px;
+	background: #f5f8ff;
+	border: 1px solid #dbe7ff;
+	border-radius: 10px;
+	font-size: 0.8rem;
+	color: #3757a6;
+	font-weight: 600;
+}
+
+.travel-card {
+	cursor: pointer;
+}
+
+.travel-card.is-empty {
+	flex: 0 0 100%;
+	max-width: 100%;
+}
+
+.travel-card.is-empty .card-info {
+	padding: 28px 24px;
+}
+
+.travel-card.is-empty h3 {
+	font-size: 1rem;
+	margin-bottom: 6px;
+}
+
+.hidden {
+	display: none !important;
+}
+body.modal-open {
+	overflow: hidden;
+}
+
+.main-wishlist-modal {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 1200;
+}
+
+.main-wishlist-modal.is-open {
+	display: flex;
+}
+
+.main-wishlist-modal-dim {
+	position: absolute;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+}
+
+.main-wishlist-modal-panel {
+	position: relative;
+	z-index: 1;
+	width: min(92vw, 520px);
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 18px;
+	padding: 20px;
+	box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+}
+
+.main-wishlist-modal-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.main-wishlist-modal-head h3 {
+	margin: 0;
+	font-size: 1.05rem;
+	color: #111827;
+}
+
+.main-wishlist-close {
+	border: 1px solid #d1d5db;
+	background: #fff;
+	color: #475569;
+	border-radius: 10px;
+	padding: 0.35rem 0.75rem;
+	font-size: 0.82rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.main-wishlist-help {
+	margin: 0 0 12px;
+	font-size: 0.86rem;
+	color: #64748b;
+}
+
+.main-wishlist-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.main-wishlist-row label {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #475569;
+}
+
+.main-wishlist-select,
+.main-wishlist-input {
+	height: 40px;
+	border: 1.5px solid #dbe3ef;
+	border-radius: 10px;
+	padding: 0 12px;
+	font-size: 0.9rem;
+	color: #1f2937;
+	background: #fff;
+}
+
+.main-wishlist-select:disabled,
+.main-wishlist-input:disabled {
+	background: #f8fafc;
+	color: #94a3b8;
+}
+
+.main-wishlist-create-wrap {
+	display: flex;
+	gap: 8px;
+}
+
+.main-wishlist-create-wrap .main-wishlist-input {
+	flex: 1;
+}
+
+.main-wishlist-primary,
+.main-wishlist-secondary {
+	height: 40px;
+	border-radius: 10px;
+	font-size: 0.84rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.main-wishlist-primary {
+	border: 1.5px solid #5b8dee;
+	background: #5b8dee;
+	color: #fff;
+}
+
+.main-wishlist-primary:disabled {
+	background: #cbd5e1;
+	border-color: #cbd5e1;
+	cursor: not-allowed;
+}
+
+.main-wishlist-secondary {
+	border: 1.5px solid #dbe3ef;
+	background: #fff;
+	color: #334155;
+	padding: 0 12px;
+}
+
+.main-wishlist-message {
+	margin: 4px 0 0;
+	font-size: 0.82rem;
+	color: #1d4ed8;
+	font-weight: 600;
+}
+
+.main-wishlist-message.error {
+	color: #b91c1c;
+}
+
