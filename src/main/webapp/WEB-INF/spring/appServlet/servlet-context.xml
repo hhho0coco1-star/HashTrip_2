@@ -25,7 +25,7 @@
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 
 
-	<annotation-driven>						
+	<annotation-driven ignore-default-model-on-redirect="true">						
 		<message-converters>					
 			<!-- @ResponseBody濡?String 泥섎━?좊븣 ?쒓?泥섎━ -->				
 			<beans:bean	class="org.springframework.http.converter.StringHttpMessageConverter">			

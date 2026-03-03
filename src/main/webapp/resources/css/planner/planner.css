@@ -938,6 +938,11 @@
     color: var(--text-tertiary);
 }
 
+.planner-plan-meta-dates {
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
 .planner-actions .btn-cta-outline,
 .planner-edit-actions .btn-cta-outline,
 .planner-edit-header .btn-cta-outline {
@@ -1367,10 +1372,19 @@
 .planner-replace-dist { font-weight: 500; }
 .planner-replace-rating { color: #eab308; }
 
+/* 상세 영역: 기본은 숨김, 카드에 .card-expanded 있을 때만 표시 (클릭 토글) */
 .planner-replace-card-expanded {
-    border-top: 1px solid #e2e8f0;
-    padding: 10px 12px;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 12px;
+    border-top: none;
     background: #f8fafc;
+    transition: max-height 0.25s ease, padding 0.2s ease, border-color 0.2s ease;
+}
+.planner-replace-item.card-expanded .planner-replace-card-expanded {
+    max-height: 420px;
+    padding: 10px 12px;
+    border-top: 1px solid #e2e8f0;
 }
 .planner-replace-expanded-inner .planner-replace-detail-link {
     display: inline-block;

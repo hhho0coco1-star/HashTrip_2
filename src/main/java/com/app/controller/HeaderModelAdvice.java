@@ -3,18 +3,25 @@ package com.app.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import com.app.dto.UsersDTO;
 import com.app.service.UsersService;
+import com.app.service.impl.SocialUserProvisionService;
 
 @ControllerAdvice
 public class HeaderModelAdvice {
 
     @Autowired
     private UsersService usersService;
+
+    @Autowired
+    private SocialUserProvisionService socialUserProvisionService;
 
     @ModelAttribute
     public void addHeaderCommonModel(Authentication authentication, Model model) {
@@ -28,18 +35,18 @@ public class HeaderModelAdvice {
             return;
         }
 
-        String authId = authentication.getName();
-        if (authId == null || authId.trim().isEmpty()) {
+        String authId = resolveAuthenticatedAuthId(authentication);
+        if (!StringUtils.hasText(authId)) {
             return;
         }
 
         UsersDTO usersDTO = usersService.getUserByAuthId(authId.trim());
         if (usersDTO == null) {
-            model.addAttribute("headerDisplayName", authId.trim());
+            model.addAttribute("headerDisplayName", "여행자");
             return;
         }
 
-        String displayName = resolveDisplayName(usersDTO, authId.trim());
+        String displayName = resolveDisplayName(usersDTO);
         String userType = normalizeUserType(usersDTO.getUserType());
         boolean canAdmin = "ADMIN".equals(userType) || "MASTER".equals(userType);
 
@@ -48,24 +55,49 @@ public class HeaderModelAdvice {
         model.addAttribute("headerCanAdmin", canAdmin);
     }
 
-    private String resolveDisplayName(UsersDTO usersDTO, String fallbackAuthId) {
-        if (usersDTO.getUserNickName() != null && !usersDTO.getUserNickName().trim().isEmpty()) {
+    private String resolveDisplayName(UsersDTO usersDTO) {
+        if (StringUtils.hasText(usersDTO.getUserNickName())) {
             return usersDTO.getUserNickName().trim();
         }
-        if (usersDTO.getUserName() != null && !usersDTO.getUserName().trim().isEmpty()) {
+        if (StringUtils.hasText(usersDTO.getUserName())) {
             return usersDTO.getUserName().trim();
         }
-        return fallbackAuthId;
+        return "여행자";
     }
 
     private String normalizeUserType(String userType) {
-        if (userType == null) {
+        if (!StringUtils.hasText(userType)) {
             return null;
         }
-        String normalized = userType.trim().toUpperCase();
-        if (normalized.isEmpty()) {
+        return userType.trim().toUpperCase();
+    }
+
+    private String resolveAuthenticatedAuthId(Authentication authentication) {
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+            Object principal = token.getPrincipal();
+            if (principal instanceof OAuth2User) {
+                OAuth2User oAuth2User = (OAuth2User) principal;
+                try {
+                    socialUserProvisionService.provisionIfMissing(
+                            token.getAuthorizedClientRegistrationId(),
+                            oAuth2User.getAttributes());
+                } catch (Exception ignored) {
+                    // Ignore provisioning errors here and try resolving existing auth id.
+                }
+                String socialAuthId = socialUserProvisionService.resolveSocialAuthId(
+                        token.getAuthorizedClientRegistrationId(),
+                        oAuth2User.getAttributes());
+                if (StringUtils.hasText(socialAuthId)) {
+                    return socialAuthId.trim();
+                }
+            }
+        }
+
+        String authId = authentication.getName();
+        if (!StringUtils.hasText(authId)) {
             return null;
         }
-        return normalized;
+        return authId.trim();
     }
 }

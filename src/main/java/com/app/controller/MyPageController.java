@@ -17,6 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -41,6 +43,7 @@ import com.app.service.ProfileImageStorageService;
 import com.app.service.UsersService;
 import com.app.service.WishListService;
 import com.app.service.impl.CommunityService;
+import com.app.service.impl.SocialUserProvisionService;
 
 @Controller
 public class MyPageController {
@@ -64,6 +67,9 @@ public class MyPageController {
 	@Autowired
 	private ProfileImageStorageService profileImageStorageService;
 
+	@Autowired
+	private SocialUserProvisionService socialUserProvisionService;
+
 	@GetMapping({ "/mypage", "/mypage/", "/myPage", "/my-page", "/hashTrip/mypage" })
 	public String mypage(
 			@RequestParam(name = "placePage", defaultValue = "1") int placePage,
@@ -80,6 +86,9 @@ public class MyPageController {
 		}
 
 		UsersDTO usersDTO = usersService.getUserByAuthId(currentAuthId);
+		if (usersDTO == null) {
+			return "redirect:/auth/login";
+		}
 		List<UserTagMapDTO> userTagList = usersService.getUserTagsByAuthId(currentAuthId);
 		List<TagMasterDTO> tagMasterList = usersService.getTagMasterList();
 
@@ -138,7 +147,9 @@ public class MyPageController {
 		model.addAttribute("kakaoMapAppKey", kakaoMapAppKey);
 		
 		// 1:1 문의
-		List<InquiryDTO> inquiryList = usersService.getMyInquiries(usersDTO.getUserNo());
+		List<InquiryDTO> inquiryList = usersDTO.getUserNo() == null
+				? Collections.emptyList()
+				: usersService.getMyInquiries(usersDTO.getUserNo());
 	    model.addAttribute("inquiryList", inquiryList); // JSP로 전달
 	    
 		return "mypage";
@@ -341,8 +352,30 @@ public class MyPageController {
 				|| authentication instanceof AnonymousAuthenticationToken) {
 			return null;
 		}
+
+		if (authentication instanceof OAuth2AuthenticationToken) {
+			OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+			Object principal = token.getPrincipal();
+			if (principal instanceof OAuth2User) {
+				OAuth2User oAuth2User = (OAuth2User) principal;
+				try {
+					socialUserProvisionService.provisionIfMissing(
+							token.getAuthorizedClientRegistrationId(),
+							oAuth2User.getAttributes());
+				} catch (Exception ignored) {
+					// Ignore provisioning exceptions here and try to resolve existing auth id.
+				}
+				String socialAuthId = socialUserProvisionService.resolveSocialAuthId(
+						token.getAuthorizedClientRegistrationId(),
+						oAuth2User.getAttributes());
+				if (StringUtils.hasText(socialAuthId)) {
+					return socialAuthId.trim();
+				}
+			}
+		}
+
 		String authId = authentication.getName();
-		if (authId == null || authId.trim().isEmpty()) {
+		if (!StringUtils.hasText(authId)) {
 			return null;
 		}
 		return authId.trim();
@@ -438,3 +471,4 @@ public class MyPageController {
 	}
 	
 }
+

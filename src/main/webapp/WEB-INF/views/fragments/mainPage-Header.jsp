@@ -67,7 +67,7 @@
                     </c:when>
                     <c:otherwise>
                         <span class="user-info">
-                            <strong><c:out value="${empty headerDisplayName ? pageContext.request.userPrincipal.name : headerDisplayName}" /></strong>님 환영합니다.
+                            <strong><c:out value="${empty headerDisplayName ? '여행자' : headerDisplayName}" /></strong>님 환영합니다.
                         </span>
                         <form class="logout-form" action="<c:url value='/auth/logout' />" method="post">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />

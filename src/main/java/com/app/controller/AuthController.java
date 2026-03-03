@@ -48,9 +48,11 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String loginPage(Authentication authentication) {
+    public String loginPage(Authentication authentication, HttpServletRequest request, HttpServletResponse response)
+            throws java.io.IOException {
         if (isAuthenticated(authentication)) {
-            return "redirect:/hashTrip";
+            response.sendRedirect(request.getContextPath() + "/hashTrip");
+            return null;
         }
         return "auth/login";
     }
