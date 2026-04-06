@@ -1,74 +1,6 @@
--- ==============================
--- FULL RESET (DROP ALL)
--- ==============================
--- Run this section first when you want a clean rebuild.
-
-BEGIN
-    FOR t IN (
-        SELECT table_name
-        FROM user_tables
-        WHERE table_name IN (
-            'PHOTO_DATA',
-            'PLACE_REVIEW',
-            'COMMUNITY',
-            'TRAVEL_LOGS',
-            'PLAN_DETAILS',
-            'ROUTE_SAVE_HISTORY',
-            'WISHLIST',
-            'CATEGORY',
-            'TRAVEL_PLANS',
-            'TRAVEL_STYLES',
-            'PLACE_TAG_MAP',
-            'PLACE_HOURS',
-            'USER_TAG_MAP',
-            'QUSETION_OPTIONS',
-            'QUESTIONS',
-            'PLACE',
-            'TAG_MASTER',
-            'QUESTIONS_CATEGORIES',
-            'COMMON_CODE',
-            'CODE_GROUP',
-            'USER_ADDRESS',
-            'USER_AUTHENTICATION',
-            'USERS'
-        )
-    ) LOOP
-        EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS PURGE';
-    END LOOP;
-END;
-/
-
-BEGIN
-    FOR s IN (
-        SELECT sequence_name
-        FROM user_sequences
-        WHERE sequence_name IN (
-            'SEQ_QUESTION_CAT_NO',
-            'SEQ_PLACE_NO',
-            'SEQ_QUESTION_NUM',
-            'SEQ_OPTION_ID',
-            'SEQ_USER_TAG_MAP_NO',
-            'SEQ_PLACE_TAG_MAP_NO',
-            'SEQ_HOURS_ID',
-            'SEQ_STYLE_USER_NO',
-            'SEQ_PLAN_NO',
-            'SEQ_PLAN_DETAIL_NO',
-            'SEQ_ROUTE_SAVE_NO',
-            'SEQ_LOG_NO',
-            'SEQ_COMMENT_NO',
-            'SEQ_COMMUNITY_REVIEW_NO',
-            'SEQ_PHOTO_NO',
-            'SEQ_CATEGORY_NO',
-            'SEQ_WISH_NO',
-            'SEQ_USER_NO',
-            'SEQ_USER_AUTH_NO',
-            'SEQ_USER_ADDRESS_NO'
-        )
-    ) LOOP
-        EXECUTE IMMEDIATE 'DROP SEQUENCE ' || s.sequence_name;
-    END LOOP;
-END;
-/
+-- hifive schema bootstrap
+-- 삭제 스크립트는 db_delete.sql에서 별도 관리합니다.
+-- 이 파일은 생성 / 변경 / 초기 데이터 적재만 포함합니다.
 
 CREATE TABLE Users (
     user_no NUMBER(19) PRIMARY KEY,
@@ -134,7 +66,7 @@ CREATE TABLE Tag_Master (
 
 -- 4. 질문 카테고리
 CREATE TABLE Questions_categories (
-    question_no NUMBER(1) PRIMARY KEY,
+    question_no NUMBER(3) PRIMARY KEY,
     question_name VARCHAR2(50)
 );
 
@@ -172,7 +104,7 @@ CREATE UNIQUE INDEX UQ_PLACE_HOURS_PLACE_DAY ON Place_Hours(place_no, day_of_wee
 
 -- 6. 질문 상세 및 선택지
 CREATE TABLE Questions (
-    question_number NUMBER(1) PRIMARY KEY,
+    question_number NUMBER(3) PRIMARY KEY,
     question_no NUMBER(3),
     question_content VARCHAR2(2000) NOT NULL,
     question_img VARCHAR2(1000) NOT NULL,
@@ -182,7 +114,7 @@ CREATE TABLE Questions (
 CREATE TABLE Qusetion_options (
     option_id NUMBER(19) PRIMARY KEY,
     question_number NUMBER(3),
-    question_no NUMBER(1),
+    question_no NUMBER(3),
     option_text VARCHAR2(500) NOT NULL,
     option_img VARCHAR2(1000) NOT NULL,
     CONSTRAINT fk_opt_q_num FOREIGN KEY (question_number) REFERENCES Questions(question_number)
@@ -222,7 +154,11 @@ CREATE TABLE Travel_Styles (
     user_no NUMBER(19), -- 타입을 NUMBER(19)로 일치시킴
     travel_is_analyzde CHAR(1) CHECK (travel_is_analyzde IN ('Y', 'N')),
     travel_analyzed_date DATE,
-    travel_type_name VARCHAR2(50),
+    travel_type_name VARCHAR2(100),
+    selected_place_codes VARCHAR2(200),
+    selected_energy_codes VARCHAR2(200),
+    selected_plan_codes VARCHAR2(200),
+    travel_final_summary VARCHAR2(1000),
     CONSTRAINT fk_style_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
@@ -235,6 +171,8 @@ CREATE TABLE Travel_Plans (
     plan_status VARCHAR2(20),
     plan_start_date DATE,
     plan_end_date DATE,
+    created_date DATE DEFAULT SYSDATE NOT NULL,
+    updated_date DATE DEFAULT SYSDATE,
     CONSTRAINT fk_plan_user FOREIGN KEY (user_no) REFERENCES Users(user_no)
 );
 
@@ -393,10 +331,6 @@ START WITH 1
 INCREMENT BY 1
 NOCACHE;
 
--- 조회성능을 높이기 위한 인덱스 이걸 하면 자동으로 오라클이 빨리 조회 할수 있음 물론 PLACE_TAG_MAP테이블을 테그 코드와 플레이스번호로 조회했을떄,,,
-CREATE INDEX IDX_PLACE_TAG_MAP_TAG_CODE ON PLACE_TAG_MAP(TAG_CODE);
-CREATE INDEX IDX_PLACE_TAG_MAP_PLACE_NO ON PLACE_TAG_MAP(PLACE_NO);
-
 -- 사용자 1:1 문의 DB 테이블 추가
 CREATE TABLE PLACE_INQUIRY (
     INQUIRY_NO      NUMBER PRIMARY KEY,          -- 문의 고유 번호
@@ -417,25 +351,12 @@ CREATE TABLE PLACE_INQUIRY (
 -- 번호 자동 생성을 위한 시퀀스
 CREATE SEQUENCE SEQ_INQUIRY_NO START WITH 1 INCREMENT BY 1;
 
--- 사용자 성향 분석 저장 테이블 컬럼 추가
-ALTER TABLE Travel_Styles ADD (
-    -- 사용자가 선택한 원본 코드들 (나중에 다시 분석할 때 필요)
-    selected_place_codes   VARCHAR2(200), 
-    selected_energy_codes  VARCHAR2(200),
-    selected_plan_codes    VARCHAR2(200),
-    -- 최종 조합된 문구 저장 (매번 로직을 돌리지 않기 위해 결과 저장)
-    travel_final_summary   VARCHAR2(1000) 
-);
-
 -- 여행 성향 시퀀스 생성
 CREATE SEQUENCE SEQ_TRAVEL_STYLE
 START WITH 1
 INCREMENT BY 1
 NOCACHE
 NOCYCLE;
-
--- 컬럼 크기를 100으로 변경
-ALTER TABLE TRAVEL_STYLES MODIFY TRAVEL_TYPE_NAME VARCHAR2(100 BYTE);
 
 -- 1. 각 태그별 가중치를 정의하는 테이블
 CREATE TABLE TAG_WEIGHT_MASTER (
@@ -451,9 +372,120 @@ CREATE TABLE TRAVEL_RESULT_MAPPING (
     RESULT_TEXT VARCHAR2(200)  -- 산과 바다를 누비는 자유로운 영혼
 );
 
-SELECT * FROM user_tag_map;
-SELECT * FROM TRAVEL_RESULT_MAPPING;
-SELECT * FROM TAG_WEIGHT_MASTER;
+-- 태그 마스터 데이터
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('LOC_NATURE_MT', '산·자연', 'LOCATION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('LOC_SEA_BEACH', '바다·해변', 'LOCATION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('LOC_CITY_CULTURE', '도시·문화', 'LOCATION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('LOC_RURAL_COUNTRY', '시골·온천', 'LOCATION');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PLAN_HIGH', '분 단위 계획형', 'PLANNING');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PLAN_MID', '주요 스팟만 선정', 'PLANNING');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('SPONTANEOUS_HIGH', '발길 닿는 대로 즉흥', 'PLANNING');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('DEPENDENT_STYLE', '남이 짜준 대로', 'PLANNING');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOVE_CAR_RENT', '자가용·렌트카', 'MOVE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOVE_PUBLIC_TRANSIT', '대중교통', 'MOVE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOVE_TAXI', '택시', 'MOVE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOVE_WALK', '도보 여행', 'MOVE');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('STAY_HOTEL_RESORT', '호텔·리조트', 'STAY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('STAY_PENSION_ROOM', '감성 에어비앤비', 'STAY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('STAY_CAMPING_GLAMP', '자연 속 캠핑', 'STAY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('STAY_GUEST_SHARE', '가성비 게하', 'STAY');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('BUDGET_LOW', '철저한 예산형', 'BUDGET');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('BUDGET_VALUE', '가성비 중심', 'BUDGET');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('BUDGET_MID_SATISFY', '쓸 땐 쓰는 스타일', 'BUDGET');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('BUDGET_FLEX', '플렉스 스타일', 'BUDGET');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('COMP_SOLO', '혼자만의 여행', 'COMPANION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('COMP_COUPLE', '사랑하는 연인', 'COMPANION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('COMP_FAMILY', '가족과 함께', 'COMPANION');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('COMP_FRIENDS', '즐거운 친구들', 'COMPANION');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('FOOD_GOURMET', '유명 맛집 탐방', 'FOOD_STYLE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('FOOD_LOCAL', '로컬 현지 음식', 'FOOD_STYLE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('FOOD_QUICK', '간편식·편의점', 'FOOD_STYLE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('FOOD_MEAT_SEAFOOD', '직접 요리', 'FOOD_STYLE');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PURPOSE_REST', '완전한 휴식', 'PURPOSE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PURPOSE_ACTIVITY', '액티비티·체험', 'PURPOSE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PURPOSE_PHOTO', '인생샷 남기기', 'PURPOSE');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('PURPOSE_HISTORY_CULTURE', '문화·역사 공부', 'PURPOSE');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('INTENSITY_VERY_LOW', '숙소에서 힐링', 'INTENSITY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('INTENSITY_LOW', '여유로운 일정', 'INTENSITY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('INTENSITY_HIGH', '바쁜 관광 일정', 'INTENSITY');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('INTENSITY_VERY_HIGH', '밤까지 풀코스', 'INTENSITY');
+
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOOD_HOTPLACE', '북적이는 핫플', 'MOOD');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOOD_STATIC', '조용한 숨은 명소', 'MOOD');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOOD_SEASONAL', '계절감이 있는 곳', 'MOOD');
+INSERT INTO TAG_MASTER (TAG_CODE, TAG_NAME, TAG_CATEGORY) VALUES ('MOOD_NIGHT_VIEW', '화려한 야경', 'MOOD');
+
+-- 질문/선택지 기본 데이터
+INSERT INTO Questions_categories (question_no, question_name) VALUES (1, '선호지형');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (2, '계획스타일');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (3, '이동수단');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (4, '숙소스타일');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (5, '예산규모');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (6, '동행자');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (7, '식도락');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (8, '여행목적');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (9, '활동강도');
+INSERT INTO Questions_categories (question_no, question_name) VALUES (10, '선호분위기');
+
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (1, 1, '어떤 여행지를 선호하세요?', 'q1.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (2, 2, '여행 계획 스타일은?', 'q2.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (3, 3, '주로 어떤 이동 수단을 쓰나요?', 'q3.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (4, 4, '숙소는 어떤 스타일을 선호하시나요?', 'q4.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (5, 5, '여행 예산 스타일은 어떤가요?', 'q5.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (6, 6, '주로 누구와 여행하시나요?', 'q6.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (7, 7, '여행 중 음식 스타일은 어떤가요?', 'q7.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (8, 8, '이번 여행의 가장 큰 목적은?', 'q8.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (9, 9, '평소 여행의 활동 강도는 어느 정도인가요?', 'q9.jpg');
+INSERT INTO Questions (question_no, question_number, question_content, question_img) VALUES (10, 10, '선호하는 여행 시기나 분위기는?', 'q10.jpg');
+
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (1, 1, 1, '산 · 계곡 · 자연', 'opt1_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (2, 1, 1, '바다 · 해변 · 섬', 'opt1_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (3, 1, 1, '도시 · 골목 · 문화', 'opt1_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (4, 1, 1, '시골 · 온천 · 전원', 'opt1_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (5, 2, 2, '분 단위 계획형', 'opt2_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (6, 2, 2, '주요 스팟만 정하는 형', 'opt2_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (7, 2, 2, '발길 닿는 대로 즉흥형', 'opt2_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (8, 2, 2, '남이 짜주는 대로 따라 가는 형', 'opt2_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (9, 3, 3, '자가용 · 렌트카', 'opt3_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (10, 3, 3, '대중교통', 'opt3_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (11, 3, 3, '택시', 'opt3_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (12, 3, 3, '뚜벅이', 'opt3_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (13, 4, 4, '호텔 · 리조트', 'opt4_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (14, 4, 4, '펜션 · 에어비앤비', 'opt4_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (15, 4, 4, '캠핑 · 글램핑', 'opt4_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (16, 4, 4, '게스트하우스', 'opt4_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (17, 5, 5, '알뜰 여행', 'opt5_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (18, 5, 5, '가성비 우선', 'opt5_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (19, 5, 5, '예산보다 만족도', 'opt5_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (20, 5, 5, '예산 제한 없는 플렉스', 'opt5_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (21, 6, 6, '혼자(혼행)', 'opt6_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (22, 6, 6, '연인 · 커플', 'opt6_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (23, 6, 6, '가족', 'opt6_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (24, 6, 6, '친구 · 지인', 'opt6_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (25, 7, 7, '미식 · 맛집 탐방', 'opt7_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (26, 7, 7, '현지 음식 위주', 'opt7_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (27, 7, 7, '간편식 · 편의점', 'opt7_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (28, 7, 7, '해산물 · 고기 특화', 'opt7_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (29, 8, 8, '완전한 힐링 · 휴식', 'opt8_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (30, 8, 8, '액티비티 · 도전', 'opt8_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (31, 8, 8, '사진 · 감성', 'opt8_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (32, 8, 8, '문화 · 역사 탐방', 'opt8_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (33, 9, 9, '숙소 근처에서만 머물기', 'opt9_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (34, 9, 9, '하루에 1~2곳만 천천히', 'opt9_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (35, 9, 9, '부지런히 여러 곳 찍기', 'opt9_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (36, 9, 9, '아침부터 밤까지 꽉찬 일정', 'opt9_4.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (37, 10, 10, '사람 북적이는 핫플레이스', 'opt10_1.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (38, 10, 10, '한적하고 조용한 숨은 명소', 'opt10_2.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (39, 10, 10, '계절감이 뚜렷한 곳', 'opt10_3.jpg');
+INSERT INTO Qusetion_options (option_id, question_number, question_no, option_text, option_img) VALUES (40, 10, 10, '야경이 예쁜 밤 중심', 'opt10_4.jpg');
 
 -- PLACE 결과 매핑
 INSERT INTO TRAVEL_RESULT_MAPPING VALUES ('PLACE', 1, '자연 속 탐험가');
@@ -593,11 +625,5 @@ VALUES ('시스템 점검 작업 안내 (01월 05일 02:00 ~ 04:00)', '안정적
 INSERT INTO notice (title, content)
 VALUES ('☀️ 2026 새해 맞이, #Trip과 함께하는 새로운 여정', '안녕하세요, <strong>#Trip</strong>입니다. 어느덧 새로운 한 해가 밝았습니다! <br><br> 새해를 맞아 본인의 여행 취향을 다시 한번 점검해 보실 수 있도록 <strong>''신년 맞이 성향 분석 알고리즘''</strong>을 정교하게 업데이트했습니다.<br> 올 한 해, 여러분의 발길이 닿는 곳마다 행복이 가득하기를 #Trip이 응원하겠습니다.<br><br> 지금 바로 새로워진 질문들로 2026년 첫 여행지를 발견해 보세요!');
 
-
-ALTER TABLE travel_Plans
-ADD (
-    CREATED_DATE DATE DEFAULT SYSDATE NOT NULL,
-    UPDATED_DATE DATE DEFAULT SYSDATE
-);
 
 COMMIT;
